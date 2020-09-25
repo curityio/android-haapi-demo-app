@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Haapi with Duo</string>
+    <string name="login_button">Login</string>
+    <string name="hi_all_text">Hi y\'all!</string>
+    <string name="other_text">Some other interesting text</string>
+    <string name="more_info">More info nowhere</string>
+    <string name="image_desc">this is image</string>
+    <string name="response_status">Response from API: %1$d</string>
+</resources>

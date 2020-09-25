@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/mainLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_margin="8dp"
+    android:background="#A1A1A1"
+    tools:context=".MainActivity">
+
+    <LinearLayout
+        android:id="@+id/authenticatorLayout"
+        android:layout_width="365dp"
+        android:layout_height="606dp"
+        android:clickable="true"
+        android:focusableInTouchMode="true"
+        android:gravity="center|top"
+        android:orientation="vertical"
+        android:overScrollMode="always"
+        android:padding="20dp"
+        android:scrollbars="vertical"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"></LinearLayout>
+
+    <Button
+        android:id="@+id/main_login"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="startLogin"
+        android:text="@string/login_button"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.498"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.273" />
+
+    <TextView
+        android:id="@+id/api_response"
+        android:layout_width="401dp"
+        android:layout_height="102dp"
+        android:background="#4CAF50"
+        android:scrollbars="vertical"
+        android:textAlignment="center"
+        android:textIsSelectable="true"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:visibility="visible" />
+
+    <LinearLayout
+        android:id="@+id/selectorsLayout"
+        android:layout_width="408dp"
+        android:layout_height="297dp"
+        android:gravity="center|top"
+        android:orientation="vertical"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
