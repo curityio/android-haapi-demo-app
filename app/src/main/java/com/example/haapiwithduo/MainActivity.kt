@@ -1,12 +1,14 @@
 package com.example.haapiwithduo
 
-import android.app.Activity
+import android.content.pm.PackageManager
+import android.content.res.ColorStateList
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.text.InputType
 import android.util.Base64
+import android.util.Log
 import android.view.View
 import android.view.View.*
 import android.view.ViewGroup
@@ -18,6 +20,7 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.arch.core.util.Function
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet.WRAP_CONTENT
 import androidx.core.content.ContextCompat.getSystemService
 import com.example.haapiwithduo.utils.disableSslTrustVerification
@@ -34,16 +37,21 @@ import se.curity.identityserver.haapi.android.sdk.okhttp.OkHttpUtils.addHaapiInt
 import java.net.URI
 import java.security.MessageDigest
 import java.util.concurrent.CompletableFuture
+import kotlin.math.log
 
+private val baseUrl = "https://47aea92fde13.ngrok.io"
+private val haapiTokenManager = HaapiTokenManager(
+//        URI("$baseUrl/dev/oauth/token"),
+    URI("$baseUrl/oauth/v2/oauth-token"),
+//        "michal-test-www"
+    "haapi-public-client"
+)
 
 class MainActivity : AppCompatActivity() {
 
     private val fieldsList = HashMap<Int, HashMap<Int, Pair<String, Function<View, String>>>>()
-    private val baseUrl = "https://efb88c1cf7b5.ngrok.io"
-    private val haapiTokenManager = HaapiTokenManager(
-        URI("$baseUrl/dev/oauth/token"),
-        "michal-test-www"
-    )
+
+
     private val httpClient = OkHttpClient.Builder()
         .addHaapiInterceptor(haapiTokenManager)
         .disableSslTrustVerification()
@@ -57,11 +65,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun logAppInfo()  {
-//        val packageInfo =
-//            packageManager.getPackageInfo(packageName, PackageManager.GET_SIGNING_CERTIFICATES)
-//        val signatures =  packageInfo.signingInfo.apkContentsSigners.map { SHA256(it.toByteArray()) }
-//        Log.d("PackageName", packageName)
-//        Log.d("AppInfo", "APK signatures $signatures")
+        val packageInfo =
+            packageManager.getPackageInfo(packageName, PackageManager.GET_SIGNING_CERTIFICATES)
+        val signatures =  packageInfo.signingInfo.apkContentsSigners.map { SHA256(it.toByteArray()) }
+        Log.d("PackageName", packageName)
+        Log.d("AppInfo", "APK signatures $signatures")
     }
 
     private fun SHA256(bytes: ByteArray): String =
@@ -77,17 +85,25 @@ logAppInfo()
     fun startLogin(view: View) {
         val authorizeUrl = Uri.Builder()
             .scheme("https")
-            .authority("efb88c1cf7b5.ngrok.io")
-            .appendPath("dev")
+            .authority("47aea92fde13.ngrok.io")
+
+//            .appendPath("dev")
+//            .appendPath("oauth")
+//            .appendPath("authorize")
+
             .appendPath("oauth")
-            .appendPath("authorize")
-            .appendQueryParameter("client_id", "michal-test-www")
+            .appendPath("v2")
+            .appendPath("oauth-authorize")
+
+//            .appendQueryParameter("client_id", "michal-test-www")
+            .appendQueryParameter("client_id", "haapi-public-client")
             .appendQueryParameter("state", "1586511942384-OcG")
             .appendQueryParameter("scope", "openid read")
             .appendQueryParameter("response_type", "code")
             .appendQueryParameter("code_challenge", "ERNHshyzhznDQOKAIEkJl94N048wMAaN4jY-2xlVy_s")
             .appendQueryParameter("code_challenge_method", "S256")
-            .appendQueryParameter("redirect_uri", "https://oauth.tools/callback/code")
+//            .appendQueryParameter("redirect_uri", "https://oauth.tools/callback/code")
+            .appendQueryParameter("redirect_uri", "https://localhost:7777/client-callback")
             .build()
             .toString()
         val request = Request.Builder()
@@ -95,30 +111,35 @@ logAppInfo()
             .url(authorizeUrl)
             .build()
 
-        doCallApi(request)
-            .thenAccept { response -> if (response.code == 200) {
-                    view.post {
-                        view.visibility = GONE
-                    }
-                } else {
-                    return@thenAccept
-                }
-
-                processHaapiResponse(response)
+        view.post {
+            view.visibility = GONE
         }
+
+        val authenticatorLayout = findViewById<LinearLayout>(R.id.authenticatorLayout)
+        val selectorLayout = findViewById<LinearLayout>(R.id.selectorsLayout)
+
+        authenticatorLayout.post {
+            authenticatorLayout.removeAllViews()
+        }
+
+        selectorLayout.post {
+            selectorLayout.removeAllViews()
+        }
+
+        callApi(request)
     }
 
     private fun processHaapiResponse(haapiResponse: Response) {
-        val responseBody = haapiResponse.body?.string()
-        val responseBodyString = responseBody ?: "{}"
-        val haapiResponseObject = JSONObject(responseBodyString)
+        val responseBody = haapiResponse.body?.string() ?: "{}"
+        val haapiResponseObject = JSONObject(responseBody)
 
         //TODO just for now
-        showJSONResponse(responseBodyString)
+        showJSONResponse(responseBody)
 
         when (haapiResponseObject["type"]) {
             "authentication-step" -> processAuthenticationStep(haapiResponseObject.getJSONArray("actions"))
             "polling-status" -> processPollingStatus(haapiResponseObject)
+            "oauth-authorization-response" -> processAuthorizationResponse(haapiResponseObject.getJSONObject("properties"))
             else -> return
         }
     }
@@ -222,12 +243,20 @@ logAppInfo()
                 selector.text = selectorOptions["title"].toString()
                 selector.visibility = VISIBLE
                 selector.layoutParams = marginParams
+                selector.backgroundTintList = ColorStateList.valueOf(getColor(R.color.button))
+                selector.setTextColor(getColor(R.color.button_txt))
                 selector.setOnClickListener {
-                    layout.visibility = GONE
-                    selectAuthenticator(selectorOptions["href"].toString()) }
+                    layout.post {
+                        layout.visibility = GONE
+                    }
+
+                    selectAuthenticator(selectorOptions["href"].toString())
+                }
 
                 layout.addView(selector)
             }
+
+            layout.visibility = VISIBLE
         }
     }
 
@@ -262,19 +291,23 @@ logAppInfo()
             val submitButton = Button(this)
             submitButton.text = form["actionTitle"].toString()
             submitButton.layoutParams = marginParams
+            submitButton.backgroundTintList = ColorStateList.valueOf(getColor(R.color.button))
+            submitButton.setTextColor(getColor(R.color.button_txt))
             submitButton.setOnClickListener {
                 val request = Request.Builder()
                     .method(form["method"].toString(), getBody(fields, form["type"].toString()))
                     .url("$baseUrl${form["href"]}")
                     .build()
 
-                layout.removeAllViews()
+                layout.post {
+                    layout.removeAllViews()
+                }
 
                 callApi(request)
             }
 
             layout.addView(submitButton)
-
+            layout.visibility = VISIBLE
         }
 
     }
@@ -301,8 +334,18 @@ logAppInfo()
         callApi(request)
     }
 
-    private fun callApi(request: Request) {
-        doCallApi(request).thenAccept { response -> processHaapiResponse(response) }
+    private fun callApi(request: Request): CompletableFuture<Void> {
+        val loader = findViewById<ProgressBar>(R.id.loader)
+        loader.post {
+            loader.visibility = VISIBLE
+        }
+
+        return doCallApi(request).thenAccept { response ->
+            loader.post {
+                loader.visibility = GONE
+            }
+            processHaapiResponse(response)
+        }
     }
 
     private fun doCallApi(request: Request): CompletableFuture<Response> {
@@ -361,7 +404,8 @@ logAppInfo()
                             formModel["type"].toString(),
                             field["value"].toString(),
                             field["name"].toString(),
-                            form.id
+                            form.id,
+                            layout
                         )
                     )
                     "select" -> layout.addView(
@@ -382,6 +426,7 @@ logAppInfo()
             }
 
             layout.addView(form)
+            layout.visibility = VISIBLE
         }
     }
 
@@ -393,19 +438,25 @@ logAppInfo()
         contentType: String,
         value: String,
         name: String,
-        formId: Int
+        formId: Int,
+        layout: LinearLayout
     ): Button {
         val button = Button(this)
         button.id = generateViewId()
         button.text = label
         button.layoutParams = marginParams
+        button.backgroundTintList = ColorStateList.valueOf(getColor(R.color.button))
+        button.setTextColor(getColor(R.color.button_txt))
         button.setOnClickListener {
             val request = Request.Builder()
                 .url("$baseUrl$url")
                 .method(method, getBodyForRequest(fieldsList[formId]!!, contentType))
                 .build()
 
-            parent.removeAllViews()
+            layout.post {
+                layout.removeAllViews()
+            }
+
             callApi(request)
         }
 
@@ -433,6 +484,9 @@ logAppInfo()
             radioButton.id = generateViewId()
             radioButton.text = option["label"].toString()
             radioButton.tag = option["value"]
+            if (i == 0) {
+                radioButton.isChecked = true
+            }
             radioGroup.addView(radioButton)
         }
 
@@ -479,6 +533,73 @@ logAppInfo()
         return requestBodyString.toString().substring(1).toRequestBody(contentType.toMediaType())
     }
 
+    private fun processAuthorizationResponse(properties: JSONObject) {
+        val layout = findViewById<LinearLayout>(R.id.authenticatorLayout)
+        layout.post {
+            layout.removeAllViews()
+            val text = TextView(this)
+            text.text = getText(R.string.code_response)
+            text.textAlignment = TextView.TEXT_ALIGNMENT_CENTER
+            text.layoutParams = marginParams
+            layout.addView(text)
+
+            val code = TextView(this)
+            code.text = properties["code"].toString()
+            code.textAlignment = TextView.TEXT_ALIGNMENT_CENTER
+            text.layoutParams = marginParams
+            layout.addView(code)
+
+//            layout.addView(getLogoutButton())
+
+            layout.visibility = VISIBLE
+        }
+    }
+
+    private fun logout(view: View) {
+        val logoutUrl = "https://47aea92fde13.ngrok.io/oauth/v2/oauth-session/logout"
+
+        val request = Request.Builder()
+            .get()
+            .url(logoutUrl)
+            .header("Accept", "text/html")
+            .build()
+
+        val authenticatorLayout = findViewById<LinearLayout>(R.id.authenticatorLayout)
+        val selectorLayout = findViewById<LinearLayout>(R.id.selectorsLayout)
+
+        authenticatorLayout.post {
+            authenticatorLayout.removeAllViews()
+        }
+
+        selectorLayout.post {
+            selectorLayout.removeAllViews()
+        }
+
+        CompletableFuture.supplyAsync {
+            httpClient.newCall(request).execute()
+        }.thenAccept { response ->
+            val responseBody = response.body?.string() ?: ""
+            println("The code for logout was: ${response.code}")
+            println("The response from logout: $responseBody")
+        }
+            .thenRun {
+            val loginButton = findViewById<Button>(R.id.main_login)
+
+            loginButton.post {
+                loginButton.visibility = VISIBLE
+            }
+        }
+    }
+
+    private fun getLogoutButton(): Button {
+        val logoutButton = Button(this)
+
+        logoutButton.id = generateViewId()
+        logoutButton.text = getText(R.string.logout_button)
+        logoutButton.setOnClickListener { view -> logout(view) }
+
+        return logoutButton
+    }
 
     /** Util **/
 

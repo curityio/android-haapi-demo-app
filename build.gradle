@@ -18,7 +18,10 @@ allprojects {
     repositories {
         google()
         jcenter()
-        mavenLocal()
+        maven {
+//            url 'https://nexus.curity.se/repository/customer-repos/'
+            url 'https://nexus.curity.se/nexus/content/repositories/customer-release-repo'
+        }
     }
 }
 
