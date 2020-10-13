@@ -39,25 +39,21 @@ import java.security.MessageDigest
 import java.util.concurrent.CompletableFuture
 import kotlin.math.log
 
-private val baseUrl = "https://47aea92fde13.ngrok.io"
+private const val baseUrl = "https://trojanowski.ngrok.io"
+
 private val haapiTokenManager = HaapiTokenManager(
-//        URI("$baseUrl/dev/oauth/token"),
     URI("$baseUrl/oauth/v2/oauth-token"),
-//        "michal-test-www"
     "haapi-public-client"
 )
 
 class MainActivity : AppCompatActivity() {
 
-    private val fieldsList = HashMap<Int, HashMap<Int, Pair<String, Function<View, String>>>>()
-
-
     private val httpClient = OkHttpClient.Builder()
         .addHaapiInterceptor(haapiTokenManager)
-        .disableSslTrustVerification()
         .build()
 
     private val marginParams = LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT)
+    private val fieldsList = HashMap<Int, HashMap<Int, Pair<String, Function<View, String>>>>()
 
     init {
         marginParams.topMargin = 20
@@ -79,30 +75,22 @@ class MainActivity : AppCompatActivity() {
 
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-logAppInfo()
+        logAppInfo()
     }
 
     fun startLogin(view: View) {
         val authorizeUrl = Uri.Builder()
             .scheme("https")
-            .authority("47aea92fde13.ngrok.io")
-
-//            .appendPath("dev")
-//            .appendPath("oauth")
-//            .appendPath("authorize")
-
+            .authority("trojanowski.ngrok.io")
             .appendPath("oauth")
             .appendPath("v2")
             .appendPath("oauth-authorize")
-
-//            .appendQueryParameter("client_id", "michal-test-www")
             .appendQueryParameter("client_id", "haapi-public-client")
             .appendQueryParameter("state", "1586511942384-OcG")
             .appendQueryParameter("scope", "openid read")
             .appendQueryParameter("response_type", "code")
             .appendQueryParameter("code_challenge", "ERNHshyzhznDQOKAIEkJl94N048wMAaN4jY-2xlVy_s")
             .appendQueryParameter("code_challenge_method", "S256")
-//            .appendQueryParameter("redirect_uri", "https://oauth.tools/callback/code")
             .appendQueryParameter("redirect_uri", "https://localhost:7777/client-callback")
             .build()
             .toString()
@@ -134,7 +122,7 @@ logAppInfo()
         val haapiResponseObject = JSONObject(responseBody)
 
         //TODO just for now
-        showJSONResponse(responseBody)
+//        showJSONResponse(responseBody)
 
         when (haapiResponseObject["type"]) {
             "authentication-step" -> processAuthenticationStep(haapiResponseObject.getJSONArray("actions"))
@@ -555,51 +543,6 @@ logAppInfo()
         }
     }
 
-    private fun logout(view: View) {
-        val logoutUrl = "https://47aea92fde13.ngrok.io/oauth/v2/oauth-session/logout"
-
-        val request = Request.Builder()
-            .get()
-            .url(logoutUrl)
-            .header("Accept", "text/html")
-            .build()
-
-        val authenticatorLayout = findViewById<LinearLayout>(R.id.authenticatorLayout)
-        val selectorLayout = findViewById<LinearLayout>(R.id.selectorsLayout)
-
-        authenticatorLayout.post {
-            authenticatorLayout.removeAllViews()
-        }
-
-        selectorLayout.post {
-            selectorLayout.removeAllViews()
-        }
-
-        CompletableFuture.supplyAsync {
-            httpClient.newCall(request).execute()
-        }.thenAccept { response ->
-            val responseBody = response.body?.string() ?: ""
-            println("The code for logout was: ${response.code}")
-            println("The response from logout: $responseBody")
-        }
-            .thenRun {
-            val loginButton = findViewById<Button>(R.id.main_login)
-
-            loginButton.post {
-                loginButton.visibility = VISIBLE
-            }
-        }
-    }
-
-    private fun getLogoutButton(): Button {
-        val logoutButton = Button(this)
-
-        logoutButton.id = generateViewId()
-        logoutButton.text = getText(R.string.logout_button)
-        logoutButton.setOnClickListener { view -> logout(view) }
-
-        return logoutButton
-    }
 
     /** Util **/
 

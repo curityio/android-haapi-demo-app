@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Hypermedia API demo</string>
+    <string name="app_name">Hypermedia Authentication API demo</string>
     <string name="login_button">Login</string>
     <string name="other_text">Some other interesting text</string>
     <string name="more_info">More info nowhere</string>
