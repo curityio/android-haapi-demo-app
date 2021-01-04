@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_margin="8dp"
-    android:background="@android:color/white"
+    android:background="#F2F3F6"
     tools:context=".MainActivity">
 
     <ProgressBar
@@ -86,6 +86,19 @@
 
     <LinearLayout
         android:id="@+id/selectorsLayout"
+        android:layout_width="408dp"
+        android:layout_height="297dp"
+        android:gravity="center|top"
+        android:orientation="vertical"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/factorsLayout"
         android:layout_width="408dp"
         android:layout_height="297dp"
         android:gravity="center|top"

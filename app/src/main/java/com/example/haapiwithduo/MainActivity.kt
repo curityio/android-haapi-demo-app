@@ -20,10 +20,8 @@ import android.view.inputmethod.InputMethodManager
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.arch.core.util.Function
-import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet.WRAP_CONTENT
 import androidx.core.content.ContextCompat.getSystemService
-import com.example.haapiwithduo.utils.disableSslTrustVerification
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -37,13 +35,14 @@ import se.curity.identityserver.haapi.android.sdk.okhttp.OkHttpUtils.addHaapiInt
 import java.net.URI
 import java.security.MessageDigest
 import java.util.concurrent.CompletableFuture
-import kotlin.math.log
 
-private const val baseUrl = "https://trojanowski.ngrok.io"
+private const val host = "iggbom-curity.ngrok.io"
+private const val baseUrl = "https://$host"
+private const val clientId = "haapi-public-client"
 
 private val haapiTokenManager = HaapiTokenManager(
     URI("$baseUrl/oauth/v2/oauth-token"),
-    "haapi-public-client"
+    clientId
 )
 
 class MainActivity : AppCompatActivity() {
@@ -81,13 +80,13 @@ class MainActivity : AppCompatActivity() {
     fun startLogin(view: View) {
         val authorizeUrl = Uri.Builder()
             .scheme("https")
-            .authority("trojanowski.ngrok.io")
+            .authority(host)
             .appendPath("oauth")
             .appendPath("v2")
             .appendPath("oauth-authorize")
-            .appendQueryParameter("client_id", "haapi-public-client")
+            .appendQueryParameter("client_id", clientId)
             .appendQueryParameter("state", "1586511942384-OcG")
-            .appendQueryParameter("scope", "openid read")
+            .appendQueryParameter("scope", "openid")
             .appendQueryParameter("response_type", "code")
             .appendQueryParameter("code_challenge", "ERNHshyzhznDQOKAIEkJl94N048wMAaN4jY-2xlVy_s")
             .appendQueryParameter("code_challenge_method", "S256")
@@ -125,9 +124,14 @@ class MainActivity : AppCompatActivity() {
 //        showJSONResponse(responseBody)
 
         when (haapiResponseObject["type"]) {
+            "redirection-step" -> processAuthenticationStep(haapiResponseObject.getJSONArray("actions"))
             "authentication-step" -> processAuthenticationStep(haapiResponseObject.getJSONArray("actions"))
             "polling-status" -> processPollingStatus(haapiResponseObject)
             "oauth-authorization-response" -> processAuthorizationResponse(haapiResponseObject.getJSONObject("properties"))
+            "polling-step" -> processPollingStatus(haapiResponseObject)
+//            "https://curity.se/problems/incorrect-credentials" -> //TODO: Implement handling of failed authentication
+//            "registration-step" //TODO: Implement handling of registration
+//            "oauth-authorization-response"
             else -> return
         }
     }
@@ -135,21 +139,30 @@ class MainActivity : AppCompatActivity() {
     private fun processPollingStatus(haapiResponseObject: JSONObject) {
         val properties = haapiResponseObject.getJSONObject("properties")
 
-        when (properties["status"] as Boolean) {
-            true -> processAuthenticationStep(haapiResponseObject.getJSONArray("actions"))
-            false -> pollStatus(haapiResponseObject)
+        when (properties["status"]) {
+            "done" -> processAuthenticationStep(haapiResponseObject.getJSONArray("actions"))
+            "pending" -> pollStatus(haapiResponseObject)
         }
     }
 
     private fun pollStatus(haapiResponseObject: JSONObject) {
-        val links = haapiResponseObject.getJSONArray("links")
+        val actions = haapiResponseObject.getJSONArray("actions")
 
-        val link = links.getJSONObject(0)
+        for (i in (0 until actions.length())) {
+            val action = actions.getJSONObject(i)
 
+            when (action["kind"]) {
+                "poll" -> poll(action.getJSONObject("model"))
+//                "cancel" -> //TODO: Not implemented yet
+            }
+        }
+    }
+
+    private fun poll(pollModel: JSONObject) {
         val request = Request.Builder()
-            .url(link["href"].toString())
-            .get()
-            .build()
+                .url(pollModel["href"].toString())
+                .get()
+                .build()
 
         Handler(Looper.getMainLooper()).postDelayed({
             callApi(request)
@@ -171,9 +184,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun processHaapiForm(form: JSONObject) {
         when (form["kind"]) {
+//            "login" -> processForm(form.getJSONObject("model"))
+            "login" -> processForm(form)
             "redirect" -> processHaapiRedirect(form.getJSONObject("model"))
             "form" -> processForm(form.getJSONObject("model"))
-            "device-option" -> processDeviceOption(form.getJSONObject("model"))
+
             else -> return
         }
     }
@@ -212,16 +227,18 @@ class MainActivity : AppCompatActivity() {
 
     private fun processSelector(selectorAction: JSONObject) {
         when (selectorAction["kind"]) {
-            "selector-authenticator" -> processSelectorAuthenticator(selectorAction.getJSONObject("model"))
+            "authenticator-selector" -> processSelectorAuthenticator(selectorAction)
+            "device-selector" -> processSelectorAuthenticator(selectorAction)
+            "device-option" -> processDeviceOptions(selectorAction)
             else -> return
         }
     }
 
-    private fun processSelectorAuthenticator(selectorActionModel: JSONObject) {
+    private fun processSelectorAuthenticator(selectorAction: JSONObject) {
         val layout = findViewById<LinearLayout>(R.id.selectorsLayout)
         layout.post {
-            layout.addView(generateHeader(selectorActionModel["title"].toString()))
-
+            layout.addView(generateHeader(selectorAction["title"].toString()))
+            val selectorActionModel = selectorAction.getJSONObject("model")
             val options = selectorActionModel.getJSONArray("options")
 
             for (i in (0 until options.length())) {
@@ -236,9 +253,15 @@ class MainActivity : AppCompatActivity() {
                 selector.setOnClickListener {
                     layout.post {
                         layout.visibility = GONE
+                        layout.removeAllViewsInLayout()
                     }
 
-                    selectAuthenticator(selectorOptions["href"].toString())
+                    when (selectorAction["kind"]) {
+                        "authenticator-selector" -> {
+                            val selectorOptionsModel = selectorOptions.getJSONObject("model")
+                            selectAuthenticator(selectorOptionsModel["href"].toString())}
+                        "device-selector" -> processSelector(selectorOptions)
+                    }
                 }
 
                 layout.addView(selector)
@@ -252,8 +275,9 @@ class MainActivity : AppCompatActivity() {
         val layout = findViewById<LinearLayout>(R.id.authenticatorLayout)
         layout.post {
             layout.addView(generateHeader(form["title"].toString()))
+            val model = form.getJSONObject("model")
 
-            val fieldsArray = form.getJSONArray("fields")
+            val fieldsArray = model.getJSONArray("fields")
             val fields = HashMap<Int, String>(fieldsArray.length())
 
             val paramsForFields = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT)
@@ -277,14 +301,14 @@ class MainActivity : AppCompatActivity() {
             }
 
             val submitButton = Button(this)
-            submitButton.text = form["actionTitle"].toString()
+            submitButton.text = model["actionTitle"].toString()
             submitButton.layoutParams = marginParams
             submitButton.backgroundTintList = ColorStateList.valueOf(getColor(R.color.button))
             submitButton.setTextColor(getColor(R.color.button_txt))
             submitButton.setOnClickListener {
                 val request = Request.Builder()
-                    .method(form["method"].toString(), getBody(fields, form["type"].toString()))
-                    .url("$baseUrl${form["href"]}")
+                    .method(model["method"].toString(), getBody(fields, model["type"].toString()))
+                    .url("$baseUrl${model["href"]}")
                     .build()
 
                 layout.post {
@@ -367,118 +391,75 @@ class MainActivity : AppCompatActivity() {
         return selectorHeader
     }
 
-    private fun processDeviceOption(formModel: JSONObject) {
-        val layout = findViewById<LinearLayout>(R.id.authenticatorLayout)
-
+    private fun processDeviceOptions(deviceOptions: JSONObject) {
+        val layout = findViewById<LinearLayout>(R.id.factorsLayout)
+        layout.addView(generateHeader(deviceOptions["title"].toString()))
         layout.post {
             val form = LinearLayout(this)
             form.id = generateViewId()
 
-            form.addView(generateHeader(formModel["title"].toString()))
-
-            val fields = formModel.getJSONArray("fields")
             fieldsList[form.id] = HashMap()
 
-            for (i in (0 until fields.length())) {
-                val field = fields.getJSONObject(i)
+            val deviceOptionsModel = deviceOptions.getJSONObject("model")
+            val options = deviceOptionsModel.getJSONArray("options")
 
-                when (field["type"].toString()) {
-                    "submit" -> layout.addView(
-                        generateSubmitButton(
-                            field["label"].toString(),
-                            form,
-                            formModel["href"].toString(),
-                            formModel["method"].toString(),
-                            formModel["type"].toString(),
-                            field["value"].toString(),
-                            field["name"].toString(),
-                            form.id,
-                            layout
-                        )
-                    )
-                    "select" -> layout.addView(
-                        generateSelector(
-                            field["name"].toString(), form.id, field.getJSONArray(
-                                "options"
-                            )
-                        )
-                    )
-                    "text" -> layout.addView(
-                        generateInput(
-                            field["label"].toString(),
-                            field["name"].toString(),
-                            form.id
-                        )
-                    )
+            val radioGroup = RadioGroup(this)
+            radioGroup.layoutParams = marginParams
+            radioGroup.id = generateViewId()
+
+            for (i in (0 until options.length())) {
+                val selectorOptions = options.getJSONObject(i)
+                val radioButton = generateSelector(radioGroup, form.id, selectorOptions)
+
+                if (i == 0) {
+                    radioButton.isChecked = true
                 }
             }
 
+            layout.addView(radioGroup)
+
+            val submitButton = Button(this)
+            submitButton.id = generateViewId()
+            submitButton.text = "submit"
+            submitButton.layoutParams = marginParams
+            submitButton.backgroundTintList = ColorStateList.valueOf(getColor(R.color.button))
+            submitButton.setTextColor(getColor(R.color.button_txt))
+            submitButton.setOnClickListener {
+                System.out.println("TESTSTST")
+                val request = Request.Builder()
+                        .url("$baseUrl/authn/authentication/duo1/select-device") //TODO: Hardcoded fix
+                        .method("POST", getBodyForRequest(fieldsList[form.id]!!, "application/x-www-form-urlencoded")) //TODO: Hardcoded fix
+                        .build()
+
+                layout.post {
+                    layout.removeAllViews()
+                }
+
+                callApi(request)
+            }
+
+            layout.addView(submitButton)
             layout.addView(form)
             layout.visibility = VISIBLE
         }
     }
 
-    private fun generateSubmitButton(
-        label: String,
-        parent: ViewGroup,
-        url: String,
-        method: String,
-        contentType: String,
-        value: String,
-        name: String,
-        formId: Int,
-        layout: LinearLayout
-    ): Button {
-        val button = Button(this)
-        button.id = generateViewId()
-        button.text = label
-        button.layoutParams = marginParams
-        button.backgroundTintList = ColorStateList.valueOf(getColor(R.color.button))
-        button.setTextColor(getColor(R.color.button_txt))
-        button.setOnClickListener {
-            val request = Request.Builder()
-                .url("$baseUrl$url")
-                .method(method, getBodyForRequest(fieldsList[formId]!!, contentType))
-                .build()
+    private fun generateSelector(radioGroup: RadioGroup, formId: Int, option: JSONObject): RadioButton {
 
-            layout.post {
-                layout.removeAllViews()
-            }
+        val model = option.getJSONObject("model")
+        val fields = model.getJSONArray("fields")
 
-            callApi(request)
-        }
+        val radioButton = RadioButton(this)
+        radioButton.id = generateViewId()
+        radioButton.text = option["title"].toString()
+        radioButton.tag = fields.getJSONObject(1)["value"].toString() + "&" +
+                fields.getJSONObject(0)["name"] + "=" +
+                fields.getJSONObject(0)["value"]
 
-        val hiddenText = TextView(this)
-        hiddenText.visibility = GONE
-        hiddenText.text = value
-        hiddenText.id = generateViewId()
-        parent.addView(hiddenText)
+        radioGroup.addView(radioButton)
 
-        fieldsList[formId]!![hiddenText.id] = Pair(
-            name,
-            Function<View, String> { textView -> (textView as TextView).text.toString() })
-
-        return button
-    }
-
-    private fun generateSelector(name: String, formId: Int, options: JSONArray): RadioGroup {
-        val radioGroup = RadioGroup(this)
-        radioGroup.layoutParams = marginParams
-        radioGroup.id = generateViewId()
-
-        for (i in (0 until options.length())) {
-            val option = options.getJSONObject(i)
-            val radioButton = RadioButton(this)
-            radioButton.id = generateViewId()
-            radioButton.text = option["label"].toString()
-            radioButton.tag = option["value"]
-            if (i == 0) {
-                radioButton.isChecked = true
-            }
-            radioGroup.addView(radioButton)
-        }
-
-        fieldsList[formId]!![radioGroup.id] = Pair(name, Function<View, String> { view ->
+        fieldsList[formId]!![radioGroup.id] = Pair(fields.getJSONObject(1)["name"].toString(),
+                Function<View, String> { view ->
             val checkedRadioId = (view as RadioGroup).checkedRadioButtonId
 
             val checkedRadioButton = findViewById<RadioButton>(checkedRadioId)
@@ -487,9 +468,10 @@ class MainActivity : AppCompatActivity() {
 
         })
 
-        return radioGroup
+        return radioButton
     }
 
+    //TODO: Add this for when Duo uses input
     private fun generateInput(hint: String, name: String, formId: Int): EditText {
         val widget = EditText(this)
         widget.id = generateViewId()
