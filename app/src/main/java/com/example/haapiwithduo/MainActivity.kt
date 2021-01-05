@@ -39,6 +39,8 @@ import java.util.concurrent.CompletableFuture
 private const val host = "iggbom-curity.ngrok.io"
 private const val baseUrl = "https://$host"
 private const val clientId = "haapi-public-client"
+private const val redirectUri = "https://localhost:7777/client-callback"
+
 
 private val haapiTokenManager = HaapiTokenManager(
     URI("$baseUrl/oauth/v2/oauth-token"),
@@ -90,7 +92,7 @@ class MainActivity : AppCompatActivity() {
             .appendQueryParameter("response_type", "code")
             .appendQueryParameter("code_challenge", "ERNHshyzhznDQOKAIEkJl94N048wMAaN4jY-2xlVy_s")
             .appendQueryParameter("code_challenge_method", "S256")
-            .appendQueryParameter("redirect_uri", "https://localhost:7777/client-callback")
+            .appendQueryParameter("redirect_uri", redirectUri)
             .build()
             .toString()
         val request = Request.Builder()
@@ -184,7 +186,6 @@ class MainActivity : AppCompatActivity() {
 
     private fun processHaapiForm(form: JSONObject) {
         when (form["kind"]) {
-//            "login" -> processForm(form.getJSONObject("model"))
             "login" -> processForm(form)
             "redirect" -> processHaapiRedirect(form.getJSONObject("model"))
             "form" -> processForm(form.getJSONObject("model"))
@@ -425,10 +426,13 @@ class MainActivity : AppCompatActivity() {
             submitButton.backgroundTintList = ColorStateList.valueOf(getColor(R.color.button))
             submitButton.setTextColor(getColor(R.color.button_txt))
             submitButton.setOnClickListener {
-                System.out.println("TESTSTST")
+                val checkedButton = findViewById<RadioButton>(radioGroup.checkedRadioButtonId)
+
+                val href = checkedButton.getTag(R.id.href).toString()
+
                 val request = Request.Builder()
-                        .url("$baseUrl/authn/authentication/duo1/select-device") //TODO: Hardcoded fix
-                        .method("POST", getBodyForRequest(fieldsList[form.id]!!, "application/x-www-form-urlencoded")) //TODO: Hardcoded fix
+                        .url("$baseUrl$href")
+                        .method("POST", getBodyForRequest(fieldsList[form.id]!!, checkedButton.getTag(R.id.type).toString()))
                         .build()
 
                 layout.post {
@@ -445,16 +449,17 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun generateSelector(radioGroup: RadioGroup, formId: Int, option: JSONObject): RadioButton {
-
         val model = option.getJSONObject("model")
         val fields = model.getJSONArray("fields")
 
         val radioButton = RadioButton(this)
         radioButton.id = generateViewId()
         radioButton.text = option["title"].toString()
-        radioButton.tag = fields.getJSONObject(1)["value"].toString() + "&" +
+        radioButton.setTag(R.id.params, fields.getJSONObject(1)["value"].toString() + "&" +
                 fields.getJSONObject(0)["name"] + "=" +
-                fields.getJSONObject(0)["value"]
+                fields.getJSONObject(0)["value"])
+        radioButton.setTag(R.id.href, model.getString("href"))
+        radioButton.setTag(R.id.type, model.getString("type"))
 
         radioGroup.addView(radioButton)
 
@@ -463,9 +468,7 @@ class MainActivity : AppCompatActivity() {
             val checkedRadioId = (view as RadioGroup).checkedRadioButtonId
 
             val checkedRadioButton = findViewById<RadioButton>(checkedRadioId)
-
-            return@Function checkedRadioButton.tag.toString()
-
+            return@Function checkedRadioButton.getTag(R.id.params).toString()
         })
 
         return radioButton
