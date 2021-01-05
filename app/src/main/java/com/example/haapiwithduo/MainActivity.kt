@@ -79,6 +79,12 @@ class MainActivity : AppCompatActivity() {
         logAppInfo()
     }
 
+    fun restart(view: View) {
+        val intent = intent
+        finish()
+        startActivity(intent)
+    }
+
     fun startLogin(view: View) {
         val authorizeUrl = Uri.Builder()
             .scheme("https")
@@ -429,6 +435,10 @@ class MainActivity : AppCompatActivity() {
                 val checkedButton = findViewById<RadioButton>(radioGroup.checkedRadioButtonId)
 
                 val href = checkedButton.getTag(R.id.href).toString()
+
+                layout.post {
+                    layout.removeAllViews()
+                }
 
                 val request = Request.Builder()
                         .url("$baseUrl$href")
