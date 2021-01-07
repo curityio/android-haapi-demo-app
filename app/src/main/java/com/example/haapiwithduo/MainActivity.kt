@@ -2,16 +2,17 @@ package com.example.haapiwithduo
 
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
+import android.graphics.Paint
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.text.InputType
+import android.text.method.LinkMovementMethod
 import android.util.Base64
 import android.util.Log
 import android.view.View
 import android.view.View.*
-import android.view.ViewGroup
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
 import android.view.animation.AlphaAnimation
 import android.view.animation.Animation
@@ -35,6 +36,7 @@ import se.curity.identityserver.haapi.android.sdk.okhttp.OkHttpUtils.addHaapiInt
 import java.net.URI
 import java.security.MessageDigest
 import java.util.concurrent.CompletableFuture
+
 
 private const val host = "iggbom-curity.ngrok.io"
 private const val baseUrl = "https://$host"
@@ -83,6 +85,7 @@ class MainActivity : AppCompatActivity() {
         val intent = intent
         finish()
         startActivity(intent)
+        startLogin(view)
     }
 
     fun startLogin(view: View) {
@@ -139,7 +142,6 @@ class MainActivity : AppCompatActivity() {
             "polling-step" -> processPollingStatus(haapiResponseObject)
 //            "https://curity.se/problems/incorrect-credentials" -> //TODO: Implement handling of failed authentication
 //            "registration-step" //TODO: Implement handling of registration
-//            "oauth-authorization-response"
             else -> return
         }
     }
@@ -266,7 +268,8 @@ class MainActivity : AppCompatActivity() {
                     when (selectorAction["kind"]) {
                         "authenticator-selector" -> {
                             val selectorOptionsModel = selectorOptions.getJSONObject("model")
-                            selectAuthenticator(selectorOptionsModel["href"].toString())}
+                            selectAuthenticator(selectorOptionsModel["href"].toString())
+                        }
                         "device-selector" -> processSelector(selectorOptions)
                     }
                 }
@@ -410,6 +413,22 @@ class MainActivity : AppCompatActivity() {
             val deviceOptionsModel = deviceOptions.getJSONObject("model")
             val options = deviceOptionsModel.getJSONArray("options")
 
+            val paramsForFields = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT)
+            paramsForFields.setMargins(370, 20, 210, 20)
+
+            val passwordField = EditText(this)
+            passwordField.id = generateViewId()
+            passwordField.inputType = InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD or InputType.TYPE_CLASS_TEXT
+            passwordField.onFocusChangeListener = FocusChangeListener()
+            passwordField.layoutParams = paramsForFields
+            passwordField.visibility = GONE
+
+            val smsLink = TextView(this)
+            smsLink.id = generateViewId()
+            smsLink.layoutParams = paramsForFields
+            smsLink.movementMethod = LinkMovementMethod.getInstance()
+            smsLink.visibility = GONE
+
             val radioGroup = RadioGroup(this)
             radioGroup.layoutParams = marginParams
             radioGroup.id = generateViewId()
@@ -423,7 +442,49 @@ class MainActivity : AppCompatActivity() {
                 }
             }
 
+            radioGroup.setOnCheckedChangeListener { group, checkedId ->
+                val selectedOption = findViewById<RadioButton>(checkedId)
+
+                when (selectedOption.text) {
+                    "passcode" -> {
+                        passwordField.visibility = VISIBLE
+                        smsLink.visibility = GONE
+                    }
+                    "sms" -> {
+                        val checkedButton = findViewById<RadioButton>(radioGroup.checkedRadioButtonId)
+                        val href = checkedButton.getTag(R.id.href).toString()
+
+                        smsLink.text = "Receive passcode via SMS"
+                        smsLink.paintFlags = Paint.UNDERLINE_TEXT_FLAG
+                        passwordField.visibility = VISIBLE
+                        smsLink.visibility = VISIBLE
+
+                        smsLink.setOnClickListener {
+
+                            val request = Request.Builder()
+                                .url("$baseUrl$href")
+                                .method(
+                                    "POST", getBodyForRequest(
+                                        fieldsList[form.id]!!,
+                                        checkedButton.getTag(R.id.type).toString()
+                                    )
+                                )
+                                .build()
+
+                            callApi(request)
+
+                        }
+                    }
+                    else -> {
+                        passwordField.visibility = GONE
+                        smsLink.visibility = GONE
+                    }
+                }
+            }
+
             layout.addView(radioGroup)
+            layout.addView(passwordField)
+            layout.addView(smsLink)
 
             val submitButton = Button(this)
             submitButton.id = generateViewId()
@@ -434,16 +495,25 @@ class MainActivity : AppCompatActivity() {
             submitButton.setOnClickListener {
                 val checkedButton = findViewById<RadioButton>(radioGroup.checkedRadioButtonId)
 
-                val href = checkedButton.getTag(R.id.href).toString()
-
-                layout.post {
-                    layout.removeAllViews()
+                when (checkedButton.text) {
+                    "passcode" -> {
+                        fieldsList[form.id]!![passwordField.id] = Pair(
+                            checkedButton.text.toString(),
+                            Function<View, String> { view -> (view as EditText).text.toString() })
+                    }
+                    "sms" -> {
+                        fieldsList[form.id]!![passwordField.id] = Pair(
+                            checkedButton.text.toString(),
+                            Function<View, String> { view -> (view as EditText).text.toString() })
+                    }
                 }
 
+                val href = checkedButton.getTag(R.id.href).toString()
+
                 val request = Request.Builder()
-                        .url("$baseUrl$href")
-                        .method("POST", getBodyForRequest(fieldsList[form.id]!!, checkedButton.getTag(R.id.type).toString()))
-                        .build()
+                    .url("$baseUrl$href")
+                    .method("POST", getBodyForRequest(fieldsList[form.id]!!, checkedButton.getTag(R.id.type).toString()))
+                    .build()
 
                 layout.post {
                     layout.removeAllViews()
@@ -462,41 +532,29 @@ class MainActivity : AppCompatActivity() {
         val model = option.getJSONObject("model")
         val fields = model.getJSONArray("fields")
 
+        //TODO: Need to fix for SMS when submitting the SMS provided code. The factor when using SMS when submitting the code should be passcode, not SMS
         val radioButton = RadioButton(this)
         radioButton.id = generateViewId()
         radioButton.text = option["title"].toString()
-        radioButton.setTag(R.id.params, fields.getJSONObject(1)["value"].toString() + "&" +
-                fields.getJSONObject(0)["name"] + "=" +
-                fields.getJSONObject(0)["value"])
+        radioButton.setTag(
+            R.id.params, fields.getJSONObject(1)["value"].toString() + "&" +
+                    fields.getJSONObject(0)["name"] + "=" +
+                    fields.getJSONObject(0)["value"]
+        )
         radioButton.setTag(R.id.href, model.getString("href"))
         radioButton.setTag(R.id.type, model.getString("type"))
 
         radioGroup.addView(radioButton)
 
         fieldsList[formId]!![radioGroup.id] = Pair(fields.getJSONObject(1)["name"].toString(),
-                Function<View, String> { view ->
-            val checkedRadioId = (view as RadioGroup).checkedRadioButtonId
+            Function<View, String> { view ->
+                val checkedRadioId = (view as RadioGroup).checkedRadioButtonId
 
-            val checkedRadioButton = findViewById<RadioButton>(checkedRadioId)
-            return@Function checkedRadioButton.getTag(R.id.params).toString()
-        })
+                val checkedRadioButton = findViewById<RadioButton>(checkedRadioId)
+                return@Function checkedRadioButton.getTag(R.id.params).toString()
+            })
 
         return radioButton
-    }
-
-    //TODO: Add this for when Duo uses input
-    private fun generateInput(hint: String, name: String, formId: Int): EditText {
-        val widget = EditText(this)
-        widget.id = generateViewId()
-        widget.layoutParams = marginParams
-        widget.hint = hint
-        widget.onFocusChangeListener = FocusChangeListener()
-
-        fieldsList[formId]!![widget.id] = Pair(
-            name,
-            Function<View, String> { view -> (view as EditText).text.toString() })
-
-        return widget
     }
 
     private fun getBodyForRequest(

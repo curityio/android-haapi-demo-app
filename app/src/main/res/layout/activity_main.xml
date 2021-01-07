@@ -100,7 +100,7 @@
     <LinearLayout
         android:id="@+id/factorsLayout"
         android:layout_width="408dp"
-        android:layout_height="297dp"
+        android:layout_height="355dp"
         android:gravity="center|top"
         android:orientation="vertical"
         app:layout_constraintEnd_toEndOf="parent"
