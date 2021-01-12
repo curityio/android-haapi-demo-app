@@ -43,7 +43,6 @@ private const val baseUrl = "https://$host"
 private const val clientId = "haapi-public-client"
 private const val redirectUri = "https://localhost:7777/client-callback"
 
-
 private val haapiTokenManager = HaapiTokenManager(
     URI("$baseUrl/oauth/v2/oauth-token"),
     clientId
@@ -140,6 +139,7 @@ class MainActivity : AppCompatActivity() {
             "polling-status" -> processPollingStatus(haapiResponseObject)
             "oauth-authorization-response" -> processAuthorizationResponse(haapiResponseObject.getJSONObject("properties"))
             "polling-step" -> processPollingStatus(haapiResponseObject)
+//            "continue-same-step" ->
 //            "https://curity.se/problems/incorrect-credentials" -> //TODO: Implement handling of failed authentication
 //            "registration-step" //TODO: Implement handling of registration
             else -> return
@@ -423,6 +423,7 @@ class MainActivity : AppCompatActivity() {
             passwordField.layoutParams = paramsForFields
             passwordField.visibility = GONE
 
+
             val smsLink = TextView(this)
             smsLink.id = generateViewId()
             smsLink.layoutParams = paramsForFields
@@ -444,18 +445,22 @@ class MainActivity : AppCompatActivity() {
 
             radioGroup.setOnCheckedChangeListener { group, checkedId ->
                 val selectedOption = findViewById<RadioButton>(checkedId)
+                val checkedButton = findViewById<RadioButton>(radioGroup.checkedRadioButtonId)
+                val option = JSONObject(checkedButton.tag.toString())
+                val model = option.getJSONObject("model")
+                val href = model.getString("href")
+                val type = model.getString("type")
 
                 when (selectedOption.text) {
                     "passcode" -> {
+                        passwordField.hint = model.getJSONArray("fields").getJSONObject(2).getString("label")
                         passwordField.visibility = VISIBLE
                         smsLink.visibility = GONE
                     }
                     "sms" -> {
-                        val checkedButton = findViewById<RadioButton>(radioGroup.checkedRadioButtonId)
-                        val href = checkedButton.getTag(R.id.href).toString()
-
                         smsLink.text = "Receive passcode via SMS"
                         smsLink.paintFlags = Paint.UNDERLINE_TEXT_FLAG
+                        passwordField.hint = model.getJSONArray("continueActions").getJSONObject(0).getJSONObject("model").getJSONArray("fields").getJSONObject(2).getString("label")
                         passwordField.visibility = VISIBLE
                         smsLink.visibility = VISIBLE
 
@@ -463,16 +468,10 @@ class MainActivity : AppCompatActivity() {
 
                             val request = Request.Builder()
                                 .url("$baseUrl$href")
-                                .method(
-                                    "POST", getBodyForRequest(
-                                        fieldsList[form.id]!!,
-                                        checkedButton.getTag(R.id.type).toString()
-                                    )
-                                )
+                                .method("POST", getStringForRequest(model).toRequestBody(type.toMediaType()))
                                 .build()
 
                             callApi(request)
-
                         }
                     }
                     else -> {
@@ -493,26 +492,37 @@ class MainActivity : AppCompatActivity() {
             submitButton.backgroundTintList = ColorStateList.valueOf(getColor(R.color.button))
             submitButton.setTextColor(getColor(R.color.button_txt))
             submitButton.setOnClickListener {
-                val checkedButton = findViewById<RadioButton>(radioGroup.checkedRadioButtonId)
+                val checkedRadioButton = findViewById<RadioButton>(radioGroup.checkedRadioButtonId)
 
-                when (checkedButton.text) {
+                val model = JSONObject(checkedRadioButton.tag.toString()).getJSONObject("model")
+                val href = model.getString("href")
+                val type = model.getString("type")
+                val request :Request
+                val requestString = StringBuilder()
+
+                when (checkedRadioButton.text) {
                     "passcode" -> {
-                        fieldsList[form.id]!![passwordField.id] = Pair(
-                            checkedButton.text.toString(),
-                            Function<View, String> { view -> (view as EditText).text.toString() })
+                        requestString.append(getStringForRequest(model))
+                            .append("&")
+                            .append("passcode")
+                            .append("=")
+                            .append(passwordField.text)
                     }
                     "sms" -> {
-                        fieldsList[form.id]!![passwordField.id] = Pair(
-                            checkedButton.text.toString(),
-                            Function<View, String> { view -> (view as EditText).text.toString() })
+                        requestString.append(getStringForRequest(model.getJSONArray("continueActions").getJSONObject(0).getJSONObject("model")))
+                            .append("&")
+                            .append("passcode")
+                            .append("=")
+                            .append(passwordField.text)
+                    }
+                    else -> {
+                        requestString.append(getStringForRequest(model))
                     }
                 }
 
-                val href = checkedButton.getTag(R.id.href).toString()
-
-                val request = Request.Builder()
+                request = Request.Builder()
                     .url("$baseUrl$href")
-                    .method("POST", getBodyForRequest(fieldsList[form.id]!!, checkedButton.getTag(R.id.type).toString()))
+                    .method("POST", requestString.toString().toRequestBody(type.toMediaType()))
                     .build()
 
                 layout.post {
@@ -529,49 +539,40 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun generateSelector(radioGroup: RadioGroup, formId: Int, option: JSONObject): RadioButton {
-        val model = option.getJSONObject("model")
-        val fields = model.getJSONArray("fields")
-
-        //TODO: Need to fix for SMS when submitting the SMS provided code. The factor when using SMS when submitting the code should be passcode, not SMS
         val radioButton = RadioButton(this)
         radioButton.id = generateViewId()
         radioButton.text = option["title"].toString()
-        radioButton.setTag(
-            R.id.params, fields.getJSONObject(1)["value"].toString() + "&" +
-                    fields.getJSONObject(0)["name"] + "=" +
-                    fields.getJSONObject(0)["value"]
-        )
-        radioButton.setTag(R.id.href, model.getString("href"))
-        radioButton.setTag(R.id.type, model.getString("type"))
+        radioButton.tag = option
 
         radioGroup.addView(radioButton)
 
-        fieldsList[formId]!![radioGroup.id] = Pair(fields.getJSONObject(1)["name"].toString(),
+        fieldsList[formId]!![radioGroup.id] = Pair(option.getString("title"),
             Function<View, String> { view ->
                 val checkedRadioId = (view as RadioGroup).checkedRadioButtonId
 
                 val checkedRadioButton = findViewById<RadioButton>(checkedRadioId)
-                return@Function checkedRadioButton.getTag(R.id.params).toString()
+                return@Function checkedRadioButton.tag.toString()
+
             })
 
         return radioButton
     }
 
-    private fun getBodyForRequest(
-        fieldsList: Map<Int, Pair<String, Function<View, String>>>,
-        contentType: String
-    ): RequestBody {
+    private fun getStringForRequest(model: JSONObject): String {
         val requestBodyString = StringBuilder()
+        val fields = model.getJSONArray("fields")
 
-        fieldsList.forEach { entry ->
-            val viewField = findViewById<View>(entry.key)
+        for (i in (0 until fields.length())) {
+
+            if(!fields.getJSONObject(i).isNull("value")){
             requestBodyString.append("&")
-                .append(entry.value.first)
+                .append(fields.getJSONObject(i).getString("name"))
                 .append("=")
-                .append(entry.value.second.apply(viewField))
+                .append(fields.getJSONObject(i).getString("value"))
+            }
         }
 
-        return requestBodyString.toString().substring(1).toRequestBody(contentType.toMediaType())
+        return requestBodyString.toString().substring(1)
     }
 
     private fun processAuthorizationResponse(properties: JSONObject) {

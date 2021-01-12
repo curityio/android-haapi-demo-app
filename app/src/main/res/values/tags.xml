@@ -1,6 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <item name="href" type="id"/>
-    <item name="type" type="id"/>
-    <item name="params" type="id"/>
-</resources>
