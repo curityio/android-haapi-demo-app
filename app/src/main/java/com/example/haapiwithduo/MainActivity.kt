@@ -1,5 +1,7 @@
 package com.example.haapiwithduo
 
+import android.app.AlertDialog
+import android.content.Context
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.graphics.Paint
@@ -137,7 +139,11 @@ class MainActivity : AppCompatActivity() {
             "redirection-step" -> processAuthenticationStep(haapiResponseObject.getJSONArray("actions"))
             "authentication-step" -> processAuthenticationStep(haapiResponseObject.getJSONArray("actions"))
             "polling-status" -> processPollingStatus(haapiResponseObject)
-            "oauth-authorization-response" -> processAuthorizationResponse(haapiResponseObject.getJSONObject("properties"))
+            "oauth-authorization-response" -> processAuthorizationResponse(
+                haapiResponseObject.getJSONObject(
+                    "properties"
+                )
+            )
             "polling-step" -> processPollingStatus(haapiResponseObject)
 //            "continue-same-step" ->
 //            "https://curity.se/problems/incorrect-credentials" -> //TODO: Implement handling of failed authentication
@@ -453,14 +459,20 @@ class MainActivity : AppCompatActivity() {
 
                 when (selectedOption.text) {
                     "passcode" -> {
-                        passwordField.hint = model.getJSONArray("fields").getJSONObject(2).getString("label")
+                        passwordField.hint =
+                            model.getJSONArray("fields").getJSONObject(2).getString(
+                                "label"
+                            )
                         passwordField.visibility = VISIBLE
                         smsLink.visibility = GONE
                     }
                     "sms" -> {
                         smsLink.text = "Receive passcode via SMS"
                         smsLink.paintFlags = Paint.UNDERLINE_TEXT_FLAG
-                        passwordField.hint = model.getJSONArray("continueActions").getJSONObject(0).getJSONObject("model").getJSONArray("fields").getJSONObject(2).getString("label")
+                        passwordField.hint =
+                            model.getJSONArray("continueActions").getJSONObject(0).getJSONObject(
+                                "model"
+                            ).getJSONArray("fields").getJSONObject(2).getString("label")
                         passwordField.visibility = VISIBLE
                         smsLink.visibility = VISIBLE
 
@@ -468,10 +480,16 @@ class MainActivity : AppCompatActivity() {
 
                             val request = Request.Builder()
                                 .url("$baseUrl$href")
-                                .method("POST", getStringForRequest(model).toRequestBody(type.toMediaType()))
+                                .method(
+                                    "POST",
+                                    getStringForRequest(model).toRequestBody(type.toMediaType())
+                                )
                                 .build()
 
                             callApi(request)
+
+                            showAlertDialog("SMS sent", layout.context);
+
                         }
                     }
                     else -> {
@@ -509,7 +527,13 @@ class MainActivity : AppCompatActivity() {
                             .append(passwordField.text)
                     }
                     "sms" -> {
-                        requestString.append(getStringForRequest(model.getJSONArray("continueActions").getJSONObject(0).getJSONObject("model")))
+                        requestString.append(
+                            getStringForRequest(
+                                model.getJSONArray("continueActions").getJSONObject(
+                                    0
+                                ).getJSONObject("model")
+                            )
+                        )
                             .append("&")
                             .append("passcode")
                             .append("=")
@@ -537,6 +561,16 @@ class MainActivity : AppCompatActivity() {
             layout.visibility = VISIBLE
         }
     }
+
+
+    private fun showAlertDialog(stringToShow: String, context: Context) {
+        val builder: AlertDialog.Builder = AlertDialog.Builder(context)
+        builder.setMessage(stringToShow)
+        builder.setCancelable(true)
+        val alert: AlertDialog = builder.create()
+        alert.show()
+    }
+
 
     private fun generateSelector(radioGroup: RadioGroup, formId: Int, option: JSONObject): RadioButton {
         val radioButton = RadioButton(this)
@@ -603,7 +637,10 @@ class MainActivity : AppCompatActivity() {
     class FocusChangeListener: OnFocusChangeListener {
 
         private fun hideKeyboard(view: View) {
-            val inputMethodManager: InputMethodManager = getSystemService(view.context, InputMethodManager::class.java)!!
+            val inputMethodManager: InputMethodManager = getSystemService(
+                view.context,
+                InputMethodManager::class.java
+            )!!
             inputMethodManager.hideSoftInputFromWindow(view.windowToken, 0)
         }
 
