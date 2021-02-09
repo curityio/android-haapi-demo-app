@@ -8,4 +8,6 @@
     <string name="code_response">Obtained authorization code:</string>
     <string name="restart">Restart flow</string>
     <string name="logout_button">Logout</string>
+    <string name="submit_button">Submit</string>
+    <string name="show_json">JSON</string>
 </resources>

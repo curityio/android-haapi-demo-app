@@ -69,21 +69,6 @@
         app:layout_constraintVertical_bias="0.956"
         tools:visibility="visible" />
 
-    <TextView
-        android:id="@+id/api_response"
-        android:layout_width="401dp"
-        android:layout_height="102dp"
-        android:background="#4CAF50"
-        android:scrollbars="vertical"
-        android:textAlignment="center"
-        android:textIsSelectable="true"
-        android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="parent"
-        tools:visibility="visible" />
-
     <LinearLayout
         android:id="@+id/selectorsLayout"
         android:layout_width="408dp"
@@ -109,5 +94,38 @@
         app:layout_constraintTop_toTopOf="parent">
 
     </LinearLayout>
+
+    <Button
+        android:id="@+id/show_json"
+        android:layout_width="58dp"
+        android:layout_height="39dp"
+        android:layout_marginEnd="52dp"
+        android:backgroundTint="@color/button"
+        android:onClick="toggleJSON"
+        android:text="@string/show_json"
+        android:textColor="@color/button_txt"
+        android:textSize="10sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/restart_flow"
+        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/authenticatorLayout"
+        app:layout_constraintVertical_bias="0.602" />
+
+    <TextView
+        android:id="@+id/api_response"
+        android:layout_width="399dp"
+        android:layout_height="405dp"
+        android:layout_marginBottom="90dp"
+        android:background="#4CAF50"
+        android:scrollbars="vertical"
+        android:textAlignment="center"
+        android:textIsSelectable="true"
+        android:translationY="495dp"
+        android:visibility="visible"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        tools:visibility="visible" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

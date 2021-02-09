@@ -1,24 +1,22 @@
 package com.example.haapiwithduo
 
+import android.animation.ObjectAnimator
 import android.app.AlertDialog
 import android.content.Context
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
-import android.graphics.Paint
 import android.net.Uri
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
 import android.text.InputType
-import android.text.method.LinkMovementMethod
 import android.util.Base64
 import android.util.Log
+import android.view.Gravity
 import android.view.View
 import android.view.View.*
 import android.view.ViewGroup.LayoutParams.MATCH_PARENT
-import android.view.animation.AlphaAnimation
-import android.view.animation.Animation
-import android.view.animation.LinearInterpolator
+import android.view.animation.*
 import android.view.inputmethod.InputMethodManager
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
@@ -39,14 +37,20 @@ import java.net.URI
 import java.security.MessageDigest
 import java.util.concurrent.CompletableFuture
 
-
-private const val host = "iggbom-curity.ngrok.io"
+/**
+ * Change these settings to your instance of the Curity Identity Server
+ */
+private const val host = "trojan.ngrok.io"
 private const val baseUrl = "https://$host"
 private const val clientId = "haapi-public-client"
 private const val redirectUri = "https://localhost:7777/client-callback"
+private const val authorizationEndpoint = "dev/oauth/authorize"
+private const val tokenEndpoint = "dev/oauth/token"
+private const val scopes = "openid" // If you need multiple scopes add them as a space-separated string, e.g. "openid profile email"
+
 
 private val haapiTokenManager = HaapiTokenManager(
-    URI("$baseUrl/oauth/v2/oauth-token"),
+    URI("$baseUrl/$tokenEndpoint"),
     clientId
 )
 
@@ -58,6 +62,7 @@ class MainActivity : AppCompatActivity() {
 
     private val marginParams = LinearLayout.LayoutParams(WRAP_CONTENT, WRAP_CONTENT)
     private val fieldsList = HashMap<Int, HashMap<Int, Pair<String, Function<View, String>>>>()
+    private var jsonVisible = false
 
     init {
         marginParams.topMargin = 20
@@ -90,24 +95,22 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun startLogin(view: View) {
-        val authorizeUrl = Uri.Builder()
+        val authorizeUrlBuilder = Uri.Builder()
             .scheme("https")
             .authority(host)
-            .appendPath("oauth")
-            .appendPath("v2")
-            .appendPath("oauth-authorize")
             .appendQueryParameter("client_id", clientId)
             .appendQueryParameter("state", "1586511942384-OcG")
-            .appendQueryParameter("scope", "openid")
+            .appendQueryParameter("scope", scopes)
             .appendQueryParameter("response_type", "code")
             .appendQueryParameter("code_challenge", "ERNHshyzhznDQOKAIEkJl94N048wMAaN4jY-2xlVy_s")
             .appendQueryParameter("code_challenge_method", "S256")
             .appendQueryParameter("redirect_uri", redirectUri)
-            .build()
-            .toString()
+
+        authorizationEndpoint.split("/").forEach { pathSegment -> authorizeUrlBuilder.appendPath(pathSegment) }
+
         val request = Request.Builder()
             .get()
-            .url(authorizeUrl)
+            .url(authorizeUrlBuilder.build().toString())
             .build()
 
         view.post {
@@ -132,8 +135,7 @@ class MainActivity : AppCompatActivity() {
         val responseBody = haapiResponse.body?.string() ?: "{}"
         val haapiResponseObject = JSONObject(responseBody)
 
-        //TODO just for now
-//        showJSONResponse(responseBody)
+        setJSONResponse(responseBody)
 
         when (haapiResponseObject["type"]) {
             "redirection-step" -> processAuthenticationStep(haapiResponseObject.getJSONArray("actions"))
@@ -190,11 +192,15 @@ class MainActivity : AppCompatActivity() {
         for (i in (0 until actions.length())) {
             val action = actions.getJSONObject(i)
 
-            when (action["template"]) {
-                "form" -> processHaapiForm(action)
-                "selector" -> processSelector(action)
-                else -> return
-            }
+            processAction(action)
+        }
+    }
+
+    private fun processAction(action: JSONObject) {
+        when (action["template"]) {
+            "form" -> processHaapiForm(action)
+            "selector" -> processSelector(action)
+            else -> return
         }
     }
 
@@ -301,23 +307,21 @@ class MainActivity : AppCompatActivity() {
 
             for (i in (0 until fieldsArray.length())) {
                 val fieldModel = fieldsArray.getJSONObject(i)
-                val field = EditText(this)
-                field.id = generateViewId()
-                fields[field.id] = fieldModel["name"].toString()
 
-                field.layoutParams = paramsForFields
-                field.hint = fieldModel["label"].toString()
-                field.onFocusChangeListener = FocusChangeListener()
-
-                if (fieldModel["type"].toString() == "password") {
-                    field.inputType = InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD or InputType.TYPE_CLASS_TEXT
+                val field = when (fieldModel.getString("type")) {
+                    "hidden" -> getHiddenField(fieldModel)
+                    "password" -> getPasswordField(fieldModel, paramsForFields)
+                    "text" -> getInputField(fieldModel, paramsForFields)
+                    "username" -> getInputField(fieldModel, paramsForFields)
+                    else -> getHiddenField(fieldModel)
                 }
 
+                fields[field.id] = fieldModel["name"].toString()
                 layout.addView(field)
             }
 
             val submitButton = Button(this)
-            submitButton.text = model["actionTitle"].toString()
+            submitButton.text = if (model.has("actionTitle")) model.getString("actionTitle") else getText(R.string.submit_button)
             submitButton.layoutParams = marginParams
             submitButton.backgroundTintList = ColorStateList.valueOf(getColor(R.color.button))
             submitButton.setTextColor(getColor(R.color.button_txt))
@@ -340,10 +344,36 @@ class MainActivity : AppCompatActivity() {
 
     }
 
+    private fun getHiddenField(fieldModel: JSONObject): TextView {
+        val field = TextView(this)
+        field.id = generateViewId()
+        field.text = fieldModel.getString("value")
+        field.visibility = GONE
+
+        return field
+    }
+
+    private fun getInputField(fieldModel: JSONObject, paramsForFields: LinearLayout.LayoutParams): EditText {
+        val field = EditText(this)
+        field.id = generateViewId()
+        field.layoutParams = paramsForFields
+        field.hint = fieldModel["label"].toString()
+        field.onFocusChangeListener = FocusChangeListener()
+
+        return field
+    }
+
+    private fun getPasswordField(fieldModel: JSONObject, paramsForFields: LinearLayout.LayoutParams): EditText {
+        val field = getInputField(fieldModel, paramsForFields)
+        field.inputType = InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD or InputType.TYPE_CLASS_TEXT
+
+        return field
+    }
+
     private fun getBody(fields: Map<Int, String>, mediaType: String): RequestBody {
         val requestString = StringBuilder()
         fields.forEach { entry ->
-            val field = findViewById<EditText>(entry.key)
+            val field = findViewById<TextView>(entry.key)
             requestString
                 .append("&")
                 .append(entry.value)
@@ -382,18 +412,10 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun showJSONResponse(response: String) {
+    private fun setJSONResponse(response: String) {
         val view = findViewById<TextView>(R.id.api_response)
-        val animation: Animation = AlphaAnimation(1f, 0f)
-        animation.duration = 500
-        animation.interpolator = LinearInterpolator()
-        animation.repeatCount = 1
-        animation.repeatMode = Animation.REVERSE
-
         view.post {
             view.text = response
-            view.visibility = VISIBLE
-            view.startAnimation(animation)
         }
     }
 
@@ -409,32 +431,21 @@ class MainActivity : AppCompatActivity() {
 
     private fun processDeviceOptions(deviceOptions: JSONObject) {
         val layout = findViewById<LinearLayout>(R.id.factorsLayout)
-        layout.addView(generateHeader(deviceOptions["title"].toString()))
         layout.post {
-            val form = LinearLayout(this)
-            form.id = generateViewId()
+            layout.addView(generateHeader(deviceOptions["title"].toString()))
 
-            fieldsList[form.id] = HashMap()
+
+            val form = LinearLayout(this)
+            val formParams = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT)
+            formParams.gravity = Gravity.CENTER
+            form.gravity = Gravity.CENTER
+            form.orientation = LinearLayout.VERTICAL
+            form.layoutParams = formParams
+
+            form.id = generateViewId()
 
             val deviceOptionsModel = deviceOptions.getJSONObject("model")
             val options = deviceOptionsModel.getJSONArray("options")
-
-            val paramsForFields = LinearLayout.LayoutParams(MATCH_PARENT, WRAP_CONTENT)
-            paramsForFields.setMargins(370, 20, 210, 20)
-
-            val passwordField = EditText(this)
-            passwordField.id = generateViewId()
-            passwordField.inputType = InputType.TYPE_TEXT_VARIATION_WEB_PASSWORD or InputType.TYPE_CLASS_TEXT
-            passwordField.onFocusChangeListener = FocusChangeListener()
-            passwordField.layoutParams = paramsForFields
-            passwordField.visibility = GONE
-
-
-            val smsLink = TextView(this)
-            smsLink.id = generateViewId()
-            smsLink.layoutParams = paramsForFields
-            smsLink.movementMethod = LinkMovementMethod.getInstance()
-            smsLink.visibility = GONE
 
             val radioGroup = RadioGroup(this)
             radioGroup.layoutParams = marginParams
@@ -446,120 +457,93 @@ class MainActivity : AppCompatActivity() {
 
                 if (i == 0) {
                     radioButton.isChecked = true
+                    processDeviceOption(form, layout, selectorOptions.getJSONObject("model"))
                 }
             }
 
-            radioGroup.setOnCheckedChangeListener { group, checkedId ->
+            radioGroup.setOnCheckedChangeListener { _, checkedId ->
                 val selectedOption = findViewById<RadioButton>(checkedId)
-                val checkedButton = findViewById<RadioButton>(radioGroup.checkedRadioButtonId)
-                val option = JSONObject(checkedButton.tag.toString())
-                val model = option.getJSONObject("model")
-                val href = model.getString("href")
-                val type = model.getString("type")
+                val model = (selectedOption.tag as JSONObject).getJSONObject("model")
 
-                when (selectedOption.text) {
-                    "passcode" -> {
-                        passwordField.hint =
-                            model.getJSONArray("fields").getJSONObject(2).getString(
-                                "label"
-                            )
-                        passwordField.visibility = VISIBLE
-                        smsLink.visibility = GONE
-                    }
-                    "sms" -> {
-                        smsLink.text = "Receive passcode via SMS"
-                        smsLink.paintFlags = Paint.UNDERLINE_TEXT_FLAG
-                        passwordField.hint =
-                            model.getJSONArray("continueActions").getJSONObject(0).getJSONObject(
-                                "model"
-                            ).getJSONArray("fields").getJSONObject(2).getString("label")
-                        passwordField.visibility = VISIBLE
-                        smsLink.visibility = VISIBLE
-
-                        smsLink.setOnClickListener {
-
-                            val request = Request.Builder()
-                                .url("$baseUrl$href")
-                                .method(
-                                    "POST",
-                                    getStringForRequest(model).toRequestBody(type.toMediaType())
-                                )
-                                .build()
-
-                            callApi(request)
-
-                            showAlertDialog("SMS sent", layout.context);
-
-                        }
-                    }
-                    else -> {
-                        passwordField.visibility = GONE
-                        smsLink.visibility = GONE
-                    }
-                }
+                processDeviceOption(form, layout, model)
             }
 
             layout.addView(radioGroup)
-            layout.addView(passwordField)
-            layout.addView(smsLink)
+            layout.addView(form)
+            layout.visibility = VISIBLE
+        }
+    }
 
-            val submitButton = Button(this)
-            submitButton.id = generateViewId()
-            submitButton.text = "submit"
-            submitButton.layoutParams = marginParams
-            submitButton.backgroundTintList = ColorStateList.valueOf(getColor(R.color.button))
-            submitButton.setTextColor(getColor(R.color.button_txt))
-            submitButton.setOnClickListener {
-                val checkedRadioButton = findViewById<RadioButton>(radioGroup.checkedRadioButtonId)
+    private fun processDeviceOption(form: LinearLayout, layout: LinearLayout, model: JSONObject) {
+        form.removeAllViews()
+        fieldsList[form.id] = HashMap()
 
-                val model = JSONObject(checkedRadioButton.tag.toString()).getJSONObject("model")
-                val href = model.getString("href")
-                val type = model.getString("type")
-                val request :Request
-                val requestString = StringBuilder()
+        val href = model.getString("href")
+        val method = model.getString("method")
+        val contentType = model.getString("type")
 
-                when (checkedRadioButton.text) {
-                    "passcode" -> {
-                        requestString.append(getStringForRequest(model))
-                            .append("&")
-                            .append("passcode")
-                            .append("=")
-                            .append(passwordField.text)
-                    }
-                    "sms" -> {
-                        requestString.append(
-                            getStringForRequest(
-                                model.getJSONArray("continueActions").getJSONObject(
-                                    0
-                                ).getJSONObject("model")
-                            )
-                        )
-                            .append("&")
-                            .append("passcode")
-                            .append("=")
-                            .append(passwordField.text)
-                    }
-                    else -> {
-                        requestString.append(getStringForRequest(model))
-                    }
+        val fields = model.getJSONArray("fields")
+        for (i in (0 until fields.length())) {
+            val field = fields.getJSONObject(i)
+
+            when (field["type"].toString()) {
+                "hidden" -> {
+                    val hiddenText = TextView(this)
+                    hiddenText.visibility = GONE
+                    hiddenText.text = field["value"].toString()
+                    hiddenText.id = generateViewId()
+                    form.addView(hiddenText)
+
+                    fieldsList[form.id]!![hiddenText.id] = Pair(
+                        field["name"].toString(),
+                        Function { textView -> (textView as TextView).text.toString() })
+
+                }
+                "text" -> form.addView(
+                    generateInput(
+                        field["label"].toString(),
+                        field["name"].toString(),
+                        form.id
+                    )
+                )
+            }
+        }
+
+        val submitButton = Button(this)
+        submitButton.id = generateViewId()
+        submitButton.text = getText(R.string.submit_button)
+        submitButton.layoutParams = marginParams
+        submitButton.backgroundTintList = ColorStateList.valueOf(getColor(R.color.button))
+        submitButton.setTextColor(getColor(R.color.button_txt))
+
+        submitButton.setOnClickListener {
+            val request: Request
+            val requestBody = getBodyForRequest(fieldsList[form.id]!!, contentType)
+
+            request = Request.Builder()
+                .url("$baseUrl$href")
+                .method(method, requestBody)
+                .build()
+
+            if (model.has("continueActions")) {
+                layout.post {
+                    layout.removeAllViews()
+                    processAction(model.getJSONArray("continueActions").getJSONObject(0))
                 }
 
-                request = Request.Builder()
-                    .url("$baseUrl$href")
-                    .method("POST", requestString.toString().toRequestBody(type.toMediaType()))
-                    .build()
-
+                // TODO: error from API call should be handled somehow.
+                // TODO: maybe layout should be refreshed only after a successful API call?
+                doCallApi(request)
+            } else {
                 layout.post {
                     layout.removeAllViews()
                 }
 
                 callApi(request)
             }
-
-            layout.addView(submitButton)
-            layout.addView(form)
-            layout.visibility = VISIBLE
         }
+
+        form.addView(submitButton)
     }
 
 
@@ -571,7 +555,6 @@ class MainActivity : AppCompatActivity() {
         alert.show()
     }
 
-
     private fun generateSelector(radioGroup: RadioGroup, formId: Int, option: JSONObject): RadioButton {
         val radioButton = RadioButton(this)
         radioButton.id = generateViewId()
@@ -580,33 +563,7 @@ class MainActivity : AppCompatActivity() {
 
         radioGroup.addView(radioButton)
 
-        fieldsList[formId]!![radioGroup.id] = Pair(option.getString("title"),
-            Function<View, String> { view ->
-                val checkedRadioId = (view as RadioGroup).checkedRadioButtonId
-
-                val checkedRadioButton = findViewById<RadioButton>(checkedRadioId)
-                return@Function checkedRadioButton.tag.toString()
-
-            })
-
         return radioButton
-    }
-
-    private fun getStringForRequest(model: JSONObject): String {
-        val requestBodyString = StringBuilder()
-        val fields = model.getJSONArray("fields")
-
-        for (i in (0 until fields.length())) {
-
-            if(!fields.getJSONObject(i).isNull("value")){
-            requestBodyString.append("&")
-                .append(fields.getJSONObject(i).getString("name"))
-                .append("=")
-                .append(fields.getJSONObject(i).getString("value"))
-            }
-        }
-
-        return requestBodyString.toString().substring(1)
     }
 
     private fun processAuthorizationResponse(properties: JSONObject) {
@@ -625,12 +582,52 @@ class MainActivity : AppCompatActivity() {
             text.layoutParams = marginParams
             layout.addView(code)
 
-//            layout.addView(getLogoutButton())
-
             layout.visibility = VISIBLE
         }
     }
 
+    private fun generateInput(hint: String, name: String, formId: Int): EditText {
+        val widget = EditText(this)
+        widget.id = generateViewId()
+        widget.layoutParams = marginParams
+        widget.hint = hint
+        widget.onFocusChangeListener = FocusChangeListener()
+
+        fieldsList[formId]!![widget.id] = Pair(
+            name,
+            Function { view -> (view as EditText).text.toString() })
+
+        return widget
+    }
+
+    private fun  getBodyForRequest(
+        fieldsList: Map<Int, Pair<String, Function<View, String>>>,
+        contentType: String
+        ): RequestBody {
+            val requestBodyString = StringBuilder()
+            fieldsList.forEach { entry ->
+                val viewField = findViewById<View>(entry.key)
+                requestBodyString.append("&")
+                    .append(entry.value.first)
+                    .append("=")
+                    .append(entry.value.second.apply(viewField))
+            }
+
+            return requestBodyString.toString().substring(1).toRequestBody(contentType.toMediaType())
+        }
+
+    fun toggleJSON(button: View) {
+        val view = findViewById<TextView>(R.id.api_response)
+
+        val animationTo = if (jsonVisible) 1600f else 0f
+        jsonVisible = !jsonVisible
+
+        ObjectAnimator.ofFloat(view, "translationY", animationTo).apply {
+            duration = 1000
+            interpolator = if (jsonVisible) DecelerateInterpolator() else AccelerateInterpolator()
+            start()
+        }
+    }
 
     /** Util **/
 
