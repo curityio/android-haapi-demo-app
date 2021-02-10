@@ -1,4 +1,20 @@
-package com.example.haapiwithduo
+/*
+ *  Copyright 2021 Curity AB
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
+package com.example.haapidemo
 
 import android.animation.ObjectAnimator
 import android.app.AlertDialog
@@ -47,7 +63,6 @@ private const val redirectUri = "https://localhost:7777/client-callback"
 private const val authorizationEndpoint = "dev/oauth/authorize"
 private const val tokenEndpoint = "dev/oauth/token"
 private const val scopes = "openid" // If you need multiple scopes add them as a space-separated string, e.g. "openid profile email"
-
 
 private val haapiTokenManager = HaapiTokenManager(
     URI("$baseUrl/$tokenEndpoint"),
@@ -415,7 +430,7 @@ class MainActivity : AppCompatActivity() {
     private fun setJSONResponse(response: String) {
         val view = findViewById<TextView>(R.id.api_response)
         view.post {
-            view.text = response
+            view.text = JSONObject(response).toString(4)
         }
     }
 
@@ -623,7 +638,7 @@ class MainActivity : AppCompatActivity() {
         jsonVisible = !jsonVisible
 
         ObjectAnimator.ofFloat(view, "translationY", animationTo).apply {
-            duration = 1000
+            duration = 500
             interpolator = if (jsonVisible) DecelerateInterpolator() else AccelerateInterpolator()
             start()
         }
