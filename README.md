@@ -8,8 +8,9 @@ OAuth2 flow with authentication done completely from the app, without the need o
 
 ## Running the example
 
-Before running the app, e.g. from Android Studio, at the top of `MainActivity.kt` set properties
-which apply to your instance of the Curity Identity Server.
+Before running the app, e.g. from Android Studio set properties which apply to your instance of the
+Curity Identity Server. These properties can be found in the `Configuration.kt` file in the
+`app/src/main/java/com/example/haapidemo` directory.
 
 ## Resources
 
