@@ -6,7 +6,7 @@
 This is an example Android app which uses the Curity Identity Server's Hypermedia API to perform an
 OAuth2 flow with authentication done completely from the app, without the need of an external browser.
 
-Note: The app needs to work at least with Android API 28 to properly use the attestation features.
+Note: The app needs at least Android 8.0 (*Oreo*, API level 26) to properly use the attestation features.
 You will need the Curity Identity Server at least in version 5.4. to work with this app.
 
 ## Running the example
