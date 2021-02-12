@@ -35,7 +35,6 @@ import com.example.haapidemo.Configuration.Companion.scopes
 import java.security.MessageDigest
 
 class MainActivity : AppCompatActivity() {
-
     private var jsonVisible = false
     private val authorizationUrl = buildAuthorizationUrl()
     private var haapiService: HaapiService? = null

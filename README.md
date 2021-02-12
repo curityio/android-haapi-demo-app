@@ -6,6 +6,9 @@
 This is an example Android app which uses the Curity Identity Server's Hypermedia API to perform an
 OAuth2 flow with authentication done completely from the app, without the need of an external browser.
 
+Note: The app needs to work at least with Android API 28 to properly use the attestation features.
+You will need the Curity Identity Server at least in version 5.4. to work with this app.
+
 ## Running the example
 
 Before running the app, e.g. from Android Studio set properties which apply to your instance of the
@@ -14,10 +17,9 @@ Curity Identity Server. These properties can be found in the `Configuration.kt` 
 
 ## Resources
 
-- [An article](https://curity.io/resources/tutorials/howtos/haapi/authentication-api-android-sdk)
-  showing how to properly configure the Curity Identity Server and a client to use the Hypermedia
-  API from an Android app.
-
 - [Introduction](https://curity.io/resources/architect/haapi/what-is-hypermedia-authentication-api/)
   to the Hypermedia Authentication API.
 
+- [An article](https://curity.io/resources/tutorials/howtos/haapi/authentication-api-android-sdk)
+  showing how to properly configure the Curity Identity Server and a client to use the Hypermedia
+  API from an Android app.
