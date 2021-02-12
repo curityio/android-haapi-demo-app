@@ -20,9 +20,9 @@ class Configuration {
         /**
          * Change these settings to your instance of the Curity Identity Server
          */
-        const val host = ""
+        const val host = "garcher.ngrok.io"
         const val baseUrl = "https://$host"
-        const val clientId = "haapi-public-client"
+        const val clientId = "haapi-android-client"
         const val redirectUri = "https://localhost:7777/client-callback"
         const val authorizationEndpoint = "oauth/v2/oauth-authorize"
         const val tokenEndpoint = "oauth/v2/oauth-token"

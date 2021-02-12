@@ -16,6 +16,8 @@
 package com.example.haapidemo
 
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.view.View
@@ -93,23 +95,68 @@ class HaapiResponseProcessor(
         return when (action["template"]) {
             "form" -> processHaapiForm(action)
             "selector" -> processSelector(action)
+            "launch" -> processLaunch(action)
             else -> emptyList()
         }
     }
 
+    /*
+     * GJA: Updated to call processForm by default, as for the web sample
+     * This works for BankID 'kind' elements of bankid-same-device and bankid-other-device
+     */
     private fun processHaapiForm(form: JSONObject): List<View> {
         return when (form["kind"]) {
             "login" -> processForm(form)
             "redirect" -> processHaapiRedirect(form.getJSONObject("model"))
             "form" -> processForm(form.getJSONObject("model"))
-            else -> emptyList()
+            else -> processForm(form)
         }
     }
 
+    /*
+     * GJA: Currently I am not rendering continue or cancel forms but maybe I should
+     */
     private fun processForm(form: JSONObject): List<View> {
+
+        if (form["kind"] == "continue" || form["kind"] == "cancel") {
+            return emptyList()
+        }
+
         val formViews = mutableListOf<View>()
         formViews.add(views.header(form["title"].toString()))
         val model = form.getJSONObject("model")
+
+        val fields = processFormFields(model)
+        for (field in fields) {
+            formViews.add(field.value)
+        }
+
+        val submitButton = views.button(model.optString("actionTitle", context.getText(R.string.submit_button).toString()))
+        submitButton.setOnClickListener {
+
+            val href = model["href"].toString()
+            val url = if (href.startsWith("http")) href else "$baseUrl$href"
+            val request = Request.Builder()
+                .method(model.getString("method"), getBody(fields, model.getString("type")))
+                .url(url)
+                .build()
+
+            apiCaller(request, true) { haapiResponse -> processHaapiResponse(haapiResponse) }
+        }
+
+        formViews.add(submitButton)
+
+        return formViews
+    }
+
+    /*
+     * GJA: Forms of kind 'continue' or 'cancel' do not have fields so deal with a missing 'fields' property
+     */
+    private fun processFormFields(model: JSONObject): Map<String, TextView> {
+
+        if (!model.has("fields")) {
+            return HashMap<String, TextView>(0)
+        }
 
         val fieldsArray = model.getJSONArray("fields")
         val fields = HashMap<String, TextView>(fieldsArray.length())
@@ -126,22 +173,9 @@ class HaapiResponseProcessor(
             }
 
             fields[fieldModel["name"].toString()] = field
-            formViews.add(field)
         }
 
-        val submitButton = views.button(model.optString("actionTitle", context.getText(R.string.submit_button).toString()))
-        submitButton.setOnClickListener {
-            val request = Request.Builder()
-                .method(model.getString("method"), getBody(fields, model.getString("type")))
-                .url("$baseUrl${model["href"]}")
-                .build()
-
-            apiCaller(request, true) { haapiResponse -> processHaapiResponse(haapiResponse) }
-        }
-
-        formViews.add(submitButton)
-
-        return formViews
+        return fields
     }
 
     private fun getBody(fields: Map<String, TextView>, mediaType: String): RequestBody {
@@ -152,6 +186,9 @@ class HaapiResponseProcessor(
         return requestString.toRequestBody(mediaType.toMediaType())
     }
 
+    /*
+     * GJA: Updated to only append to the base URL if this is a relative URL
+     */
     private fun processHaapiRedirect(haapiResponseModel: JSONObject): List<View> {
         val href = haapiResponseModel["href"].toString()
         val url = if (href.startsWith("http")) href else "$baseUrl$href"
@@ -194,6 +231,58 @@ class HaapiResponseProcessor(
             "device-option" -> processDeviceOptions(selectorAction)
             else -> emptyList()
         }
+    }
+
+    private fun processLaunch(launchAction: JSONObject): List<View> {
+        return when (launchAction["kind"]) {
+            "external-browser" -> emptyList()
+            else -> processLauncher(launchAction)
+        }
+    }
+
+    /*
+     * GJA: The launch action has a model that contains inner arrays of continueActions and errorActions
+     * I need to store these and then replace the view after the below click event
+     */
+    private fun processLauncher(launchAction: JSONObject): List<View> {
+
+        val model = launchAction.getJSONObject("model")
+        val title = model.optString("actionTitle", "Launch")
+        val launchUrl = model["href"].toString()
+
+        val formViews = mutableListOf<View>()
+        formViews.add(views.header(title))
+
+        val launchButton = views.button(title)
+        launchButton.setOnClickListener {
+            val intent = Intent(Intent.ACTION_VIEW)
+            intent.data = Uri.parse(launchUrl)
+            context.startActivity(intent)
+        }
+
+        formViews.add(launchButton)
+        return formViews
+
+        /* After the launch I need to replace the screen and render these actions
+           Also the continue and cancel forms should not fail when clicked
+
+        val launcherViews = mutableListOf<View>()
+
+        if (model.has("continueActions")) {
+            val continueActions = model.getJSONArray("continueActions")
+            val action = continueActions.getJSONObject(0)
+            launcherViews.addAll(processAction(action))
+        }
+
+        if (model.has("errorActions")) {
+            val errorActions = model.getJSONArray("errorActions")
+            for (i in (0 until errorActions.length())) {
+                val action = errorActions.getJSONObject(i)
+                launcherViews.addAll(processAction(action))
+            }
+        }
+
+        return launcherViews*/
     }
 
     private fun processSelectorAuthenticator(selectorAction: JSONObject): List<View> {
