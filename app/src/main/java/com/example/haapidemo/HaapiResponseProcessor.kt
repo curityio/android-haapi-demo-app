@@ -15,6 +15,7 @@
  */
 package com.example.haapidemo
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -101,29 +102,22 @@ class HaapiResponseProcessor(
     }
 
     /*
-     * GJA: Updated to call processForm by default, as for the web sample
-     * This works for BankID 'kind' elements of bankid-same-device and bankid-other-device
+     * GJA: This works for BankID 'kind' elements of bankid-same-device and bankid-other-device
      */
     private fun processHaapiForm(form: JSONObject): List<View> {
         return when (form["kind"]) {
             "login" -> processForm(form)
-            "redirect" -> processHaapiRedirect(form.getJSONObject("model"))
+            "redirect" -> processHaapiRedirect(form)
             "form" -> processForm(form.getJSONObject("model"))
             else -> processForm(form)
         }
     }
 
-    /*
-     * GJA: Currently I am not rendering continue or cancel forms but maybe I should
-     */
     private fun processForm(form: JSONObject): List<View> {
 
-        if (form["kind"] == "continue" || form["kind"] == "cancel") {
-            return emptyList()
-        }
-
+        val title = getFormTitle(form)
         val formViews = mutableListOf<View>()
-        formViews.add(views.header(form["title"].toString()))
+        formViews.add(views.header(title))
         val model = form.getJSONObject("model")
 
         val fields = processFormFields(model)
@@ -137,25 +131,36 @@ class HaapiResponseProcessor(
             val href = model["href"].toString()
             val url = if (href.startsWith("http")) href else "$baseUrl$href"
             val request = Request.Builder()
-                .method(model.getString("method"), getBody(fields, model.getString("type")))
-                .url(url)
-                .build()
+                    .method(model.getString("method"), getBody(fields, model.getString("type")))
+                    .url(url)
+                    .build()
 
             apiCaller(request, true) { haapiResponse -> processHaapiResponse(haapiResponse) }
         }
 
         formViews.add(submitButton)
-
         return formViews
     }
 
+    private fun getFormTitle(form: JSONObject): String {
+
+        if (form.has("title")) {
+            return form["title"].toString()
+        }
+
+        return when (form.getString("kind")) {
+            "redirect" -> "API redirect, should be followed automatically by the client"
+            else -> "Default Title"
+        }
+    }
+
     /*
-     * GJA: Forms of kind 'continue' or 'cancel' do not have fields so deal with a missing 'fields' property
+     * GJA: Handle form fields in a subroutine that also deals with the zero fields case
      */
     private fun processFormFields(model: JSONObject): Map<String, TextView> {
 
         if (!model.has("fields")) {
-            return HashMap<String, TextView>(0)
+            return HashMap(0)
         }
 
         val fieldsArray = model.getJSONArray("fields")
@@ -186,10 +191,9 @@ class HaapiResponseProcessor(
         return requestString.toRequestBody(mediaType.toMediaType())
     }
 
-    /*
-     * GJA: Updated to only append to the base URL if this is a relative URL
-     */
-    private fun processHaapiRedirect(haapiResponseModel: JSONObject): List<View> {
+    private fun processHaapiRedirect(haapiRedirectForm: JSONObject): List<View> {
+
+        val haapiResponseModel = haapiRedirectForm.getJSONObject("model")
         val href = haapiResponseModel["href"].toString()
         val url = if (href.startsWith("http")) href else "$baseUrl$href"
 
@@ -199,7 +203,6 @@ class HaapiResponseProcessor(
             .build()
 
         apiCaller(request, false) { haapiResponse -> processHaapiResponse(haapiResponse) }
-
         return emptyList()
     }
 
@@ -240,10 +243,6 @@ class HaapiResponseProcessor(
         }
     }
 
-    /*
-     * GJA: The launch action has a model that contains inner arrays of continueActions and errorActions
-     * I need to store these and then replace the view after the below click event
-     */
     private fun processLauncher(launchAction: JSONObject): List<View> {
 
         val model = launchAction.getJSONObject("model")
@@ -257,32 +256,88 @@ class HaapiResponseProcessor(
         launchButton.setOnClickListener {
             val intent = Intent(Intent.ACTION_VIEW)
             intent.data = Uri.parse(launchUrl)
-            context.startActivity(intent)
+
+            (context as Activity).startActivity(intent)
+            processLaunchContinuations(model)
+
+            // Trigger an API redirect here
+            if (model.has("continueActions")) {
+                // Use a requestBuilder perhaps???
+            }
         }
 
         formViews.add(launchButton)
         return formViews
+    }
 
-        /* After the launch I need to replace the screen and render these actions
-           Also the continue and cancel forms should not fail when clicked
+    /*
+     * GJA: After a launch, replace the screen with continueActions, or with errorActions if the launch failed
+     * This barely works - the error view.challenge button enables me to click something once polling is complete
+     * I should instead manually trigger a redirect and hopefully this will do things correctly
+     *
+     * "continueActions": [
+          {
+            "template": "form",
+            "kind": "redirect",
+            "title": "If you are not redirected automatically, click here to continue authenticating",
+            "model": {
+              "href": "https://garcher.ngrok.io/authn/authentication/bankid/poller",
+              "method": "GET"
+            }
+          }
+        ],
+        "errorActions": [
+          {
+            "template": "form",
+            "kind": "bankid-other-device",
+            "title": "view.otherdevicetitle",
+            "model": {
+              "href": "/authn/authentication/bankid/launch",
+              "method": "POST",
+              "type": "application/x-www-form-urlencoded",
+              "actionTitle": "view.challenge",
+              "fields": [
+                {
+                  "name": "personalnumber",
+                  "type": "username",
+                  "label": "view.personalnumber",
+                  "placeholder": "view.personalnumber_placeholder"
+                },
+                {
+                  "name": "usesamedevice",
+                  "type": "hidden",
+                  "value": "false"
+                }
+              ]
+            }
+          }
+        ]
+     */
+    private fun processLaunchContinuations(launchModel: JSONObject) {
 
-        val launcherViews = mutableListOf<View>()
+        val views = mutableListOf<View>()
 
-        if (model.has("continueActions")) {
-            val continueActions = model.getJSONArray("continueActions")
-            val action = continueActions.getJSONObject(0)
-            launcherViews.addAll(processAction(action))
-        }
-
-        if (model.has("errorActions")) {
-            val errorActions = model.getJSONArray("errorActions")
-            for (i in (0 until errorActions.length())) {
-                val action = errorActions.getJSONObject(i)
-                launcherViews.addAll(processAction(action))
+        if (launchModel.has("continueActions")) {
+            val continueActions = launchModel.getJSONArray("continueActions")
+            for (i in (0 until continueActions.length())) {
+                val action = continueActions.getJSONObject(i)
+                val continueViews = processAction(action)
+                views.addAll(continueViews)
             }
         }
 
-        return launcherViews*/
+        if (launchModel.has("errorActions")) {
+            val errorActions = launchModel.getJSONArray("errorActions")
+            for (i in (0 until errorActions.length())) {
+                val action = errorActions.getJSONObject(i)
+                val errorViews = processAction(action)
+                views.addAll(errorViews)
+            }
+        }
+
+        if (views.size > 0) {
+            redraw(views, true)
+        }
     }
 
     private fun processSelectorAuthenticator(selectorAction: JSONObject): List<View> {
@@ -421,15 +476,17 @@ class HaapiResponseProcessor(
     }
 
     private fun processPollingStatus(haapiResponseObject: JSONObject): List<List<View>> {
+
         val properties = haapiResponseObject.getJSONObject("properties")
 
         return when (properties["status"]) {
-            "done" -> processAuthenticationStep(haapiResponseObject.getJSONArray("actions"))
+            "done" -> {
+                processAuthenticationStep(haapiResponseObject.getJSONArray("actions"))
+            }
             "pending" -> pollStatus(haapiResponseObject)
             else -> emptyList()
         }
     }
-
 
     private fun pollStatus(haapiResponseObject: JSONObject): List<List<View>> {
         val actions = haapiResponseObject.getJSONArray("actions")
@@ -453,7 +510,9 @@ class HaapiResponseProcessor(
             .build()
 
         Handler(Looper.getMainLooper()).postDelayed({
-            apiCaller(request, false) { processHaapiResponse(it) }
+            apiCaller(request, false) {
+                processHaapiResponse(it)
+            }
         }, 3000)
     }
 
