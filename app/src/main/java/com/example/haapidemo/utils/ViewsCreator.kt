@@ -47,7 +47,7 @@ class ViewsCreator(private val context: Context) {
         selectorHeader.text = text
         selectorHeader.textAlignment = View.TEXT_ALIGNMENT_CENTER
         selectorHeader.layoutParams = marginParams
-        selectorHeader.setTextAppearance(R.style.CustomTextViewStyle)
+        selectorHeader.setTextAppearance(R.style.LabelTextViewStyle)
 
         return selectorHeader
     }
@@ -121,7 +121,17 @@ class ViewsCreator(private val context: Context) {
         text.text = value
         text.textAlignment = TextView.TEXT_ALIGNMENT_CENTER
         text.layoutParams = marginParams
-        text.setTextAppearance(R.style.CustomTextViewStyle)
+        text.setTextAppearance(R.style.LabelTextViewStyle)
+
+        return text
+    }
+
+    fun errorField(value: String): TextView {
+        val text = TextView(context)
+        text.text = value
+        text.textAlignment = TextView.TEXT_ALIGNMENT_CENTER
+        text.layoutParams = marginParams
+        text.setTextAppearance(R.style.ErrorTextViewStyle)
 
         return text
     }
