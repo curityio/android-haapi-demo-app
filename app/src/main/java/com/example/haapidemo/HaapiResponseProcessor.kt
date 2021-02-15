@@ -107,8 +107,6 @@ class HaapiResponseProcessor(
 
         return when (form["kind"]) {
             "redirect" -> processHaapiRedirect(form)
-            "continue" -> emptyList()
-            "cancel" -> emptyList()
             else -> processForm(form)
         }
     }
