@@ -62,6 +62,7 @@ class HaapiResponseProcessor(
     }
 
     fun processHaapiResponse(haapiResponseString: String): List<List<View>> {
+
         val haapiResponseObject = JSONObject(haapiResponseString)
 
         return when (haapiResponseObject["type"]) {
@@ -103,10 +104,11 @@ class HaapiResponseProcessor(
     }
 
     private fun processHaapiForm(form: JSONObject): List<View> {
+
         return when (form["kind"]) {
-            "login" -> processForm(form)
             "redirect" -> processHaapiRedirect(form)
-            "form" -> processForm(form)
+            "continue" -> emptyList()
+            "cancel" -> emptyList()
             else -> processForm(form)
         }
     }
@@ -411,24 +413,29 @@ class HaapiResponseProcessor(
         val actions = haapiResponseObject.getJSONArray("actions")
 
         return when (status) {
-            "done" ->  processAuthenticationStep(actions)
-            "pending" -> pollStatus(status, actions)
+            "done" -> {
+                redraw(emptyList(), true)
+                return processAuthenticationStep(actions)
+            }
+            "pending" -> {
+                redraw(listOf(views.textField("Waiting, status is ${status} ...")), true)
+                return pollStatus(actions)
+            }
             else -> emptyList()
         }
     }
 
-    private fun pollStatus(status: String, actions: JSONArray): List<List<View>> {
+    private fun pollStatus(actions: JSONArray): List<List<View>> {
 
         for (i in (0 until actions.length())) {
             val action = actions.getJSONObject(i)
-
             when (action["kind"]) {
                 "poll" -> poll(action.getJSONObject("model"))
 //                "cancel" -> //TODO: Not implemented yet
             }
         }
 
-        return listOf(listOf(views.textField("Polling status is ${status}")))
+        return emptyList()
     }
 
     private fun poll(pollModel: JSONObject) {
