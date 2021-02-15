@@ -32,6 +32,7 @@ import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
+import java.lang.RuntimeException
 
 class HaapiResponseProcessor(
     private val context: Context,
@@ -96,26 +97,23 @@ class HaapiResponseProcessor(
         return when (action["template"]) {
             "form" -> processHaapiForm(action)
             "selector" -> processSelector(action)
-            "launch" -> processLaunch(action)
+            "client-operation" -> processClientOperation(action)
             else -> emptyList()
         }
     }
 
-    /*
-     * GJA: This works for BankID 'kind' elements of bankid-same-device and bankid-other-device
-     */
     private fun processHaapiForm(form: JSONObject): List<View> {
         return when (form["kind"]) {
             "login" -> processForm(form)
             "redirect" -> processHaapiRedirect(form)
-            "form" -> processForm(form.getJSONObject("model"))
+            "form" -> processForm(form)
             else -> processForm(form)
         }
     }
 
     private fun processForm(form: JSONObject): List<View> {
 
-        val title = getFormTitle(form)
+        val title = form["title"].toString()
         val formViews = mutableListOf<View>()
         formViews.add(views.header(title))
         val model = form.getJSONObject("model")
@@ -142,21 +140,6 @@ class HaapiResponseProcessor(
         return formViews
     }
 
-    private fun getFormTitle(form: JSONObject): String {
-
-        if (form.has("title")) {
-            return form["title"].toString()
-        }
-
-        return when (form.getString("kind")) {
-            "redirect" -> "API redirect, should be followed automatically by the client"
-            else -> "Default Title"
-        }
-    }
-
-    /*
-     * GJA: Handle form fields in a subroutine that also deals with the zero fields case
-     */
     private fun processFormFields(model: JSONObject): Map<String, TextView> {
 
         if (!model.has("fields")) {
@@ -236,108 +219,54 @@ class HaapiResponseProcessor(
         }
     }
 
-    private fun processLaunch(launchAction: JSONObject): List<View> {
-        return when (launchAction["kind"]) {
-            "external-browser" -> emptyList()
-            else -> processLauncher(launchAction)
+    private fun processClientOperation(action: JSONObject): List<View> {
+
+        val model =  action.getJSONObject("model")
+        return when (model["name"]) {
+            "external-browser-flow" -> emptyList()
+            "bankid" -> processLaunch(action)
+            else -> emptyList()
         }
     }
 
-    private fun processLauncher(launchAction: JSONObject): List<View> {
+    private fun processLaunch(action: JSONObject): List<View> {
 
-        val model = launchAction.getJSONObject("model")
-        val title = model.optString("actionTitle", "Launch")
-        val launchUrl = model["href"].toString()
+        val title = action.optString("title", "Launch")
+        val model = action.getJSONObject("model")
+        val args = model.getJSONObject("arguments")
+        val launchUrl = args["href"].toString()
 
         val formViews = mutableListOf<View>()
         formViews.add(views.header(title))
 
         val launchButton = views.button(title)
         launchButton.setOnClickListener {
+
             val intent = Intent(Intent.ACTION_VIEW)
             intent.data = Uri.parse(launchUrl)
-
             (context as Activity).startActivity(intent)
-            processLaunchContinuations(model)
 
-            // Trigger an API redirect here
-            if (model.has("continueActions")) {
-                // Use a requestBuilder perhaps???
-            }
+            val action = model.getJSONArray("continueActions").getJSONObject(0)
+            processLaunchContinueAction(action)
         }
 
         formViews.add(launchButton)
         return formViews
     }
 
-    /*
-     * GJA: After a launch, replace the screen with continueActions, or with errorActions if the launch failed
-     * This barely works - the error view.challenge button enables me to click something once polling is complete
-     * I should instead manually trigger a redirect and hopefully this will do things correctly
-     *
-     * "continueActions": [
-          {
-            "template": "form",
-            "kind": "redirect",
-            "title": "If you are not redirected automatically, click here to continue authenticating",
-            "model": {
-              "href": "https://garcher.ngrok.io/authn/authentication/bankid/poller",
-              "method": "GET"
-            }
-          }
-        ],
-        "errorActions": [
-          {
-            "template": "form",
-            "kind": "bankid-other-device",
-            "title": "view.otherdevicetitle",
-            "model": {
-              "href": "/authn/authentication/bankid/launch",
-              "method": "POST",
-              "type": "application/x-www-form-urlencoded",
-              "actionTitle": "view.challenge",
-              "fields": [
-                {
-                  "name": "personalnumber",
-                  "type": "username",
-                  "label": "view.personalnumber",
-                  "placeholder": "view.personalnumber_placeholder"
-                },
-                {
-                  "name": "usesamedevice",
-                  "type": "hidden",
-                  "value": "false"
-                }
-              ]
-            }
-          }
-        ]
-     */
-    private fun processLaunchContinuations(launchModel: JSONObject) {
+    private fun processLaunchContinueAction(action: JSONObject) {
 
-        val views = mutableListOf<View>()
+        val model = action.getJSONObject("model")
+        val method = model.getString("method")
+        val pollUrl = model.getString("href")
 
-        if (launchModel.has("continueActions")) {
-            val continueActions = launchModel.getJSONArray("continueActions")
-            for (i in (0 until continueActions.length())) {
-                val action = continueActions.getJSONObject(i)
-                val continueViews = processAction(action)
-                views.addAll(continueViews)
-            }
-        }
+        val request: Request
+        request = Request.Builder()
+                .url(pollUrl)
+                .method(method, null)
+                .build()
 
-        if (launchModel.has("errorActions")) {
-            val errorActions = launchModel.getJSONArray("errorActions")
-            for (i in (0 until errorActions.length())) {
-                val action = errorActions.getJSONObject(i)
-                val errorViews = processAction(action)
-                views.addAll(errorViews)
-            }
-        }
-
-        if (views.size > 0) {
-            redraw(views, true)
-        }
+        apiCaller(request, true) { haapiResponse -> processHaapiResponse(haapiResponse) }
     }
 
     private fun processSelectorAuthenticator(selectorAction: JSONObject): List<View> {
@@ -478,18 +407,17 @@ class HaapiResponseProcessor(
     private fun processPollingStatus(haapiResponseObject: JSONObject): List<List<View>> {
 
         val properties = haapiResponseObject.getJSONObject("properties")
+        val status = properties["status"].toString()
+        val actions = haapiResponseObject.getJSONArray("actions")
 
-        return when (properties["status"]) {
-            "done" -> {
-                processAuthenticationStep(haapiResponseObject.getJSONArray("actions"))
-            }
-            "pending" -> pollStatus(haapiResponseObject)
+        return when (status) {
+            "done" ->  processAuthenticationStep(actions)
+            "pending" -> pollStatus(status, actions)
             else -> emptyList()
         }
     }
 
-    private fun pollStatus(haapiResponseObject: JSONObject): List<List<View>> {
-        val actions = haapiResponseObject.getJSONArray("actions")
+    private fun pollStatus(status: String, actions: JSONArray): List<List<View>> {
 
         for (i in (0 until actions.length())) {
             val action = actions.getJSONObject(i)
@@ -500,7 +428,7 @@ class HaapiResponseProcessor(
             }
         }
 
-        return emptyList()
+        return listOf(listOf(views.textField("Polling status is ${status}")))
     }
 
     private fun poll(pollModel: JSONObject) {
