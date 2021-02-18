@@ -115,6 +115,7 @@ class HaapiResponseProcessor(
 
         return when (form["kind"]) {
             "redirect" -> processHaapiRedirect(form)
+            // TODO: Implement continue and cancel UI elements
             "continue" -> emptyList()
             "cancel" -> emptyList()
             else -> processForm(form)
@@ -153,7 +154,7 @@ class HaapiResponseProcessor(
     private fun processFormFields(model: JSONObject): Map<String, TextView> {
 
         if (!model.has("fields")) {
-            return HashMap(0)
+            return emptyMap()
         }
 
         val fieldsArray = model.getJSONArray("fields")
@@ -233,8 +234,9 @@ class HaapiResponseProcessor(
 
         val model =  action.getJSONObject("model")
         return when (model["name"]) {
+            // TODO: Implement the external browser flow correctly
             "external-browser-flow" -> emptyList()
-            "bankid" -> processLaunch(action.getJSONObject("model"))
+            "bankid" -> processLaunch(model)
             else -> emptyList()
         }
     }
@@ -250,12 +252,12 @@ class HaapiResponseProcessor(
             (context as Activity).startActivity(intent)
 
             val action = model.getJSONArray("continueActions").getJSONObject(0)
-            processAction(action)
+            return processAction(action)
 
         } catch (e: Throwable) {
 
             val action = model.getJSONArray("errorActions").getJSONObject(0)
-            processAction(action)
+            return processAction(action)
         }
 
         return emptyList()
