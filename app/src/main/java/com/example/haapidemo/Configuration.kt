@@ -26,6 +26,6 @@ class Configuration {
         const val redirectUri = "https://localhost:7777/client-callback"
         const val authorizationEndpoint = "oauth/v2/oauth-authorize"
         const val tokenEndpoint = "oauth/v2/oauth-token"
-        const val scopes = "openid" // If you need multiple scopes add them as a space-separated string, e.g. "openid profile email"
+        const val scopes = "openid"
     }
 }

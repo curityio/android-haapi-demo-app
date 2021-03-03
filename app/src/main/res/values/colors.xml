@@ -18,6 +18,7 @@
     <color name="colorPrimary">#646C85</color>
     <color name="colorPrimaryDark">#383D4B</color>
     <color name="colorAccent">#C9619E</color>
+    <color name="colorError">#FF0000</color>
     <color name="button">#576078</color>
     <color name="button_txt">#fff</color>
 </resources>

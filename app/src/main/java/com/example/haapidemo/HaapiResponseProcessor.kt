@@ -15,7 +15,10 @@
  */
 package com.example.haapidemo
 
+import android.app.Activity
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.view.View
@@ -29,6 +32,7 @@ import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONArray
 import org.json.JSONObject
+import java.lang.RuntimeException
 
 class HaapiResponseProcessor(
     private val context: Context,
@@ -58,9 +62,11 @@ class HaapiResponseProcessor(
     }
 
     fun processHaapiResponse(haapiResponseString: String): List<List<View>> {
+
         val haapiResponseObject = JSONObject(haapiResponseString)
 
-        return when (haapiResponseObject["type"]) {
+        val type = haapiResponseObject["type"].toString()
+        return when (type) {
             "redirection-step" -> processAuthenticationStep(haapiResponseObject.getJSONArray("actions"))
             "authentication-step" -> processAuthenticationStep(haapiResponseObject.getJSONArray("actions"))
             "polling-status" -> processPollingStatus(haapiResponseObject)
@@ -73,7 +79,14 @@ class HaapiResponseProcessor(
 //            "continue-same-step" ->
 //            "https://curity.se/problems/incorrect-credentials" -> //TODO: Implement handling of failed authentication
 //            "registration-step" //TODO: Implement handling of registration
-            else -> emptyList()
+            else -> {
+
+                if (type.startsWith("https://curity.se/problems")) {
+                    return processErrors(haapiResponseObject)
+                }
+
+                return emptyList()
+            }
         }
     }
 
@@ -93,23 +106,56 @@ class HaapiResponseProcessor(
         return when (action["template"]) {
             "form" -> processHaapiForm(action)
             "selector" -> processSelector(action)
+            "client-operation" -> processClientOperation(action)
             else -> emptyList()
         }
     }
 
     private fun processHaapiForm(form: JSONObject): List<View> {
+
         return when (form["kind"]) {
-            "login" -> processForm(form)
-            "redirect" -> processHaapiRedirect(form.getJSONObject("model"))
-            "form" -> processForm(form.getJSONObject("model"))
-            else -> emptyList()
+            "redirect" -> processHaapiRedirect(form)
+            // TODO: Implement continue and cancel UI elements
+            "continue" -> emptyList()
+            "cancel" -> emptyList()
+            else -> processForm(form)
         }
     }
 
     private fun processForm(form: JSONObject): List<View> {
+
+        val title = form["title"].toString()
         val formViews = mutableListOf<View>()
-        formViews.add(views.header(form["title"].toString()))
+        formViews.add(views.header(title))
         val model = form.getJSONObject("model")
+
+        val fields = processFormFields(model)
+        for (field in fields) {
+            formViews.add(field.value)
+        }
+
+        val submitButton = views.button(model.optString("actionTitle", context.getText(R.string.submit_button).toString()))
+        submitButton.setOnClickListener {
+
+            val href = model["href"].toString()
+            val url = if (href.startsWith("http")) href else "$baseUrl$href"
+            val request = Request.Builder()
+                    .method(model.getString("method"), getBody(fields, model.getString("type")))
+                    .url(url)
+                    .build()
+
+            apiCaller(request, true) { haapiResponse -> processHaapiResponse(haapiResponse) }
+        }
+
+        formViews.add(submitButton)
+        return formViews
+    }
+
+    private fun processFormFields(model: JSONObject): Map<String, TextView> {
+
+        if (!model.has("fields")) {
+            return emptyMap()
+        }
 
         val fieldsArray = model.getJSONArray("fields")
         val fields = HashMap<String, TextView>(fieldsArray.length())
@@ -126,22 +172,9 @@ class HaapiResponseProcessor(
             }
 
             fields[fieldModel["name"].toString()] = field
-            formViews.add(field)
         }
 
-        val submitButton = views.button(model.optString("actionTitle", context.getText(R.string.submit_button).toString()))
-        submitButton.setOnClickListener {
-            val request = Request.Builder()
-                .method(model.getString("method"), getBody(fields, model.getString("type")))
-                .url("$baseUrl${model["href"]}")
-                .build()
-
-            apiCaller(request, true) { haapiResponse -> processHaapiResponse(haapiResponse) }
-        }
-
-        formViews.add(submitButton)
-
-        return formViews
+        return fields
     }
 
     private fun getBody(fields: Map<String, TextView>, mediaType: String): RequestBody {
@@ -152,7 +185,9 @@ class HaapiResponseProcessor(
         return requestString.toRequestBody(mediaType.toMediaType())
     }
 
-    private fun processHaapiRedirect(haapiResponseModel: JSONObject): List<View> {
+    private fun processHaapiRedirect(haapiRedirectForm: JSONObject): List<View> {
+
+        val haapiResponseModel = haapiRedirectForm.getJSONObject("model")
         val href = haapiResponseModel["href"].toString()
         val url = if (href.startsWith("http")) href else "$baseUrl$href"
 
@@ -162,7 +197,6 @@ class HaapiResponseProcessor(
             .build()
 
         apiCaller(request, false) { haapiResponse -> processHaapiResponse(haapiResponse) }
-
         return emptyList()
     }
 
@@ -194,6 +228,39 @@ class HaapiResponseProcessor(
             "device-option" -> processDeviceOptions(selectorAction)
             else -> emptyList()
         }
+    }
+
+    private fun processClientOperation(action: JSONObject): List<View> {
+
+        val model =  action.getJSONObject("model")
+        return when (model["name"]) {
+            // TODO: Implement the external browser flow correctly
+            "external-browser-flow" -> emptyList()
+            "bankid" -> processLaunch(model)
+            else -> emptyList()
+        }
+    }
+
+    private fun processLaunch(model: JSONObject): List<View> {
+
+        val args = model.getJSONObject("arguments")
+        val launchUrl = args["href"].toString()
+
+        try {
+            val intent = Intent(Intent.ACTION_VIEW)
+            intent.data = Uri.parse(launchUrl)
+            (context as Activity).startActivity(intent)
+
+            val action = model.getJSONArray("continueActions").getJSONObject(0)
+            return processAction(action)
+
+        } catch (e: Throwable) {
+
+            val action = model.getJSONArray("errorActions").getJSONObject(0)
+            return processAction(action)
+        }
+
+        return emptyList()
     }
 
     private fun processSelectorAuthenticator(selectorAction: JSONObject): List<View> {
@@ -332,22 +399,28 @@ class HaapiResponseProcessor(
     }
 
     private fun processPollingStatus(haapiResponseObject: JSONObject): List<List<View>> {
-        val properties = haapiResponseObject.getJSONObject("properties")
 
-        return when (properties["status"]) {
-            "done" -> processAuthenticationStep(haapiResponseObject.getJSONArray("actions"))
-            "pending" -> pollStatus(haapiResponseObject)
+        val properties = haapiResponseObject.getJSONObject("properties")
+        val status = properties["status"].toString()
+        val actions = haapiResponseObject.getJSONArray("actions")
+
+        return when (status) {
+            "done" -> {
+                redraw(emptyList(), true)
+                return processAuthenticationStep(actions)
+            }
+            "pending" -> {
+                redraw(listOf(views.textField("Waiting, status is ${status} ...")), true)
+                return pollStatus(actions)
+            }
             else -> emptyList()
         }
     }
 
-
-    private fun pollStatus(haapiResponseObject: JSONObject): List<List<View>> {
-        val actions = haapiResponseObject.getJSONArray("actions")
+    private fun pollStatus(actions: JSONArray): List<List<View>> {
 
         for (i in (0 until actions.length())) {
             val action = actions.getJSONObject(i)
-
             when (action["kind"]) {
                 "poll" -> poll(action.getJSONObject("model"))
 //                "cancel" -> //TODO: Not implemented yet
@@ -364,7 +437,9 @@ class HaapiResponseProcessor(
             .build()
 
         Handler(Looper.getMainLooper()).postDelayed({
-            apiCaller(request, false) { processHaapiResponse(it) }
+            apiCaller(request, false) {
+                processHaapiResponse(it)
+            }
         }, 3000)
     }
 
@@ -373,5 +448,53 @@ class HaapiResponseProcessor(
             views.textField(context.getText(R.string.code_response).toString()),
             views.textField(properties.getString("code"))
         ))
+    }
+
+    private fun processErrors(haapiResponse: JSONObject): List<List<View>> {
+
+        val type = haapiResponse["type"].toString()
+        return when (type) {
+            "https://curity.se/problems/invalid-input" -> processInvalidInput(haapiResponse)
+            "https://curity.se/problems/incorrect-credentials" -> processGeneralError(haapiResponse)
+            else -> processGeneralError(haapiResponse)
+        }
+    }
+
+    private fun processInvalidInput(haapiResponse: JSONObject): List<List<View>> {
+
+        val errorViews = mutableListOf<View>()
+        errorViews.add(views.errorField(haapiResponse.getString("title")))
+
+        if (haapiResponse.has("invalidFields")) {
+
+            val fields = haapiResponse.getJSONArray("invalidFields")
+            for (i in (0 until fields.length())) {
+                val field = fields.getJSONObject(i)
+                if (field.has("detail")) {
+                    errorViews.add(views.errorField(field["detail"].toString()))
+                }
+            }
+        }
+
+        return listOf(errorViews)
+    }
+
+    private fun processGeneralError(haapiResponse: JSONObject): List<List<View>> {
+
+        val errorViews = mutableListOf<View>()
+        errorViews.add(views.errorField(haapiResponse.getString("title")))
+
+        if (haapiResponse.has("messages")) {
+
+            val fields = haapiResponse.getJSONArray("messages")
+            for (i in (0 until fields.length())) {
+                val field = fields.getJSONObject(i)
+                if (field.has("text")) {
+                    errorViews.add(views.errorField(field["text"].toString()))
+                }
+            }
+        }
+
+        return listOf(errorViews)
     }
 }

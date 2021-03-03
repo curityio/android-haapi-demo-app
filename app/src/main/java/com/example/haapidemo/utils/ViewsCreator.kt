@@ -2,6 +2,7 @@ package com.example.haapidemo.utils
 
 import android.content.Context
 import android.content.res.ColorStateList
+import android.graphics.Typeface
 import android.text.InputType
 import android.view.Gravity
 import android.view.View
@@ -14,6 +15,11 @@ class ViewsCreator(private val context: Context) {
     private val marginParams = LinearLayout.LayoutParams(
         ConstraintSet.WRAP_CONTENT,
         ConstraintSet.WRAP_CONTENT
+    )
+
+    private val buttonMarginParams = LinearLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ConstraintSet.WRAP_CONTENT
     )
 
     private val paramsForFields = LinearLayout.LayoutParams(
@@ -41,6 +47,7 @@ class ViewsCreator(private val context: Context) {
         selectorHeader.text = text
         selectorHeader.textAlignment = View.TEXT_ALIGNMENT_CENTER
         selectorHeader.layoutParams = marginParams
+        selectorHeader.setTextAppearance(R.style.LabelTextViewStyle)
 
         return selectorHeader
     }
@@ -76,7 +83,7 @@ class ViewsCreator(private val context: Context) {
         button.id = View.generateViewId()
         button.text = label
         button.visibility = View.VISIBLE
-        button.layoutParams = marginParams
+        button.layoutParams = buttonMarginParams
         button.backgroundTintList = ColorStateList.valueOf(context.getColor(R.color.button))
         button.setTextColor(context.getColor(R.color.button_txt))
 
@@ -114,6 +121,17 @@ class ViewsCreator(private val context: Context) {
         text.text = value
         text.textAlignment = TextView.TEXT_ALIGNMENT_CENTER
         text.layoutParams = marginParams
+        text.setTextAppearance(R.style.LabelTextViewStyle)
+
+        return text
+    }
+
+    fun errorField(value: String): TextView {
+        val text = TextView(context)
+        text.text = value
+        text.textAlignment = TextView.TEXT_ALIGNMENT_CENTER
+        text.layoutParams = marginParams
+        text.setTextAppearance(R.style.ErrorTextViewStyle)
 
         return text
     }

@@ -23,4 +23,13 @@
         <item name="android:windowBackground">@drawable/app_background</item>
     </style>
 
+    <style name="LabelTextViewStyle" parent="android:Widget.TextView">
+        <item name="android:textSize">14sp</item>
+    </style>
+
+    <style name="ErrorTextViewStyle" parent="android:Widget.TextView">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/colorError</item>
+    </style>
+
 </resources>
