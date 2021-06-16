@@ -25,15 +25,15 @@
     <color name="info">#70BBE1</color>
     <color name="links">#D55BA0</color>
     <color name="primary">#646E85</color>
-    <color name="primary_dark">#FFFFFF</color>
-    <color name="primary_medium">#FFFFFF</color>
+    <color name="primary_dark">#15171D</color>
+    <color name="primary_medium">#42495B</color>
     <color name="secondary_action">#FFFFFF</color>
     <color name="spot_green">#4AA69E</color>
     <color name="spot_magenta">#D55BA0</color>
     <color name="spot_yellow">#ECE668</color>
     <color name="success">#4CAF50</color>
-    <color name="text">#333333</color>
-    <color name="text_headings">#111111</color>
-    <color name="text_paragraphs">#333333</color>
+    <color name="text">#FFFFFF</color>
+    <color name="text_headings">#FFFFFF</color>
+    <color name="text_paragraphs">#FFFFFF</color>
     <color name="warning">#E0C01C</color>
 </resources>
