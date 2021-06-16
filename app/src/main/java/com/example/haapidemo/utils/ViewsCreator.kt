@@ -84,8 +84,8 @@ class ViewsCreator(private val context: Context) {
         button.text = label
         button.visibility = View.VISIBLE
         button.layoutParams = buttonMarginParams
-        button.backgroundTintList = ColorStateList.valueOf(context.getColor(R.color.button))
-        button.setTextColor(context.getColor(R.color.button_txt))
+        button.backgroundTintList = ColorStateList.valueOf(context.getColor(R.color.primary))
+        button.setTextColor(context.getColor(R.color.button_text))
 
         return button
     }
