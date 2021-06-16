@@ -41,6 +41,11 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+
+    lintOptions {
+        // App icons or density or config images are not important at the moment.
+        disable 'IconLauncherShape', 'IconDipSize', 'IconDuplicatesConfig', 'IconMissingDensityFolder'
+    }
 }
 
 dependencies {
