@@ -30,13 +30,13 @@ data class Redirect(
 ) : HaapiStep()
 
 data class AuthenticatorOption(
-    val label: String,
+    val label: Message,
     val type: String?,
     val action: Action.Form,
 )
 
 data class AuthenticatorSelector(
-    val title: String,
+    val title: Message,
     val authenticators: List<AuthenticatorOption>,
 ) : HaapiStep()
 
@@ -45,10 +45,26 @@ data class InteractiveForm(
     val cancel: Action.Form?
 ) : HaapiStep()
 
-data class ClientOperation(
-    val action: Action.ClientOperation,
+data class ExternalBrowserClientOperation(
+    val actionModel: ActionModel.ClientOperation.ExternalBrowser,
     val cancel: Action.Form?
 ) : HaapiStep()
+
+data class BankIdClientOperation(
+    val actionModel: ActionModel.ClientOperation.BankID,
+    val cancel: Action.Form?
+) : HaapiStep()
+
+data class EncapClientOperation(
+    val actionModel: ActionModel.ClientOperation.EncapAutoActivation,
+    val cancel: Action.Form?
+) : HaapiStep()
+
+data class UnknownClientOperation(
+    val actionModel: ActionModel.ClientOperation.Unknown,
+    val cancel: Action.Form?
+) : HaapiStep()
+
 
 data class PollingStep(
     val properties: Properties.Polling,

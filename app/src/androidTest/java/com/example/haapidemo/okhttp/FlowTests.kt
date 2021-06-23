@@ -29,7 +29,6 @@ import java.time.Duration
  * - using an OkHttp client with an [HaapiTokenManager] interceptor.
  * - using the [HaapiStep] hierarchy to handle the responses.
  */
-@RunWith(AndroidJUnit4::class)
 class FlowTests
 {
     @Test
@@ -40,9 +39,9 @@ class FlowTests
         response = httpClient.submit(redirect.action).toHaapiStep()
         val authenticatorSelection = response.assertOfType<AuthenticatorSelector>()
 
-        authenticatorSelection.title.assertIs("Select Authentication Method")
+        authenticatorSelection.title.toText().assertIs("Select Authentication Method")
         val authenticatorOption = authenticatorSelection.authenticators.find {
-            it.type == "html-form" && it.label == "A standard SQL backed authenticator"
+            it.type == "html-form" && it.label.toText() == "A standard SQL backed authenticator"
         } ?: throw Exception("Unable to find authenticator")
 
         response = httpClient.submit(authenticatorOption.action).toHaapiStep()
@@ -69,9 +68,9 @@ class FlowTests
         response = httpClient.submit(redirect.action).toHaapiStep()
         val authenticatorSelection = response.assertOfType<AuthenticatorSelector>()
 
-        authenticatorSelection.title.assertIs("Select Authentication Method")
+        authenticatorSelection.title.toText().assertIs("Select Authentication Method")
         val authenticatorOption = authenticatorSelection.authenticators.find {
-            it.type == "html-form" && it.label == "A standard SQL backed authenticator"
+            it.type == "html-form" && it.label.toText() == "A standard SQL backed authenticator"
         } ?: throw Exception("Unable to find authenticator")
 
         response = httpClient.submit(authenticatorOption.action).toHaapiStep()
@@ -101,9 +100,9 @@ class FlowTests
         response = httpClient.submit(redirect.action).toHaapiStep()
         val authenticatorSelection = response.assertOfType<AuthenticatorSelector>()
 
-        authenticatorSelection.title.assertIs("Select Authentication Method")
+        authenticatorSelection.title.toText().assertIs("Select Authentication Method")
         val authenticatorOption = authenticatorSelection.authenticators.find {
-            it.type == "email" && it.label == "email1"
+            it.type == "email" && it.label.toText() == "email1"
         } ?: throw Exception("Unable to find authenticator")
 
         response = httpClient.submit(authenticatorOption.action).toHaapiStep()
@@ -143,17 +142,14 @@ class FlowTests
         response = httpClient.submit(redirect.action).toHaapiStep()
         val authenticatorSelection = response.assertOfType<AuthenticatorSelector>()
 
-        authenticatorSelection.title.assertIs("Select Authentication Method")
+        authenticatorSelection.title.toText().assertIs("Select Authentication Method")
         val authenticatorOption = authenticatorSelection.authenticators.find {
-            it.type == "saml" && it.label == "Virtual SAML"
+            it.type == "saml" && it.label.toText() == "Virtual SAML"
         } ?: throw Exception("Unable to find authenticator")
 
         response = httpClient.submit(authenticatorOption.action).toHaapiStep()
-        val externalBrowserFlowOperation = response.assertOfType<ClientOperation>()
-
-        val externalBrowserFlowArgs = externalBrowserFlowOperation.action.model.arguments
-        if (externalBrowserFlowArgs !is ActionModel.ClientOperation.Arguments.ExternalBrowser)
-            throw Exception("Unexpected client operation arguments")
+        val externalBrowserFlowOperation = response.assertOfType<ExternalBrowserClientOperation>()
+        val externalBrowserFlowArgs = externalBrowserFlowOperation.actionModel.arguments
 
         externalBrowserFlowArgs.href.assertNonBlank()
 
@@ -201,3 +197,10 @@ private fun request(url: HttpUrl) = Request.Builder()
 
 private fun OkHttpClient.get(url: String) = newCall(request(url)).execute()
 private fun OkHttpClient.get(url: HttpUrl) = newCall(request(url)).execute()
+
+private fun Message.toText() = when(this) {
+    is Message.OfLiteral -> this.message
+    is Message.OfLiteralAndKey -> this.message
+    // On a real case, the app could use a translation map here instead of throwing
+    is Message.OfKey -> throw ModelException("Messages should have literal values")
+}

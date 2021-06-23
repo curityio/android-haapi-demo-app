@@ -22,15 +22,15 @@ package com.example.haapidemo.models
 fun HaapiRepresentation.toHaapiStep(): HaapiStep =
     when (type)
     {
-        is StepType.AUTHENTICATION_STEP -> handleAuthenticationStep(this)
-        is StepType.REDIRECTION_STEP -> handleRedirectStep(this)
-        is StepType.REGISTRATION_STEP -> handleAuthenticationStep(this)
-        is StepType.POLLING_STEP -> handlePollingStep(this)
-        is StepType.CONTINUE_SAME_STEP -> ContinueSameStep(this)
-        is StepType.CONSENTOR_STEP -> UnknownStep(this)
-        is StepType.USER_CONSENT_STEP -> UnknownStep(this)
-        is StepType.OAUTH_AUTHORIZATION_RESPONSE -> handleAuthorizationStep(this)
-        is StepType.UNKNOWN -> UnknownStep(this)
+        is RepresentationType.AUTHENTICATION_STEP -> handleAuthenticationStep(this)
+        is RepresentationType.REDIRECTION_STEP -> handleRedirectStep(this)
+        is RepresentationType.REGISTRATION_STEP -> handleAuthenticationStep(this)
+        is RepresentationType.POLLING_STEP -> handlePollingStep(this)
+        is RepresentationType.CONTINUE_SAME_STEP -> ContinueSameStep(this)
+        is RepresentationType.CONSENTOR_STEP -> UnknownStep(this)
+        is RepresentationType.USER_CONSENT_STEP -> UnknownStep(this)
+        is RepresentationType.OAUTH_AUTHORIZATION_RESPONSE -> handleAuthorizationStep(this)
+        is RepresentationType.UNKNOWN -> UnknownStep(this)
     }
 
 private fun handleAuthenticatorSelector(
@@ -88,7 +88,24 @@ private fun handleAuthenticationStep(representation: HaapiRepresentation): Haapi
     val cancel = representation.actions.findForm { it.kind == "cancel" }
     return if (clientOperation != null)
     {
-        ClientOperation(clientOperation, cancel)
+        when(val operation = clientOperation.model) {
+            is ActionModel.ClientOperation.ExternalBrowser -> ExternalBrowserClientOperation(
+                actionModel = operation,
+                cancel = cancel,
+            )
+            is ActionModel.ClientOperation.BankID -> BankIdClientOperation(
+                actionModel = operation,
+                cancel = cancel,
+            )
+            is ActionModel.ClientOperation.EncapAutoActivation -> EncapClientOperation(
+                actionModel = operation,
+                cancel = cancel,
+            )
+            is ActionModel.ClientOperation.Unknown -> UnknownClientOperation(
+                actionModel = operation,
+                cancel = cancel,
+            )
+        }
     } else
     {
         val action = representation.actions.findForm {
@@ -100,7 +117,7 @@ private fun handleAuthenticationStep(representation: HaapiRepresentation): Haapi
 
 private fun handleRedirectStep(representation: HaapiRepresentation): HaapiStep
 {
-    if (representation.type != StepType.REDIRECTION_STEP)
+    if (representation.type != RepresentationType.REDIRECTION_STEP)
     {
         return UnknownStep(representation)
     }
@@ -122,7 +139,7 @@ private fun handleRedirectStep(representation: HaapiRepresentation): HaapiStep
 
 private fun handlePollingStep(representation: HaapiRepresentation): HaapiStep
 {
-    if (representation.type != StepType.POLLING_STEP)
+    if (representation.type != RepresentationType.POLLING_STEP)
     {
         return UnknownStep(representation)
     }
@@ -159,7 +176,7 @@ private fun handlePollingStep(representation: HaapiRepresentation): HaapiStep
 
 private fun handleAuthorizationStep(representation: HaapiRepresentation): HaapiStep
 {
-    if (representation.type != StepType.OAUTH_AUTHORIZATION_RESPONSE)
+    if (representation.type != RepresentationType.OAUTH_AUTHORIZATION_RESPONSE)
     {
         return UnknownStep(representation)
     }

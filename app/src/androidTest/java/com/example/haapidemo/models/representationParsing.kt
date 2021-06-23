@@ -31,26 +31,27 @@ object RepresentationParser
         )
     }
 
-    private val parseType = createParser<StepType> { StepType.UNKNOWN(it) }
+    private val parseType = createParser<RepresentationType> { RepresentationType.UNKNOWN(it) }
 
-    private fun parseProperties(type: StepType, obj: JSONObject): Properties? = when (type)
-    {
-        StepType.POLLING_STEP -> PropertiesParser.parsePolling(
-            (obj.getJSONObject(
-                "properties"
-            ))
-        )
-        StepType.OAUTH_AUTHORIZATION_RESPONSE -> PropertiesParser.parseAuthorizationResponse(
-            (obj.getJSONObject(
-                "properties"
-            ))
-        )
-        else -> null
-    }
+    private fun parseProperties(type: RepresentationType, obj: JSONObject): Properties? =
+        when (type)
+        {
+            RepresentationType.POLLING_STEP -> PropertiesParser.parsePolling(
+                (obj.getJSONObject(
+                    "properties"
+                ))
+            )
+            RepresentationType.OAUTH_AUTHORIZATION_RESPONSE -> PropertiesParser.parseAuthorizationResponse(
+                (obj.getJSONObject(
+                    "properties"
+                ))
+            )
+            else -> obj.optJSONObject("properties")?.let { Properties.Unknown(it) }
+        }
 
     private fun parseUserMessage(obj: JSONObject) =
         UserMessage(
-            text = obj.string("text"),
+            text = obj.message("text"),
             classList = obj.listStrings("classList")
         )
 }
@@ -59,6 +60,7 @@ private object PropertiesParser
 {
     fun parseAuthorizationResponse(obj: JSONObject) = parsing("oauth-authorization-response") {
         Properties.AuthorizationResponse(
+            json = obj,
             code = obj.stringOpt("code"),
             state = obj.stringOpt("state"),
             scope = obj.stringOpt("scope"),
@@ -74,10 +76,12 @@ private object PropertiesParser
 
     fun parsePolling(obj: JSONObject) = parsing("polling") {
         Properties.Polling(
+            json = obj,
             recipientOfCommunication = obj.stringOpt("recipientOfCommunication"),
             status = parseStatus(obj.string("status"))
         )
     }
+
 }
 
 private object LinkParser
@@ -86,7 +90,7 @@ private object LinkParser
         Link(
             href = obj.string("href"),
             rel = obj.string("rel"),
-            title = obj.stringOpt("title"),
+            title = obj.messageOpt("title"),
             type = obj.stringOpt("type")
         )
     }
@@ -107,12 +111,13 @@ private object ActionParser
 
     fun parseForm(obj: JSONObject) =
         Action.Form(
-            template = "form",
+            template = ActionTemplate.FORM,
             kind = obj.string("kind"),
-            title = obj.stringOpt("title"),
+            title = obj.messageOpt("title"),
             model = ActionFormModelParser.parse(obj.getJSONObject("model")),
             properties = obj.optJSONObject("properties")?.run {
                 Action.Form.Properties(
+                    json = this,
                     authenticatorType = this.optString("authenticatorType")
                 )
             }
@@ -120,15 +125,20 @@ private object ActionParser
 
     fun parseSelector(obj: JSONObject) =
         Action.Selector(
-            template = "selector",
+            template = ActionTemplate.SELECTOR,
             kind = obj.string("kind"),
-            title = obj.stringOpt("title"),
+            title = obj.messageOpt("title"),
             model = ActionSelectorModelParser.parse(obj.getJSONObject("model")),
+            properties = obj.optJSONObject("properties")?.run {
+                Action.Selector.Properties(
+                    json = this,
+                )
+            }
         )
 
     fun parseClientOperation(obj: JSONObject) =
         Action.ClientOperation(
-            template = "client-operation",
+            template = ActionTemplate.CLIENT_OPERATION,
             model = ActionClientOperationModelParser.parse(obj.getJSONObject("model"))
         )
 }
@@ -140,7 +150,7 @@ private object ActionFormModelParser
             href = obj.string("href"),
             method = obj.string("method"),
             type = obj.stringOpt("type"),
-            actionTitle = obj.stringOpt("actionTitle"),
+            actionTitle = obj.messageOpt("actionTitle"),
             fields = obj.list("fields", FieldParser::parse)
         )
     }
@@ -157,30 +167,42 @@ private object ActionSelectorModelParser
 
 private object ActionClientOperationModelParser
 {
-    fun parse(obj: JSONObject) = parsing("Selector") {
+    fun parse(obj: JSONObject) = parsing("client-operation") {
         val name = obj.string("name")
         val argsObj = obj.getJSONObject("arguments")
-        ActionModel.ClientOperation(
-            name = name,
-            continueActions = obj.list("continueActions", ActionParser::parse),
-            errorActions = obj.list("errorActions", ActionParser::parse),
-            arguments = when (name)
-            {
-                "external-browser-flow" -> ActionModel.ClientOperation.Arguments.ExternalBrowser(
+        when (name)
+        {
+            "external-browser-flow" -> ActionModel.ClientOperation.ExternalBrowser(
+                continueActions = obj.list("continueActions", ActionParser::parse),
+                errorActions = obj.list("errorActions", ActionParser::parse),
+                arguments = Arguments.ExternalBrowser(
                     href = argsObj.string("href"),
                 )
-                "bankid" -> ActionModel.ClientOperation.Arguments.BankID(
+            )
+            "bankid" -> ActionModel.ClientOperation.BankID(
+                continueActions = obj.list("continueActions", ActionParser::parse),
+                errorActions = obj.list("errorActions", ActionParser::parse),
+                arguments = Arguments.BankID(
                     href = argsObj.string("href"),
                     autoStartToken = argsObj.string("autoStartToken"),
                     redirect = argsObj.string("redirect"),
                 )
-                "encap-auto-activation" -> ActionModel.ClientOperation.Arguments.Encap(
+            )
+            "encap-auto-activation" -> ActionModel.ClientOperation.EncapAutoActivation(
+                continueActions = obj.list("continueActions", ActionParser::parse),
+                errorActions = obj.list("errorActions", ActionParser::parse),
+                arguments = Arguments.EncapAutoActivation(
                     href = argsObj.string("href"),
                     activationCode = argsObj.string("activationCode"),
                 )
-                else -> throw JSONException("Unsupported client operation name'$name'")
-            }
-        )
+            )
+            else -> ActionModel.ClientOperation.Unknown(
+                name = name,
+                continueActions = obj.list("continueActions", ActionParser::parse),
+                errorActions = obj.list("errorActions", ActionParser::parse),
+                arguments = obj.optJSONObject("arguments"),
+            )
+        }
     }
 }
 
@@ -203,7 +225,7 @@ private object FieldParser
     private fun parseText(obj: JSONObject) =
         Field.Text(
             name = obj.string("name"),
-            label = obj.stringOpt("label"),
+            label = obj.messageOpt("label"),
             placeholder = obj.stringOpt("placeholder"),
             value = obj.stringOpt("value"),
             kind = obj.stringOpt("kind")?.let {
@@ -220,7 +242,7 @@ private object FieldParser
     private fun parseUsername(obj: JSONObject) =
         Field.Username(
             name = obj.string("name"),
-            label = obj.string("label"),
+            label = obj.message("label"),
             placeholder = obj.stringOpt("placeholder"),
             value = obj.stringOpt("value"),
         )
@@ -228,14 +250,14 @@ private object FieldParser
     private fun parsePassword(obj: JSONObject) =
         Field.Password(
             name = obj.string("name"),
-            label = obj.stringOpt("label"),
+            label = obj.messageOpt("label"),
             placeholder = obj.stringOpt("placeholder"),
         )
 
     private fun parseCheckbox(obj: JSONObject) =
         Field.Checkbox(
             name = obj.string("name"),
-            label = obj.stringOpt("label"),
+            label = obj.messageOpt("label"),
             value = obj.stringOpt("value"),
             checked = obj.boolean("checked"),
             readonly = obj.boolean("readonly")
@@ -244,10 +266,10 @@ private object FieldParser
     private fun parseSelect(obj: JSONObject) =
         Field.Select(
             name = obj.string("name"),
-            label = obj.string("label"),
+            label = obj.message("label"),
             options = obj.list("options") {
                 Field.Select.Option(
-                    label = it.string("label"),
+                    label = it.message("label"),
                     value = it.string("value"),
                     selected = it.boolean("selected")
                 )
@@ -273,6 +295,40 @@ private fun JSONObject.string(name: String): String = this.getString(name)
 private fun JSONObject.stringOpt(name: String): String? = this.optString(name).run {
     if (this.isBlank()) null else this
 }
+
+private fun JSONObject.messageOpt(name: String): Message?
+{
+    val maybeLiteral = this.stringOpt(name)
+    val maybeKey = this.stringOpt(keyField(name))
+
+    return if (maybeLiteral != null)
+    {
+        if (maybeKey != null)
+        {
+            Message.OfLiteralAndKey(maybeLiteral, maybeKey)
+        } else
+        {
+            Message.OfLiteral(maybeLiteral)
+        }
+    } else
+    {
+        if (maybeKey != null)
+        {
+            Message.OfKey(maybeKey)
+        } else
+        {
+            null
+        }
+    }
+}
+
+private fun JSONObject.message(name: String): Message
+{
+    return messageOpt(name) ?: throw ModelException("Missing field '$name'")
+}
+
+
+private fun keyField(name: String) = name + "Key"
 
 private fun JSONObject.boolean(name: String): Boolean = this.optBoolean(name, false)
 
@@ -328,11 +384,11 @@ private fun JSONObject.mapOfStrings(name: String): Map<String, String> =
     }
 
 /**
- * Function to create a [DiscriminatedUnion] parser.
+ * Function to create a [EnumLike] parser.
  * @param unmapped the function to create the instance when the input doesn't match any discriminator
  * @return a function from string to [T]
  */
-private inline fun <reified T : DiscriminatedUnion>
+private inline fun <reified T : EnumLike>
         createParser(crossinline unmapped: (String) -> T): (String) -> T
 {
     val map = T::class.sealedSubclasses
