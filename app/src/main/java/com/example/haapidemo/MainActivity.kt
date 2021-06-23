@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package com.example.haapidemo
+package io.curity.haapidemo
 
 import android.animation.ObjectAnimator
 import android.content.pm.PackageManager
@@ -27,11 +27,12 @@ import android.view.View.*
 import android.view.animation.*
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
-import com.example.haapidemo.Configuration.Companion.authorizationEndpoint
-import com.example.haapidemo.Configuration.Companion.clientId
-import com.example.haapidemo.Configuration.Companion.host
-import com.example.haapidemo.Configuration.Companion.redirectUri
-import com.example.haapidemo.Configuration.Companion.scopes
+import io.curity.haapidemo.R
+import io.curity.haapidemo.Configuration.Companion.authorizationEndpoint
+import io.curity.haapidemo.Configuration.Companion.clientId
+import io.curity.haapidemo.Configuration.Companion.host
+import io.curity.haapidemo.Configuration.Companion.redirectUri
+import io.curity.haapidemo.Configuration.Companion.scopes
 import java.security.MessageDigest
 
 class MainActivity : AppCompatActivity() {

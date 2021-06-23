@@ -15,17 +15,18 @@
  */
 package io.curity.haapidemo
 
-class Configuration {
-    companion object {
-        /**
-         * Change these settings to your instance of the Curity Identity Server
-         */
-        const val host = ""
-        const val baseUrl = "https://$host"
-        const val clientId = "haapi-public-client"
-        const val redirectUri = "https://localhost:7777/client-callback"
-        const val authorizationEndpoint = "oauth/v2/oauth-authorize"
-        const val tokenEndpoint = "oauth/v2/oauth-token"
-        const val scopes = "openid"
+import org.junit.Test
+
+import org.junit.Assert.*
+
+/**
+ * Example local unit test, which will execute on the development machine (host).
+ *
+ * See [testing documentation](http://d.android.com/tools/testing).
+ */
+class ExampleUnitTest {
+    @Test
+    fun addition_isCorrect() {
+        assertEquals(4, 2 + 2)
     }
 }

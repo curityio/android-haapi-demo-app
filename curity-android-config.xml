@@ -42,7 +42,7 @@
                                 </capabilities>
                                 <attestation>
                                     <android>
-                                        <package-name>com.example.haapidemo</package-name>
+                                        <package-name>io.curity.haapidemo</package-name>
 <!--                                        <package-name>io.curity.androidcat</package-name>-->
 <!--                                        <package-name>se.curity.identityserver.haapi.android.sdk.test</package-name>-->
                                         <signature-digest>rIplnew74f38oCiH+qvg4KUEvhV6LAXLhkf+m+V71B8=</signature-digest>

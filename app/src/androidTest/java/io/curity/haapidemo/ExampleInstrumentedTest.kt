@@ -15,17 +15,25 @@
  */
 package io.curity.haapidemo
 
-class Configuration {
-    companion object {
-        /**
-         * Change these settings to your instance of the Curity Identity Server
-         */
-        const val host = ""
-        const val baseUrl = "https://$host"
-        const val clientId = "haapi-public-client"
-        const val redirectUri = "https://localhost:7777/client-callback"
-        const val authorizationEndpoint = "oauth/v2/oauth-authorize"
-        const val tokenEndpoint = "oauth/v2/oauth-token"
-        const val scopes = "openid"
+import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.ext.junit.runners.AndroidJUnit4
+
+import org.junit.Test
+import org.junit.runner.RunWith
+
+import org.junit.Assert.*
+
+/**
+ * Instrumented test, which will execute on an Android device.
+ *
+ * See [testing documentation](http://d.android.com/tools/testing).
+ */
+@RunWith(AndroidJUnit4::class)
+class ExampleInstrumentedTest {
+    @Test
+    fun useAppContext() {
+        // Context of the app under test.
+        val appContext = InstrumentationRegistry.getInstrumentation().targetContext
+        assertEquals("com.example.haapidemo", appContext.packageName)
     }
 }

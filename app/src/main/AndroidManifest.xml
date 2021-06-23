@@ -15,7 +15,7 @@
       limitations under the License.
     -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.haapidemo">
+    package="io.curity.haapidemo">
 
     <application
         android:allowBackup="false"
@@ -24,7 +24,7 @@
         android:roundIcon="@mipmap/curity_logo_symbol"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name="com.example.haapidemo.MainActivity">
+        <activity android:name="io.curity.haapidemo.MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

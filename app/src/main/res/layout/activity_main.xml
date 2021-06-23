@@ -21,7 +21,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_margin="8dp"
-    tools:context=".MainActivity">
+    tools:context="io.curity.haapidemo.MainActivity">
 
     <ProgressBar
         android:id="@+id/loader"

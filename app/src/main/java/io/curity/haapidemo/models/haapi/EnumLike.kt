@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021 Curity AB
+ *  Copyright (C) 2021 Curity AB
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -13,19 +13,13 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package io.curity.haapidemo
 
-class Configuration {
-    companion object {
-        /**
-         * Change these settings to your instance of the Curity Identity Server
-         */
-        const val host = ""
-        const val baseUrl = "https://$host"
-        const val clientId = "haapi-public-client"
-        const val redirectUri = "https://localhost:7777/client-callback"
-        const val authorizationEndpoint = "oauth/v2/oauth-authorize"
-        const val tokenEndpoint = "oauth/v2/oauth-token"
-        const val scopes = "openid"
-    }
+package io.curity.haapidemo.models.haapi
+
+/**
+ * Base interface for enum-like sealed hierarchies
+ */
+interface EnumLike
+{
+    val discriminator: String
 }

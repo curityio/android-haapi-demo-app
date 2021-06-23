@@ -22,7 +22,7 @@ android {
     buildToolsVersion "30.0.3"
 
     defaultConfig {
-        applicationId "com.example.haapidemo"
+        applicationId "io.curity.haapidemo"
         minSdkVersion 28
         targetSdkVersion 30
         versionCode 1
