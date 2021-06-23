@@ -11,6 +11,7 @@
 
 package com.example.haapidemo.models
 
+import com.example.haapidemo.models.haapi.*
 
 /**
  * Maps an [HaapiRepresentation] to one of the high-level [HaapiStep] concrete classes.
@@ -22,15 +23,15 @@ package com.example.haapidemo.models
 fun HaapiRepresentation.toHaapiStep(): HaapiStep =
     when (type)
     {
-        is RepresentationType.AUTHENTICATION_STEP -> handleAuthenticationStep(this)
-        is RepresentationType.REDIRECTION_STEP -> handleRedirectStep(this)
-        is RepresentationType.REGISTRATION_STEP -> handleAuthenticationStep(this)
-        is RepresentationType.POLLING_STEP -> handlePollingStep(this)
-        is RepresentationType.CONTINUE_SAME_STEP -> ContinueSameStep(this)
-        is RepresentationType.CONSENTOR_STEP -> UnknownStep(this)
-        is RepresentationType.USER_CONSENT_STEP -> UnknownStep(this)
-        is RepresentationType.OAUTH_AUTHORIZATION_RESPONSE -> handleAuthorizationStep(this)
-        is RepresentationType.UNKNOWN -> UnknownStep(this)
+        is RepresentationType.AuthenticationStep -> handleAuthenticationStep(this)
+        is RepresentationType.RedirectionStep -> handleRedirectStep(this)
+        is RepresentationType.RegistrationStep -> handleAuthenticationStep(this)
+        is RepresentationType.PollingStep -> handlePollingStep(this)
+        is RepresentationType.ContinueSameStep -> ContinueSameStep(this)
+        is RepresentationType.ConsentorStep -> UnknownStep(this)
+        is RepresentationType.UserConsentStep -> UnknownStep(this)
+        is RepresentationType.OauthAuthorizationResponse -> handleAuthorizationStep(this)
+        is RepresentationType.Unknown -> UnknownStep(this)
     }
 
 private fun handleAuthenticatorSelector(
@@ -54,7 +55,8 @@ private fun handleAuthenticatorSelector(
         authenticators = action.model.options
             .filterIsInstance<Action.Form>()
             .map {
-                if (it.title == null)
+                val actionFormTitle = it.title
+                if (actionFormTitle == null)
                 {
                     return InvalidStep(representation)
                 }
@@ -63,8 +65,8 @@ private fun handleAuthenticatorSelector(
                     return InvalidStep(representation)
                 }
                 AuthenticatorOption(
-                    label = it.title,
-                    type = it.properties.authenticatorType,
+                    label = actionFormTitle,
+                    type = it.properties?.authenticatorType,
                     action = it
                 )
             }
@@ -117,7 +119,7 @@ private fun handleAuthenticationStep(representation: HaapiRepresentation): Haapi
 
 private fun handleRedirectStep(representation: HaapiRepresentation): HaapiStep
 {
-    if (representation.type != RepresentationType.REDIRECTION_STEP)
+    if (representation.type != RepresentationType.RedirectionStep)
     {
         return UnknownStep(representation)
     }
@@ -139,15 +141,18 @@ private fun handleRedirectStep(representation: HaapiRepresentation): HaapiStep
 
 private fun handlePollingStep(representation: HaapiRepresentation): HaapiStep
 {
-    if (representation.type != RepresentationType.POLLING_STEP)
+    if (representation.type != RepresentationType.PollingStep)
     {
         return UnknownStep(representation)
     }
-    if (representation.properties !is Properties.Polling)
+    val properties = representation.properties?.let { it }
+    if (properties !is Properties.Polling)
     {
         return InvalidStep(representation)
     }
-    return if (representation.properties.status == PollingStatus.PENDING)
+
+    val polling = representation.properties as? Properties.Polling
+    return if (polling?.status == PollingStatus.Pending)
     {
         val pollAction =
             representation.actions.findForm { it.kind == "poll" } ?: return InvalidStep(
@@ -156,7 +161,7 @@ private fun handlePollingStep(representation: HaapiRepresentation): HaapiStep
 
         val cancelAction = representation.actions.findForm { it.kind == "cancel" }
         PollingStep(
-            representation.properties,
+            properties,
             pollAction,
             cancelAction
         )
@@ -167,7 +172,7 @@ private fun handlePollingStep(representation: HaapiRepresentation): HaapiStep
                 representation
             )
         PollingStep(
-            representation.properties,
+            properties,
             continueAction,
             null
         )
@@ -176,16 +181,17 @@ private fun handlePollingStep(representation: HaapiRepresentation): HaapiStep
 
 private fun handleAuthorizationStep(representation: HaapiRepresentation): HaapiStep
 {
-    if (representation.type != RepresentationType.OAUTH_AUTHORIZATION_RESPONSE)
+    if (representation.type != RepresentationType.OauthAuthorizationResponse)
     {
         return UnknownStep(representation)
     }
-    if (representation.properties == null || representation.properties !is Properties.AuthorizationResponse)
+    val properties = representation.properties
+    if (properties == null || properties !is Properties.AuthorizationResponse)
     {
         return InvalidStep(representation)
     }
     return AuthorizationCompleted(
-        representation.properties
+        properties
     )
 }
 

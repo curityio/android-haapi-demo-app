@@ -20,6 +20,7 @@ import okhttp3.Response
 import org.json.JSONObject
 import com.example.haapidemo.*
 import com.example.haapidemo.models.*
+import com.example.haapidemo.models.haapi.*
 
 
 /*

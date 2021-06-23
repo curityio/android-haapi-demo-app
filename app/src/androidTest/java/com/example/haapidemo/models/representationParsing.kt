@@ -11,9 +11,11 @@
 
 package com.example.haapidemo.models
 
+import com.example.haapidemo.models.haapi.EnumLike
 import org.json.JSONException
 import org.json.JSONObject
 import java.time.Duration
+import com.example.haapidemo.models.haapi.*
 
 class ModelException(msg: String, cause: Throwable? = null) : RuntimeException(msg, cause)
 
@@ -31,17 +33,17 @@ object RepresentationParser
         )
     }
 
-    private val parseType = createParser<RepresentationType> { RepresentationType.UNKNOWN(it) }
+    private val parseType = createParser<RepresentationType> { RepresentationType.Unknown(it) }
 
     private fun parseProperties(type: RepresentationType, obj: JSONObject): Properties? =
         when (type)
         {
-            RepresentationType.POLLING_STEP -> PropertiesParser.parsePolling(
+            RepresentationType.PollingStep -> PropertiesParser.parsePolling(
                 (obj.getJSONObject(
                     "properties"
                 ))
             )
-            RepresentationType.OAUTH_AUTHORIZATION_RESPONSE -> PropertiesParser.parseAuthorizationResponse(
+            RepresentationType.OauthAuthorizationResponse -> PropertiesParser.parseAuthorizationResponse(
                 (obj.getJSONObject(
                     "properties"
                 ))
@@ -72,7 +74,7 @@ private object PropertiesParser
         )
     }
 
-    private val parseStatus = createParser<PollingStatus> { PollingStatus.UNKNOWN(it) }
+    private val parseStatus = createParser<PollingStatus> { PollingStatus.Unknown(it) }
 
     fun parsePolling(obj: JSONObject) = parsing("polling") {
         Properties.Polling(
@@ -111,7 +113,7 @@ private object ActionParser
 
     fun parseForm(obj: JSONObject) =
         Action.Form(
-            template = ActionTemplate.FORM,
+            template = ActionTemplate.Form,
             kind = obj.string("kind"),
             title = obj.messageOpt("title"),
             model = ActionFormModelParser.parse(obj.getJSONObject("model")),
@@ -125,7 +127,7 @@ private object ActionParser
 
     fun parseSelector(obj: JSONObject) =
         Action.Selector(
-            template = ActionTemplate.SELECTOR,
+            template = ActionTemplate.Selector,
             kind = obj.string("kind"),
             title = obj.messageOpt("title"),
             model = ActionSelectorModelParser.parse(obj.getJSONObject("model")),
@@ -138,7 +140,7 @@ private object ActionParser
 
     fun parseClientOperation(obj: JSONObject) =
         Action.ClientOperation(
-            template = ActionTemplate.CLIENT_OPERATION,
+            template = ActionTemplate.ClientOperation,
             model = ActionClientOperationModelParser.parse(obj.getJSONObject("model"))
         )
 }

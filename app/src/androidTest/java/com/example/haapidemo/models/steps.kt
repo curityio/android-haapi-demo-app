@@ -11,6 +11,7 @@
 
 package com.example.haapidemo.models
 
+import com.example.haapidemo.models.haapi.*
 /**
  * Sealed class hierarchy to represent the high-level steps described by the [HaapiRepresentation] class.
  *   - These classes only represent a subset of what is representable by [HaapiRepresentation].

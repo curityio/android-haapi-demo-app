@@ -18,11 +18,12 @@ import okhttp3.Request
 import org.junit.Test
 import org.junit.runner.RunWith
 import com.example.haapidemo.*
-import com.example.haapidemo.models.*
 import se.curity.identityserver.haapi.android.sdk.HaapiTokenManager
 import se.curity.identityserver.haapi.android.sdk.okhttp.OkHttpUtils.addHaapiInterceptor
 import java.net.URI
 import java.time.Duration
+import com.example.haapidemo.models.haapi.*
+import com.example.haapidemo.models.*
 
 /**
  * Tests that do complete or partial flows
@@ -115,13 +116,13 @@ class FlowTests
         val firstPolling = response.assertOfType<PollingStep>()
 
         firstPolling.properties.recipientOfCommunication.assertIs("xxxx@xxxxple.com")
-        firstPolling.properties.status.assertIs(PollingStatus.PENDING)
+        firstPolling.properties.status.assertIs(PollingStatus.Pending)
         firstPolling.cancel.assertNotNull()
         response = httpClient.submit(firstPolling.main).toHaapiStep()
         val secondPolling = response.assertOfType<PollingStep>()
 
         secondPolling.properties.recipientOfCommunication.assertIs("xxxx@xxxxple.com")
-        secondPolling.properties.status.assertIs(PollingStatus.PENDING)
+        secondPolling.properties.status.assertIs(PollingStatus.Pending)
         secondPolling.cancel.assertNotNull()
 
         response = httpClient.submit(secondPolling.cancel!!).toHaapiStep()
