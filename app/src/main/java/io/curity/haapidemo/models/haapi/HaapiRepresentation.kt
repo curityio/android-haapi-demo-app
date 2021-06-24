@@ -16,6 +16,8 @@
 
 package io.curity.haapidemo.models.haapi
 
+import io.curity.haapidemo.models.haapi.actions.Action
+
 /**
  * Representation of non-error HAAPI responses
  */

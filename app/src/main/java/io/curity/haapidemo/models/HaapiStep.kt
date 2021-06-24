@@ -12,6 +12,8 @@
 package io.curity.haapidemo.models
 
 import io.curity.haapidemo.models.haapi.*
+import io.curity.haapidemo.models.haapi.actions.Action
+import io.curity.haapidemo.models.haapi.actions.ActionModel
 
 /**
  * Sealed class hierarchy to represent the high-level steps described by the [HaapiRepresentation] class.
@@ -90,4 +92,7 @@ data class InvalidStep(
     val representation: HaapiRepresentation,
 ) : HaapiStep()
 
+data class ProblemStep(
+    val representation: HaapiRepresentation
+) : HaapiStep()
 

@@ -15,6 +15,10 @@ import org.json.JSONException
 import org.json.JSONObject
 import java.time.Duration
 import io.curity.haapidemo.models.haapi.*
+import io.curity.haapidemo.models.haapi.actions.Action
+import io.curity.haapidemo.models.haapi.actions.ActionModel
+import io.curity.haapidemo.models.haapi.actions.ActionTemplate
+import io.curity.haapidemo.models.haapi.actions.Arguments
 
 class ModelException(msg: String, cause: Throwable? = null) : RuntimeException(msg, cause)
 
@@ -69,7 +73,8 @@ private object PropertiesParser
             tokenType = obj.stringOpt("token_type"),
             idToken = obj.stringOpt("id_token"),
             sessionState = obj.stringOpt("session_state"),
-            expiresIn = obj.longFromNumberOrStringOpt("expires_in")?.let { Duration.ofSeconds(it) }
+            expiresIn = obj.longFromNumberOrStringOpt("expires_in")?.let { Duration.ofSeconds(it) },
+            refreshToken = obj.stringOpt("refresh_token")
         )
     }
 

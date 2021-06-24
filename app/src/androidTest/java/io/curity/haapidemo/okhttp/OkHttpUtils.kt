@@ -17,7 +17,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
 import org.json.JSONObject
-import io.curity.haapidemo.models.haapi.Action
+import io.curity.haapidemo.models.haapi.actions.Action
 import io.curity.haapidemo.models.haapi.Field
 import io.curity.haapidemo.API_MEDIA_TYPE
 import io.curity.haapidemo.HOST_NAME

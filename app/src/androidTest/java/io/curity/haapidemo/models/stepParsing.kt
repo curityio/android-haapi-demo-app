@@ -12,6 +12,8 @@
 package io.curity.haapidemo.models
 
 import io.curity.haapidemo.models.haapi.*
+import io.curity.haapidemo.models.haapi.actions.Action
+import io.curity.haapidemo.models.haapi.actions.ActionModel
 
 /**
  * Maps an [HaapiRepresentation] to one of the high-level [HaapiStep] concrete classes.
@@ -32,6 +34,11 @@ fun HaapiRepresentation.toHaapiStep(): HaapiStep =
         is RepresentationType.UserConsentStep -> UnknownStep(this)
         is RepresentationType.OauthAuthorizationResponse -> handleAuthorizationStep(this)
         is RepresentationType.Unknown -> UnknownStep(this)
+
+        is RepresentationType.IncorrectCredentialsProblem -> ProblemStep(this)
+        is RepresentationType.InvalidInputProblem -> ProblemStep(this)
+        is RepresentationType.UnexpectedProblem -> ProblemStep(this)
+        is RepresentationType.AuthorizationResponseProblem -> ProblemStep(this)
     }
 
 private fun handleAuthenticatorSelector(

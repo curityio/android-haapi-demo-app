@@ -14,8 +14,9 @@
  *  limitations under the License.
  */
 
-package io.curity.haapidemo.models.haapi
+package io.curity.haapidemo.models.haapi.actions
 
+import io.curity.haapidemo.models.haapi.Message
 import org.json.JSONObject
 
 sealed class Action

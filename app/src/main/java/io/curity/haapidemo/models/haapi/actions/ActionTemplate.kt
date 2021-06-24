@@ -14,22 +14,15 @@
  *  limitations under the License.
  */
 
-package io.curity.haapidemo.models.haapi
+package io.curity.haapidemo.models.haapi.actions
 
-sealed class Arguments
+import io.curity.haapidemo.models.haapi.EnumLike
+
+sealed class ActionTemplate(override val discriminator: String) : EnumLike
 {
-    class ExternalBrowser(
-        val href: String
-    ) : Arguments()
+    object Form : ActionTemplate("form")
+    object Selector : ActionTemplate("selector")
+    object ClientOperation : ActionTemplate("client-operation")
 
-    class BankID(
-        val href: String,
-        val autoStartToken: String,
-        val redirect: String,
-    ) : Arguments()
-
-    class EncapAutoActivation(
-        val href: String,
-        val activationCode: String,
-    ) : Arguments()
+    data class Unknown(val value: String) : ActionTemplate(value)
 }

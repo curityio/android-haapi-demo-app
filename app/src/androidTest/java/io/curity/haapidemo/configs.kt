@@ -27,7 +27,7 @@ val AUTHORIZATION_ENDPOINT = "$SCHEME://$HOST_NAME/dev/oauth/authorize"
 const val API_MEDIA_TYPE = "application/vnd.auth+json"
 
 @JvmField
-val CLIENT_ID: String = "haapi-public-client"
+val CLIENT_ID: String = "haapi-android-client"
 
 val AUTHORIZATION_REQUEST_URI: HttpUrl = AUTHORIZATION_ENDPOINT.toHttpUrl()
         .newBuilder()
