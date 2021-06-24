@@ -27,5 +27,11 @@ sealed class RepresentationType(override val discriminator: String) : EnumLike
     object UserConsentStep : RepresentationType("user-consent-step")
     object OauthAuthorizationResponse : RepresentationType("oauth-authorization-response")
 
+    // Problems
+    object IncorrectCredentialsProblem : RepresentationType("https://curity.se/problems/incorrect-credentials")
+    object InvalidInputProblem : RepresentationType("https://curity.se/problems/invalid-input")
+    object UnexpectedProblem : RepresentationType("https://curity.se/problems/unexpected")
+    object AuthorizationResponseProblem : RepresentationType("https://curity.se/problems/error-authorization-response")
+
     data class Unknown(val value: String) : RepresentationType(value)
 }
