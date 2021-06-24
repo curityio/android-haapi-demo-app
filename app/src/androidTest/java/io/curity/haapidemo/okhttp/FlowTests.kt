@@ -23,6 +23,7 @@ import io.curity.haapidemo.*
 import io.curity.haapidemo.models.*
 import io.curity.haapidemo.models.haapi.Message
 import io.curity.haapidemo.models.haapi.PollingStatus
+import io.curity.haapidemo.parsers.*
 
 /**
  * Tests that do complete or partial flows

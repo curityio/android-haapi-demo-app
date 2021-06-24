@@ -9,7 +9,7 @@
  * For further information, please contact Curity AB.
  */
 
-package io.curity.haapidemo.models
+package io.curity.haapidemo.parsers
 
 import org.json.JSONException
 import org.json.JSONObject

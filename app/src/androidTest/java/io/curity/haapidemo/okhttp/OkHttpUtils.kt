@@ -23,10 +23,9 @@ import io.curity.haapidemo.API_MEDIA_TYPE
 import io.curity.haapidemo.HOST_NAME
 import io.curity.haapidemo.SCHEME
 import io.curity.haapidemo.models.HaapiStep
-import io.curity.haapidemo.models.ModelException
-import io.curity.haapidemo.models.RepresentationParser
-import io.curity.haapidemo.models.toHaapiStep
-
+import io.curity.haapidemo.parsers.ModelException
+import io.curity.haapidemo.parsers.RepresentationParser
+import io.curity.haapidemo.parsers.toHaapiStep
 
 /*
  * OkHttp utilities

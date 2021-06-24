@@ -9,8 +9,9 @@
  * For further information, please contact Curity AB.
  */
 
-package io.curity.haapidemo.models
+package io.curity.haapidemo.parsers
 
+import io.curity.haapidemo.models.*
 import io.curity.haapidemo.models.haapi.*
 import io.curity.haapidemo.models.haapi.actions.Action
 import io.curity.haapidemo.models.haapi.actions.ActionModel
