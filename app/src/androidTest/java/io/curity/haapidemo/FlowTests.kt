@@ -9,8 +9,9 @@
  * For further information, please contact Curity AB.
  */
 
-package io.curity.haapidemo.okhttp
+package io.curity.haapidemo
 
+import androidx.test.ext.junit.runners.AndroidJUnit4
 import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -23,13 +24,16 @@ import io.curity.haapidemo.*
 import io.curity.haapidemo.models.*
 import io.curity.haapidemo.models.haapi.Message
 import io.curity.haapidemo.models.haapi.PollingStatus
+import io.curity.haapidemo.okhttp.*
 import io.curity.haapidemo.parsers.*
+import org.junit.runner.RunWith
 
 /**
  * Tests that do complete or partial flows
  * - using an OkHttp client with an [HaapiTokenManager] interceptor.
  * - using the [HaapiStep] hierarchy to handle the responses.
  */
+@RunWith(AndroidJUnit4::class)
 class FlowTests
 {
     @Test
@@ -126,7 +130,7 @@ class FlowTests
         secondPolling.cancel.assertNotNull()
 
         response = httpClient.submit(secondPolling.cancel!!).toHaapiStep()
-        val newAuthenticatorForm = response.assertOfType<InteractiveForm>()
+        response.assertOfType<InteractiveForm>()
 
         response = httpClient.submit(
             authenticatorForm.action,

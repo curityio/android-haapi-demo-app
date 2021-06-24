@@ -74,7 +74,7 @@ private fun handleAuthenticatorSelector(
                 }
                 AuthenticatorOption(
                     label = actionFormTitle,
-                    type = it.properties?.authenticatorType,
+                    type = it.properties.authenticatorType,
                     action = it
                 )
             }
