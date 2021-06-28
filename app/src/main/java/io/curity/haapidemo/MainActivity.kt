@@ -108,11 +108,6 @@ class MainActivity : AppCompatActivity() {
             .appendQueryParameter("response_type", "code")
             .appendQueryParameter("redirect_uri", redirectUri)
 
-//            // TODO: this should properly generate code challenge and state
-//            .appendQueryParameter("code_challenge", "ERNHshyzhznDQOKAIEkJl94N048wMAaN4jY-2xlVy_s")
-//            .appendQueryParameter("code_challenge_method", "S256")
-//            .appendQueryParameter("state", "1586511942384-OcG")
-
         authorizationEndpoint.split("/").forEach { pathSegment -> authorizeUrlBuilder.appendPath(pathSegment) }
 
         return authorizeUrlBuilder.build().toString()
