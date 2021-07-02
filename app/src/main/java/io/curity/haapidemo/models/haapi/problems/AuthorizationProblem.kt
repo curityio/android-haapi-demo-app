@@ -19,7 +19,7 @@ package io.curity.haapidemo.models.haapi.problems
 import io.curity.haapidemo.models.haapi.Link
 import io.curity.haapidemo.models.haapi.UserMessage
 
-data class AuhtorizationProblem(
+data class AuthorizationProblem(
     override val title: String,
     override val code: String?,
     override val messages: List<UserMessage>?,
