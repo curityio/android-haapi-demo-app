@@ -85,7 +85,7 @@ class MainActivity : AppCompatActivity() {
         haapiService?.startAuthorization(authorizationUrl)
     }
 
-    fun toggleJSON(button: View) {
+    fun toggleJSON(@Suppress("UNUSED_PARAMETER") button: View) {
         val view = findViewById<TextView>(R.id.api_response)
 
         val animationTo = if (jsonVisible) 1600f else 0f

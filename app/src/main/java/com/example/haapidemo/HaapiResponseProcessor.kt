@@ -259,8 +259,6 @@ class HaapiResponseProcessor(
             val action = model.getJSONArray("errorActions").getJSONObject(0)
             return processAction(action)
         }
-
-        return emptyList()
     }
 
     private fun processSelectorAuthenticator(selectorAction: JSONObject): List<View> {
