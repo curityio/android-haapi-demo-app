@@ -264,44 +264,57 @@ class HaapiFlowManager (
      * @return HaapiStep
      */
     private suspend fun requestHaapi(request: Request, httpClient: OkHttpClient = this.httpClient): HaapiStep {
-        return coroutineScope.async {
+        return withContext(coroutineScope.coroutineContext) {
             try {
                 val response = httpClient.newCall(request).execute()
                 val responseBody = response.body
 
                 if (responseBody == null) {
-                    SystemErrorStep(HaapiErrorTitle.UNEXPECTED.name, "ResponseBody is empty with status code ${response.code}")
+                    SystemErrorStep(
+                        HaapiErrorTitle.UNEXPECTED.name,
+                        "ResponseBody is empty with status code ${response.code}"
+                    )
                 }
                 val jsonObject = JSONObject(responseBody!!.string())
                 val contentType = response.header("content-type")
 
                 if (response.isSuccessful) {
-                    if (contentType == "application/vnd.auth+json") {
-                        representationParser.parse(jsonObject).toHaapiStep()
-                    } else if (contentType == "application/json") {
-                        val oAuthTokenResponse = representationParser.parseAccessToken(jsonObject)
-                        TokensStep(oAuthTokenResponse = oAuthTokenResponse)
-                    } else {
-                        SystemErrorStep(HaapiErrorTitle.UNEXPECTED.title, "Response was successful with " +
-                                "unsupported content-type : ${response.header("content-type")}")
+                    when (contentType) {
+                        "application/vnd.auth+json" -> {
+                            representationParser.parse(jsonObject).toHaapiStep()
+                        }
+                        "application/json" -> {
+                            val oAuthTokenResponse = representationParser.parseAccessToken(jsonObject)
+                            TokensStep(oAuthTokenResponse = oAuthTokenResponse)
+                        }
+                        else -> {
+                            SystemErrorStep(
+                                HaapiErrorTitle.UNEXPECTED.title, "Response was successful with " +
+                                        "unsupported content-type : ${response.header("content-type")}"
+                            )
+                        }
                     }
                 } else {
                     if (contentType == "application/problem+json") {
                         val problem = representationParser.parseProblem(jsonObject)
                         ProblemStep(problem)
                     } else {
-                        SystemErrorStep(HaapiErrorTitle.UNEXPECTED.title, "Response was unsuccessful with " +
-                                "unsupported content-type : ${response.header("content-type")}")
+                        SystemErrorStep(
+                            HaapiErrorTitle.UNEXPECTED.title, "Response was unsuccessful with " +
+                                    "unsupported content-type : ${response.header("content-type")}"
+                        )
                     }
                 }
-            }
-            catch (e: Exception) {
+            } catch (e: Exception) {
                 when (e) {
-                    is IOException, is java.lang.IllegalStateException -> SystemErrorStep(HaapiErrorTitle.HAAPI.title, e.message ?: "")
+                    is IOException, is IllegalStateException -> SystemErrorStep(
+                        HaapiErrorTitle.HAAPI.title,
+                        e.message ?: ""
+                    )
                     else -> SystemErrorStep(HaapiErrorTitle.NETWORK.title, e.message ?: "")
                 }
             }
-        }.await()
+        }
     }
 }
 
