@@ -18,20 +18,21 @@ package io.curity.haapidemo.models.haapi
 
 sealed class Field(
     val name: String,
+    val value: String?
 )
 {
     class Hidden(
         name: String,
-        val value: String
-    ) : Field(name)
+        value: String
+    ) : Field(name, value)
 
     class Text(
         name: String,
+        value: String?,
         val label: Message?,
         val placeholder: String?,
-        val value: String?,
         val kind: TextKind?
-    ) : Field(name)
+    ) : Field(name, value)
 
     sealed class TextKind(override val discriminator: String) : EnumLike
     {
@@ -48,28 +49,30 @@ sealed class Field(
         name: String,
         val label: Message?,
         val placeholder: String?,
-        val value: String?,
-    ) : Field(name)
+        value: String?,
+    ) : Field(name, value)
 
     class Password(
         name: String,
+        value: String?,
         val label: Message?,
         val placeholder: String?,
-    ) : Field(name)
+    ) : Field(name, value)
 
     class Checkbox(
         name: String,
         val label: Message?,
-        val value: String?,
+        value: String?,
         val checked: Boolean,
         val readonly: Boolean,
-    ) : Field(name)
+    ) : Field(name, value)
 
     class Select(
         name: String,
+        value: String?,
         label: Message,
         options: List<Option>
-    ) : Field(name)
+    ) : Field(name, value)
     {
         class Option(
             val label: Message,
@@ -80,6 +83,6 @@ sealed class Field(
 
     class Context(
         name: String
-    ) : Field(name)
+    ) : Field(name, null)
 
 }

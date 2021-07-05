@@ -60,7 +60,7 @@ fun OkHttpClient.submit(action: Action.Form, vararg pairs: Pair<String, String>)
             action.model.fields.forEach { field ->
                 if (field is Field.Hidden)
                 {
-                    formBuilder.add(field.name, field.value)
+                    formBuilder.add(field.name, field.value ?: "")
                 } else {
                     val value = map[field.name] ?: throw Exception("Unable to find value for field ${field.name}")
                     formBuilder.add(field.name, value)
