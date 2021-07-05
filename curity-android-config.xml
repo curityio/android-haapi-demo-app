@@ -1,0 +1,76 @@
+<!--
+  ~ Copyright (C) 2020 Curity AB. All rights reserved.
+  ~
+  ~ The contents of this file are the property of Curity AB.
+  ~ You may not copy or use this file, in either source code
+  ~ or executable form, except in compliance with terms
+  ~ set by Curity AB.
+  ~
+  ~ For further information, please contact Curity AB.
+  -->
+
+<config xmlns="http://tail-f.com/ns/config/1.0">
+    <profiles xmlns="https://curity.se/ns/conf/base">
+        <profile>
+            <id>oauth-dev</id>
+            <type xmlns:as="https://curity.se/ns/conf/profile/oauth">as:oauth-service</type>
+            <expose-detailed-error-messages/>
+            <settings>
+                <authorization-server xmlns="https://curity.se/ns/conf/profile/oauth">
+                    <client-store>
+                        <config-backed>
+                            <client>
+                                <id>haapi-public-client</id>
+                                <client-name>Haapi Public Client</client-name>
+                                <no-authentication>true</no-authentication>
+                                <redirect-uris tags=" aHR0cHM6Ly8je0xPQ0FMSE9TVCB8IGxvY2FsaG9zdH06Nzc3Ny9jbGllbnQtY2FsbGJhY2s= ">haapi:start</redirect-uris>
+                                <audience>haapi-client</audience>
+                                <scope>address</scope>
+                                <scope>email</scope>
+                                <scope>openid</scope>
+                                <scope>phone</scope>
+                                <scope>profile</scope>
+                                <scope>read</scope>
+                                <scope>write</scope>
+                                <allowed-origins>https://localhost:8443</allowed-origins>
+                                <allowed-origins>https://example.com:8443</allowed-origins>
+                                <capabilities>
+                                    <code/>
+                                    <implicit/>
+                                    <client-credentials/>
+                                    <haapi/>
+                                </capabilities>
+                                <attestation>
+                                    <android>
+                                        <package-name>com.example.haapidemo</package-name>
+<!--                                        <package-name>io.curity.androidcat</package-name>-->
+<!--                                        <package-name>se.curity.identityserver.haapi.android.sdk.test</package-name>-->
+                                        <signature-digest>rIplnew74f38oCiH+qvg4KUEvhV6LAXLhkf+m+V71B8=</signature-digest>
+                                        <android-policy>emulator-policy</android-policy>
+                                    </android>
+                                </attestation>
+                            </client>
+                        </config-backed>
+                    </client-store>
+                </authorization-server>
+            </settings>
+        </profile>
+    </profiles>
+    <facilities xmlns="https://curity.se/ns/conf/base">
+        <client-attestation>
+            <android-policy xmlns="https://curity.se/ns/conf/client-attestation">
+                <id>emulator-policy</id>
+                <verify-boot-state>false</verify-boot-state>
+                <minimum-security-level>software</minimum-security-level>
+                <override-certificate-chain-validation>
+                    <do-not-validate-certificate-chain/>
+                </override-certificate-chain-validation>
+            </android-policy>
+            <android-policy xmlns="https://curity.se/ns/conf/client-attestation">
+                <id>secure-policy</id>
+                <verify-boot-state>true</verify-boot-state>
+                <minimum-security-level>trusted-env</minimum-security-level>
+            </android-policy>
+        </client-attestation>
+    </facilities>
+</config>
