@@ -21,6 +21,7 @@ import io.curity.haapidemo.models.haapi.actions.Action
 import io.curity.haapidemo.models.haapi.Field
 import io.curity.haapidemo.API_MEDIA_TYPE
 import io.curity.haapidemo.HOST_NAME
+import io.curity.haapidemo.PORT
 import io.curity.haapidemo.SCHEME
 import io.curity.haapidemo.models.HaapiStep
 import io.curity.haapidemo.parsers.ModelException
@@ -100,5 +101,5 @@ private fun absolute(url: String) =
         url
     } else
     {
-        "$SCHEME://$HOST_NAME$url"
+        "$SCHEME://$HOST_NAME$PORT$url"
     }
