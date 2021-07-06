@@ -38,9 +38,9 @@ class HaapiFlowManagerTest {
     private val flowConfiguration: HaapiFlowConfiguration = HaapiFlowConfiguration(
         name = "haapi-android-client",
         clientId = "haapi-android-client",
-        baseURLString = "https://192.168.1.114:8443",
-        tokenEndpointURI = "https://192.168.1.114:8443/dev/oauth/token",
-        authorizationEndpointURI = "https://192.168.1.114:8443/dev/oauth/authorize",
+        baseURLString = "https://$EMULATOR_HOST_IP$PORT",
+        tokenEndpointURI = "https://$EMULATOR_HOST_IP$PORT/dev/oauth/token",
+        authorizationEndpointURI = "https://$EMULATOR_HOST_IP$PORT/dev/oauth/authorize",
         metaDataBaseURLString = "",
         redirectURI = "haapi:start",
         followRedirect = true,
@@ -87,8 +87,10 @@ class HaapiFlowManagerTest {
         // Given: A user that just created an instance of HaapiFlowManager with a valid configuration with automatic redirect
         flowManager = HaapiFlowManager(flowConfiguration, dispatcher = testCoroutineScopeRule.dispatcher)
         Assert.assertNull("Expecting null because the flow did not start", flowManager.liveStep.value)
+
         // When: HaapiFlowManager.start() is called
         val haapiStep = flowManager.start()
+
         // Then: An AuthenticatorSelector should be received
         Assert.assertTrue("Expecting haapiStep to be AuthenticatorSelector", haapiStep is AuthenticatorSelector)
     }
@@ -99,8 +101,10 @@ class HaapiFlowManagerTest {
         val invalidConfiguration = flowConfiguration.copy(clientId = "invalid-name")
         Assert.assertEquals("invalid-name", invalidConfiguration.clientId )
         flowManager = HaapiFlowManager(invalidConfiguration, dispatcher = testCoroutineScopeRule.dispatcher)
+
         // When: HaapiFlowManager.start() is called
         val invalidStep = flowManager.start()
+
         // Then: A SystemErrorStep should be received
         Assert.assertTrue("Expecting haapiStep to be SystemErrorStep : $invalidStep", invalidStep is SystemErrorStep)
     }
@@ -112,8 +116,10 @@ class HaapiFlowManagerTest {
         Assert.assertNull("Expecting haapiStep to be null", flowManager.haapiStep)
         flowManager.start()
         Assert.assertNotNull("Expecting haapiStep not to be null", flowManager.haapiStep)
+
         // When: HaapiFlowManager.reset() is called
         flowManager.reset()
+
         // Then: flowManager.haapiStep is expected to be null
         Assert.assertNull("Expecting haapiStep to be null after reset", flowManager.haapiStep)
     }
@@ -128,8 +134,10 @@ class HaapiFlowManagerTest {
         val interactiveForm = flowManager.submitForm(usernameAuthenticator.action.model, emptyMap()) as InteractiveForm
         val newStep = flowManager.submitForm(interactiveForm.action.model, mapOf("username" to "testuser")) as AuthorizationCompleted
         val code = newStep.responseParameters.code!!
+
         // When: Fetching the access token with a valid authorization code
         val finalStep = flowManager.fetchAccessToken(code)
+
         // Then: An AccessTokenStep should be received
         Assert.assertTrue("Expecting", finalStep is TokensStep)
         val accessTokenStep = finalStep as TokensStep
@@ -147,9 +155,11 @@ class HaapiFlowManagerTest {
         val interactiveForm = flowManager.submitForm(usernameAuthenticator.action.model, emptyMap()) as InteractiveForm
         val newStep = flowManager.submitForm(interactiveForm.action.model, mapOf("username" to "testuser")) as AuthorizationCompleted
         val code = newStep.responseParameters.code!!
+
         // When: Fetching the accesstoken with an invalid authorization code
         val invalidAuthorizationCode = "$code$"
         val finalStep = flowManager.fetchAccessToken(invalidAuthorizationCode)
+
         // Then: A SystemErrorStep should be received
         Assert.assertTrue("Expecting a SystemErrorStep", finalStep is SystemErrorStep)
     }
@@ -162,9 +172,11 @@ class HaapiFlowManagerTest {
         val usernameAuthenticator = authenticatorSelector.authenticators.first { it.type == "username" && it.label.message == "username" }
         val interactiveForm = flowManager.submitForm(usernameAuthenticator.action.model, emptyMap()) as InteractiveForm
         val accessTokenStep = flowManager.submitForm(interactiveForm.action.model, mapOf("username" to "testuser")) as TokensStep
+
         // When: Refreshing its access token with an invalid refresh_token
         val invalidRefreshToken = accessTokenStep.oAuthTokenResponse.refreshToken!! + "$"
         val refreshStep = flowManager.refreshAccessToken(invalidRefreshToken)
+
         // Then: A SystemErrorStep should be received
         Assert.assertTrue("Expecting a SystemErrorStep", refreshStep is SystemErrorStep)
     }
@@ -177,8 +189,10 @@ class HaapiFlowManagerTest {
         val usernameAuthenticator = authenticatorSelector.authenticators.first { it.type == "username" && it.label.message == "username" }
         val interactiveForm = flowManager.submitForm(usernameAuthenticator.action.model, emptyMap()) as InteractiveForm
         val accessTokenStep = flowManager.submitForm(interactiveForm.action.model, mapOf("username" to "testuser")) as TokensStep
+
         // When: Refreshing its access token
         val refreshStep = flowManager.refreshAccessToken(accessTokenStep.oAuthTokenResponse.refreshToken!!)
+
         // Then: A TokensStep should be received containing a new access_token and refresh_token
         Assert.assertTrue("Expecting to have a TokenStep: $refreshStep", refreshStep is TokensStep)
         val newAccessTokenStep = refreshStep as TokensStep
@@ -203,8 +217,10 @@ class HaapiFlowManagerTest {
         val sqlAuthenticator = authenticatorSelector.authenticators.first { it.type == "html-form" && it.label.message == "A standard SQL backed authenticator" }
         val sqlAction = sqlAuthenticator.action.model
         flowManager.reset()
+
         // When: Submit an action instead of start()
         val newStep = flowManager.submitForm(sqlAction, emptyMap())
+
         // Then: A SystemErrorStep should be received
         Assert.assertTrue("Expecting a SystemErrorStep", newStep is SystemErrorStep)
     }
@@ -215,9 +231,11 @@ class HaapiFlowManagerTest {
         flowManager = HaapiFlowManager(flowConfiguration, dispatcher = testCoroutineScopeRule.dispatcher)
         val authenticatorSelector = flowManager.start() as AuthenticatorSelector
         val sqlAuthenticator = authenticatorSelector.authenticators.first { it.type == "html-form" && it.label.message == "A standard SQL backed authenticator" }
+
         // When: Submit a valid action
         val validAction = sqlAuthenticator.action.model
         val newStep = flowManager.submitForm(validAction, emptyMap())
+
         // Then: A new valid step is received
         Assert.assertTrue("Expecting an InteractiveForm", newStep is InteractiveForm)
         Assert.assertNotEquals("Expecting a new step", authenticatorSelector, newStep)
@@ -232,8 +250,10 @@ class HaapiFlowManagerTest {
         val interactiveForm = flowManager.submitForm(sqlAuthenticator.action.model, emptyMap()) as InteractiveForm
         val aLink = interactiveForm.links.first()
         flowManager.reset()
+
         // When: Follow a link
         val newStep = flowManager.followLink(aLink)
+
         // Then: A SystemErrorsStep should be received
         Assert.assertTrue("Expecting a SystemErrorStep", newStep is SystemErrorStep)
     }
@@ -245,10 +265,12 @@ class HaapiFlowManagerTest {
         val authenticatorSelector = flowManager.start() as AuthenticatorSelector
         val sqlAuthenticator = authenticatorSelector.authenticators.first { it.type == "html-form" && it.label.message == "A standard SQL backed authenticator" }
         val interactiveForm = flowManager.submitForm(sqlAuthenticator.action.model, emptyMap()) as InteractiveForm
+
         // When: Follow a link
         val aLink = interactiveForm.links.firstOrNull()
         Assert.assertNotNull("Expecting a link for a SQL backed authenticator", aLink)
         val newStep = flowManager.followLink(aLink!!)
+
         // Then: A new step is received
         Assert.assertNotEquals("Expecting a step different than interactiveForm", interactiveForm, newStep)
     }
@@ -258,8 +280,10 @@ class HaapiFlowManagerTest {
         // Given: A user close the flowManager
         flowManager = HaapiFlowManager(flowConfiguration, dispatcher = testCoroutineScopeRule.dispatcher)
         flowManager.close()
+
         // When: Start()
         var newStep = flowManager.start()
+        
         // Then: A SystemErrorsStep should be received
         Assert.assertTrue("Expecting a SystemErrorStep", newStep is SystemErrorStep)
     }
