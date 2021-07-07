@@ -11,7 +11,6 @@ import android.widget.TextView
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.constraintlayout.widget.ConstraintLayout
 import io.curity.haapidemo.R
-import kotlinx.android.synthetic.main.activity_main.view.*
 
 /*
  *  Copyright (C) 2021 Curity AB
