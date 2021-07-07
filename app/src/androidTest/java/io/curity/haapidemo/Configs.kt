@@ -16,7 +16,7 @@ import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import java.net.URI
 
-const val EMULATOR_HOST_IP = "192.168.1.114"
+const val EMULATOR_HOST_IP = "10.0.2.2"
 val BASE_URI: URI = URI("https://$EMULATOR_HOST_IP:8443")
 val HOST_NAME = BASE_URI.host
 val SCHEME = BASE_URI.scheme
