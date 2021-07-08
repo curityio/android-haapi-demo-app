@@ -16,6 +16,7 @@
 
 package io.curity.haapidemo.flow
 
+import androidx.lifecycle.LiveData
 import io.curity.haapidemo.models.HaapiStep
 import io.curity.haapidemo.models.haapi.Link
 import io.curity.haapidemo.models.haapi.actions.ActionModel
@@ -25,10 +26,9 @@ interface HaapiFlowManageable: HaapiFlowable, HaapiSubmitable
 interface HaapiFlowable {
 
     /**
-     * Returns an optional HaapiStep.
+     * Returns a LiveData of an optional HaapiStep. The initial value of HaapiStep is `null`.
      */
-    val haapiStep: HaapiStep?
-        get() = null
+    val liveStep: LiveData<HaapiStep?>
 
     /**
      * Starts the Haapi Flow and returns a new HaapiStep

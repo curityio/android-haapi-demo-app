@@ -28,7 +28,6 @@ import org.junit.rules.TestWatcher
 import org.junit.runner.Description
 import org.junit.runner.RunWith
 import kotlinx.coroutines.test.runBlockingTest
-import okhttp3.OkHttpClient
 import org.junit.*
 
 @RunWith(AndroidJUnit4::class)
@@ -113,15 +112,15 @@ class HaapiFlowManagerTest {
     fun reset() = testCoroutineScopeRule.runBlockingTest {
         // Given: A user with an instance of HaapiFlowManager has called start() with a returned not null haapiStep
         flowManager = HaapiFlowManager(flowConfiguration, dispatcher = testCoroutineScopeRule.dispatcher)
-        Assert.assertNull("Expecting haapiStep to be null", flowManager.haapiStep)
+        Assert.assertNull("Expecting haapiStep to be null", flowManager.liveStep.value)
         flowManager.start()
-        Assert.assertNotNull("Expecting haapiStep not to be null", flowManager.haapiStep)
+        Assert.assertNotNull("Expecting haapiStep not to be null", flowManager.liveStep.value)
 
         // When: HaapiFlowManager.reset() is called
         flowManager.reset()
 
         // Then: flowManager.haapiStep is expected to be null
-        Assert.assertNull("Expecting haapiStep to be null after reset", flowManager.haapiStep)
+        Assert.assertNull("Expecting haapiStep to be null after reset", flowManager.liveStep.value)
     }
 
     @Test
@@ -291,7 +290,7 @@ class HaapiFlowManagerTest {
     @Test
     fun completeSQLAuthenticationLoginWithoutRedirect() = testCoroutineScopeRule.runBlockingTest {
         flowManager = HaapiFlowManager(flowConfiguration, dispatcher = testCoroutineScopeRule.dispatcher)
-        Assert.assertNull("Expecting haapiStep as null", flowManager.haapiStep)
+        Assert.assertNull("Expecting haapiStep as null", flowManager.liveStep.value)
         val haapiStep = flowManager.start()
         Assert.assertTrue("Expecting an AuthenticatorSelector : $haapiStep", haapiStep is AuthenticatorSelector)
         val authenticatorSelector = haapiStep as AuthenticatorSelector

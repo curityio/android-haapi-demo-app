@@ -17,6 +17,7 @@
 package io.curity.haapidemo.flow
 
 import android.util.Log
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import io.curity.haapidemo.models.*
 import io.curity.haapidemo.models.haapi.Link
@@ -68,15 +69,9 @@ class HaapiFlowManager (
 
     private val representationParser = RepresentationParser
 
-    private var _haapiStep: HaapiStep? = null
-    override val haapiStep: HaapiStep?
-        get() = _haapiStep
-
-    /**
-     * A MutableLiveData property of "HaapiStep?". Before calling [HaapiFlowManager.start], the value is `null`.
-     */
-    var liveStep: MutableLiveData<HaapiStep?> = MutableLiveData<HaapiStep?>(null)
-        private set
+    private val _liveStep = MutableLiveData<HaapiStep?>(null)
+    override val liveStep: LiveData<HaapiStep?>
+        get() = _liveStep
 
     private val haapiTokenManager: HaapiTokenManager by lazy {
         val tokenManagerBuilder = HaapiTokenManager.Builder(
@@ -128,7 +123,7 @@ class HaapiFlowManager (
     }
 
     override suspend fun submitForm(form: ActionModel.Form, parameters: Map<String, String>): HaapiStep {
-        if (_haapiStep == null) {
+        if (_liveStep.value == null) {
             return SystemErrorStep(HaapiErrorTitle.INVALID_ACTION.title, "Cannot submitForm because the HaapiFlow did not start or a " +
                     "systemError happened.. Please use start() or reset().")
         }
@@ -180,7 +175,7 @@ class HaapiFlowManager (
     }
 
     override suspend fun followLink(link: Link): HaapiStep {
-        if (_haapiStep == null) {
+        if (_liveStep.value == null) {
             return SystemErrorStep(HaapiErrorTitle.INVALID_ACTION.title, "Cannot followLink because the HaapiFlow did not start or a " +
                     "systemError happened. Please use start() or reset().")
         }
@@ -252,8 +247,7 @@ class HaapiFlowManager (
     }
 
     private fun updateStep(newStep: HaapiStep?) {
-        _haapiStep = newStep
-        liveStep.postValue(_haapiStep)
+        _liveStep.postValue(newStep)
     }
 
     /**
