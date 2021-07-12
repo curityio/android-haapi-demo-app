@@ -24,7 +24,8 @@
         android:roundIcon="@mipmap/curity_logo_symbol"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
-        <activity android:name="io.curity.haapidemo.MainActivity">
+        <activity android:name=".FlowActivity"></activity>
+        <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
