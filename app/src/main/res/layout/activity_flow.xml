@@ -20,7 +20,9 @@
     android:id="@+id/mainLayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_margin="8dp"
+    android:layout_marginTop="48dp"
+    android:background="@drawable/rounded_top_corners_shape"
+    android:elevation="8dp"
     tools:context="io.curity.haapidemo.FlowActivity">
 
     <ProgressBar
