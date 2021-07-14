@@ -44,7 +44,11 @@ class MainActivity : AppCompatActivity() {
         // You can use this to get the signature that should be registered at the Curity Identity Server
         val packageInfo =
             packageManager.getPackageInfo(packageName, PackageManager.GET_SIGNING_CERTIFICATES)
-        val signatures =  packageInfo.signingInfo.apkContentsSigners.map { SHA256(it.toByteArray()) }
+        val signatures = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+            packageInfo.signingInfo.apkContentsSigners.map { SHA256(it.toByteArray()) }
+        } else {
+            "Impossible to get because your API version is too low. Please check in the README how to get the API signature"
+        }
         Log.d("PackageName", packageName)
         Log.d("AppInfo", "APK signatures $signatures")
     }

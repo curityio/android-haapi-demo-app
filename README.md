@@ -6,7 +6,7 @@
 This is an example Android app which uses the Curity Identity Server's Hypermedia API to perform an
 OAuth2 flow with authentication done completely from the app, without the need of an external browser.
 
-Note: The app needs at least Android 9.0 (*Pie*, API level 28) to properly use the attestation features.
+Note: The app needs at least Android 8.0 (*Oreo*, API level 26) to properly use the attestation features.
 You will need the Curity Identity Server at least in version 5.4. to work with this app.
 
 ## Getting started
@@ -14,6 +14,18 @@ You will need the Curity Identity Server at least in version 5.4. to work with t
 ### Configure the identity server
 
 Navigate to your identity server admin page and upload *curity-android-config.xml* and commit the changes.
+
+### How to get the API Signature ?
+
+#### Running a device with an API version >= API 28 (Android 9.0, Pie)
+
+When starting the demo application, in Logcat, you should the APK Signature printed in DEBUG mode.
+
+`2021-07-14 12:22:37.952 9631-9631/io.curity.haapidemo D/AppInfo: APK signatures $RESULT$`
+
+#### Running a device with an API version < API 28 (Android 9.0, Pie)
+
+Follow the instructions in this page: https://curity.io/docs/idsvr/latest/developer-guide/haapi/index.html#android-client-attestation-configuration
 
 ## Running the example
 
