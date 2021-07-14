@@ -20,5 +20,6 @@
         <attr name="textAppearanceButton" format="reference"/>
         <attr name="tintColor" format="color" />
         <attr name="android:foreground" />
+        <attr name="android:text" />
     </declare-styleable>
 </resources>

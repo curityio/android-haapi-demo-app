@@ -83,6 +83,9 @@ class ProgressButton @JvmOverloads constructor(
                     val progressBarColor = getColor(R.styleable.ProgressButton_tintColor, Color.parseColor("#FFFFFF"))
                     progressBar.indeterminateDrawable.setTint(progressBarColor)
 
+                    val text = getText(R.styleable.ProgressButton_android_text)
+                    textView.setText(text)
+
                 } finally {
                     recycle()
                 }
