@@ -15,11 +15,19 @@
  */
 package io.curity.haapidemo
 
+import android.content.Context
 import android.os.Bundle
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.datastore.preferences.preferencesDataStore
+import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.findNavController
 import androidx.navigation.ui.setupWithNavController
+import io.curity.haapidemo.ui.settings.HaapiFlowConfigurationRepository
+import io.curity.haapidemo.ui.settings.SettingsListViewModel
+import io.curity.haapidemo.ui.settings.SettingsListViewModelFactory
+
+val Context.configurationDataStore by preferencesDataStore("io.curity.haapidemo.datastore.configuration")
 
 class MainActivity : AppCompatActivity() {
 
@@ -30,5 +38,10 @@ class MainActivity : AppCompatActivity() {
 
         val navController = findNavController(R.id.nav_host_fragment)
         navView.setupWithNavController(navController)
+
+        // Register ViewModel
+        ViewModelProvider(this,
+            SettingsListViewModelFactory(HaapiFlowConfigurationRepository(dataStore = configurationDataStore))
+        ).get(SettingsListViewModel::class.java)
     }
 }

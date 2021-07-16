@@ -15,14 +15,61 @@
  */
 package io.curity.haapidemo.ui.settings
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.*
+import io.curity.haapidemo.flow.HaapiFlowConfiguration
 
-class SettingsListViewModel : ViewModel() {
+class SettingsListViewModel(
+    private val repository: HaapiFlowConfigurationRepository
+) : ViewModel() {
+
+    private val configsFlow = repository.configurationsFlow
 
     private val _text = MutableLiveData<String>().apply {
         value = "This is a Fragment"
     }
     val text: LiveData<String> = _text
+
+    val configurations: LiveData<MutableList<HaapiFlowConfiguration>> = configsFlow.asLiveData()
+
+    suspend fun addNewConfiguration(): HaapiFlowConfiguration {
+        val result = HaapiFlowConfiguration.newInstance("haapi-android-client")
+        repository.appendNewConfiguration(result)
+        return result
+    }
+
+    suspend fun updateConfiguration(config: HaapiFlowConfiguration, index: Int) {
+        repository.updateConfiguration(config, index)
+    }
+
+    fun configurationAt(index: Int): HaapiFlowConfiguration? {
+        return configurations.value?.get(index)
+    }
+}
+
+class SettingsListViewModelFactory(
+    private val repository: HaapiFlowConfigurationRepository
+): ViewModelProvider.Factory {
+
+    override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(SettingsListViewModel::class.java)) {
+            return SettingsListViewModel(repository) as T
+        }
+
+        throw IllegalArgumentException("Unknown ViewModel class SettingsListViewModel")
+    }
+}
+
+private fun HaapiFlowConfiguration.Companion.newInstance(name: String): HaapiFlowConfiguration {
+    return HaapiFlowConfiguration(
+        name = name,
+        clientId = "haapi-android-client",
+        baseURLString = "https://",
+        tokenEndpointURI = "https:///dev/oauth/token",
+        authorizationEndpointURI = "https:///dev/oauth/authorize",
+        metaDataBaseURLString = "",
+        redirectURI = "haapi:start",
+        followRedirect = true,
+        isSSLTrustVerificationEnabled = false,
+        selectedScopes = listOf("open", "profile")
+    )
 }
