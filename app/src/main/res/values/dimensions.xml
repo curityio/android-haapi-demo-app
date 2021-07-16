@@ -16,4 +16,7 @@
     -->
 <resources>
     <dimen name="cornerRadius">6dp</dimen>
+    <dimen name="spacing">16dp</dimen>
+    <dimen name="tabBarHeight">56dp</dimen>
+    <dimen name="componentSpacing">8dp</dimen>
 </resources>
