@@ -38,7 +38,12 @@ class ProfileActivity : AppCompatActivity() {
     private lateinit var viewModel: ProfileViewModel
     private lateinit var recyclerView: RecyclerView
 
-    private val adapter by lazy { ProfileAdapter(clickHandler = { content, position -> selectItem(content, position) }) }
+    private val adapter by lazy {
+        ProfileAdapter(
+            clickHandler = { content, position -> selectItem(content, position) },
+            toggleHandler = { position -> toggleItem(position) }
+        )
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -89,6 +94,12 @@ class ProfileActivity : AppCompatActivity() {
         builder.show()
     }
 
+    private fun toggleItem(index: Int) {
+        lifecycleScope.launch {
+            viewModel.updateBoolean(index = ProfileIndex.fromInt(index))
+        }
+    }
+
     companion object {
         private const val EXTRA_HAAPI_CONFIGURATION = "io.curity.haapidemo.profileActivity.extra.configuration"
         private const val EXTRA_HAAPI_INDEX_CONFIGURATION = "io.curity.haapidemo.profileActivity.extra.index.configuration"
@@ -112,7 +123,12 @@ enum class ProfileIndex {
     ItemMetaDataURL,
     SectionEndpoints,
     ItemTokenEndpointURI,
-    ItemAuthorizationEndpointURI;
+    ItemAuthorizationEndpointURI,
+    SectionToggles,
+    ItemFollowRedirect,
+    ItemAutomaticPolling,
+    ItemAutoAuthorizationChallenged,
+    ItemSSLTrustVerification;
 
     companion object {
         fun fromInt(value: Int) = ProfileIndex.values().first { it.ordinal == value }

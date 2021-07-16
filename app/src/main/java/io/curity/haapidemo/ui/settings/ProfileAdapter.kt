@@ -22,13 +22,18 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import io.curity.haapidemo.uicomponents.SectionViewHolder
 import io.curity.haapidemo.uicomponents.TextViewHolder
+import io.curity.haapidemo.uicomponents.ToggleViewHolder
 
-class ProfileAdapter(private val clickHandler: (ProfileItem.Content, Int) -> Unit): ListAdapter<ProfileItem, RecyclerView.ViewHolder>(CONFIG_COMPARATOR) {
+class ProfileAdapter(
+    private val clickHandler: (ProfileItem.Content, Int) -> Unit,
+    private val toggleHandler: (Int) -> Unit
+): ListAdapter<ProfileItem, RecyclerView.ViewHolder>(CONFIG_COMPARATOR) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return when(viewType) {
             ItemType.Header.ordinal -> SectionViewHolder.from(parent)
             ItemType.Content.ordinal -> TextViewHolder.from(parent)
+            ItemType.Toggle.ordinal -> ToggleViewHolder.from(parent)
             else -> throw ClassCastException("No class for viewType $viewType")
         }
     }
@@ -47,6 +52,12 @@ class ProfileAdapter(private val clickHandler: (ProfileItem.Content, Int) -> Uni
                 )
                 holder.itemView.setOnClickListener { clickHandler(contentItem, position) }
             }
+            is ToggleViewHolder -> {
+                val toggleItem = getItem(position) as ProfileItem.Toggle
+                holder.bind(toggleItem.label, toggleItem.isToggled) {
+                    toggleHandler(position)
+                }
+            }
         }
     }
 
@@ -54,6 +65,7 @@ class ProfileAdapter(private val clickHandler: (ProfileItem.Content, Int) -> Uni
         return when(getItem(position)) {
             is ProfileItem.Header -> ItemType.Header.ordinal
             is ProfileItem.Content -> ItemType.Content.ordinal
+            is ProfileItem.Toggle -> ItemType.Toggle.ordinal
         }
     }
 
@@ -71,7 +83,8 @@ class ProfileAdapter(private val clickHandler: (ProfileItem.Content, Int) -> Uni
 
     private enum class ItemType {
         Header,
-        Content
+        Content,
+        Toggle
     }
 
 }
@@ -85,7 +98,11 @@ sealed class ProfileItem {
     }
 
     data class Content(val header: String, val text: String): ProfileItem() {
-        override val id: Long = header.hashCode().toLong() + text.hashCode().toLong()
+        override val id: Long = header.hashCode().toLong()
+    }
+
+    data class Toggle(val label: String, val isToggled: Boolean): ProfileItem() {
+        override val id: Long = label.hashCode().toLong()
     }
 
 }

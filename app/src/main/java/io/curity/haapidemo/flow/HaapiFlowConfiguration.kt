@@ -34,9 +34,10 @@ import java.net.URI
  * @property [metaDataBaseURLString] A String that represents a metadata endpoint
  * @property [redirectURI] A String that represents a redirect URI. Please check with your curity identity server
  * configuration
- * @property [followRedirect] A Boolean that represents if `HaapiFlowManager` will automatically or not handle the redirect flow.
  * @property [keyStoreAlias] A String that represents the name of the key store entry. `haapi-demo-app` is the default
  * value. It is important this value is unique. Otherwise, `HaapiFlowManager` will not be able to start.
+ * @property [followRedirect] A Boolean that represents if `HaapiFlowManager` will automatically or not handle the redirect flow.
+ * @property [isAutoPollingEnabled] A Boolean that represents if HaapiFlowManager` will automatically or not handle the polling process.
  * @property [isAutoAuthorizationChallengedEnabled] A Boolean that represents if `HaapiFlowManager` will automatically
  * or not handle the authorization flow to retrieve the access token. `true` is the default value.
  * @property [isSSLTrustVerificationEnabled] A Boolean that represents if `HaapiFlowManager` will trust or not the SSL
@@ -54,10 +55,11 @@ data class HaapiFlowConfiguration(
     var authorizationEndpointURI: String,
     var metaDataBaseURLString: String,
     var redirectURI: String,
-    val followRedirect: Boolean,
     val keyStoreAlias: String = "haapi-demo-app",
-    val isAutoAuthorizationChallengedEnabled: Boolean = true,
-    val isSSLTrustVerificationEnabled: Boolean = true,
+    var followRedirect: Boolean = true,
+    var isAutoPollingEnabled: Boolean = true,
+    var isAutoAuthorizationChallengedEnabled: Boolean = true,
+    var isSSLTrustVerificationEnabled: Boolean = true,
     val selectedScopes: List<String> = emptyList()
 ) {
 
