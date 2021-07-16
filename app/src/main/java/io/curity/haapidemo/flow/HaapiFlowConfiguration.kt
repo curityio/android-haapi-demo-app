@@ -16,6 +16,7 @@
 
 package io.curity.haapidemo.flow
 
+import kotlinx.serialization.Serializable
 import java.net.URI
 
 /**
@@ -43,14 +44,16 @@ import java.net.URI
  * used when performing test against localhost or debugging.
  * @property [selectedScopes] A list of String that represents the selected scopes. By default, there is no scopes.
  */
+
+@Serializable
 data class HaapiFlowConfiguration(
-    val name: String,
-    val clientId: String,
-    val baseURLString: String,
-    val tokenEndpointURI: String,
-    val authorizationEndpointURI: String,
-    val metaDataBaseURLString: String,
-    val redirectURI: String,
+    var name: String,
+    var clientId: String,
+    var baseURLString: String,
+    var tokenEndpointURI: String,
+    var authorizationEndpointURI: String,
+    var metaDataBaseURLString: String,
+    var redirectURI: String,
     val followRedirect: Boolean,
     val keyStoreAlias: String = "haapi-demo-app",
     val isAutoAuthorizationChallengedEnabled: Boolean = true,
