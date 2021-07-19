@@ -76,7 +76,7 @@ class ProfileViewModel(
         val oldProfileItem = _list.value!![atIndex.ordinal] as ProfileItem.Content
         val newProfileItem = ProfileItem.Content(header = oldProfileItem.header, text = value)
         val newList =_list.value!!
-        newList.set(atIndex.ordinal, newProfileItem)
+        newList[atIndex.ordinal] = newProfileItem
         _list.postValue(newList)
         repository.updateConfiguration(configuration, indexConfiguration)
     }
@@ -93,6 +93,9 @@ class ProfileViewModel(
         repository.updateConfiguration(configuration, indexConfiguration)
     }
 
+    suspend fun makeConfigurationActive() {
+        repository.setActiveConfiguration(configuration)
+    }
 }
 
 class ProfileViewModelFactory(
@@ -103,6 +106,7 @@ class ProfileViewModelFactory(
 
     override fun <T : ViewModel?> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(ProfileViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
             return ProfileViewModel(repository, configuration, index) as T
         }
 

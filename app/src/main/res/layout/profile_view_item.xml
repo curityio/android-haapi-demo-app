@@ -21,6 +21,10 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginBottom="@dimen/spacing"
+    android:paddingTop="@dimen/paddingTopBottom"
+    android:paddingBottom="@dimen/paddingTopBottom"
+    android:paddingStart="@dimen/paddingStartEnd"
+    android:paddingEnd="@dimen/paddingStartEnd"
     android:foreground="?attr/selectableItemBackground">
 
     <TextView

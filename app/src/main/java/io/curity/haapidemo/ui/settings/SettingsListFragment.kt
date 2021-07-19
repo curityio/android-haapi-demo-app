@@ -33,7 +33,7 @@ import kotlinx.coroutines.launch
 class SettingsListFragment : Fragment() {
 
     private lateinit var settingsListViewModel: SettingsListViewModel
-    private val adapter by lazy { ProfilesAdapter(clickHandler = { config, index -> select(config, index)})}
+    private val adapter by lazy { ProfilesAdapter(clickHandler = { config -> select(config)})}
 
     private lateinit var recyclerView: RecyclerView
     private lateinit var addButton: FloatingActionButton
@@ -58,21 +58,29 @@ class SettingsListFragment : Fragment() {
 
         recyclerView.adapter = adapter
 
-        settingsListViewModel.configurations.observe(viewLifecycleOwner) {
-            lifecycleScope.launch(Dispatchers.Main) {
-                adapter.submitList(it)
+        settingsListViewModel.models.observe(viewLifecycleOwner) { newList ->
+            lifecycleScope.launch (Dispatchers.Main) {
+                adapter.submitList(newList)
             }
         }
 
         addButton.setOnClickListener {
             lifecycleScope.launch {
-                settingsListViewModel.addNewConfiguration()
+                val newConfiguration = settingsListViewModel.addNewConfiguration()
+                lifecycleScope.launch(Dispatchers.Main) {
+                    select(newConfiguration)
+                }
             }
         }
     }
 
-    private fun select(config: HaapiFlowConfiguration, atIndex: Int) {
-        val newIntent = ProfileActivity.newIntent(requireContext(), config, atIndex)
+    private fun select(config: HaapiFlowConfiguration) {
+        val newIntent = ProfileActivity.newIntent(
+            context = requireContext(),
+            haapiConfiguration = config,
+            index = settingsListViewModel.indexOfConfiguration(config),
+            isActiveConfiguration = settingsListViewModel.isActiveConfiguration(config)
+        )
         startActivity(newIntent)
     }
 }

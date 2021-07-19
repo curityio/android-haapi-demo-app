@@ -17,32 +17,53 @@ package io.curity.haapidemo.ui.settings
 
 import androidx.lifecycle.*
 import io.curity.haapidemo.flow.HaapiFlowConfiguration
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 
 class SettingsListViewModel(
     private val repository: HaapiFlowConfigurationRepository
 ) : ViewModel() {
 
-    private val configsFlow = repository.configurationsFlow
+    //region Private references
+    private var activeConfiguration: HaapiFlowConfiguration? = null
+    private var configurations: List<HaapiFlowConfiguration> = emptyList()
 
-    private val _text = MutableLiveData<String>().apply {
-        value = "This is a Fragment"
+    private val flowModels: Flow<List<SettingsItem>> = combine(
+        repository.activeConfigurationFlow,
+        repository.configurationsFlow)
+    { activeConfiguration: HaapiFlowConfiguration, list: List<HaapiFlowConfiguration> ->
+
+        this.activeConfiguration = activeConfiguration
+        configurations = list
+
+        val newList: MutableList<SettingsItem> = mutableListOf()
+
+        newList.add(SettingsItem.Header(title = "Active Profile"))
+        newList.add(SettingsItem.Configuration(configuration = activeConfiguration))
+        this.activeConfiguration = activeConfiguration
+
+        newList.add(SettingsItem.Header(title = "Profiles"))
+        newList.addAll(list.map { SettingsItem.Configuration(configuration = it) })
+
+        return@combine newList
     }
-    val text: LiveData<String> = _text
+    //endregion
 
-    val configurations: LiveData<MutableList<HaapiFlowConfiguration>> = configsFlow.asLiveData()
+    val models = flowModels.asLiveData(Dispatchers.IO)
 
     suspend fun addNewConfiguration(): HaapiFlowConfiguration {
-        val result = HaapiFlowConfiguration.newInstance("haapi-android-client")
+        val result = HaapiFlowConfiguration.newInstance(configurations.size + 1)
         repository.appendNewConfiguration(result)
         return result
     }
 
-    suspend fun updateConfiguration(config: HaapiFlowConfiguration, index: Int) {
-        repository.updateConfiguration(config, index)
+    fun isActiveConfiguration(config: HaapiFlowConfiguration): Boolean {
+        return activeConfiguration == config
     }
 
-    fun configurationAt(index: Int): HaapiFlowConfiguration? {
-        return configurations.value?.get(index)
+    fun indexOfConfiguration(config: HaapiFlowConfiguration): Int {
+        return configurations.indexOf(config)
     }
 }
 

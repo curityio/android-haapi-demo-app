@@ -19,7 +19,8 @@ import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
+import android.view.View
+import android.widget.Button
 import android.widget.EditText
 import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.ViewModelProvider
@@ -53,9 +54,9 @@ class ProfileActivity : AppCompatActivity() {
         recyclerView.adapter = adapter
 
         val configString = intent.getStringExtra(EXTRA_HAAPI_CONFIGURATION)
-        val index = intent.getIntExtra(EXTRA_HAAPI_INDEX_CONFIGURATION, -1)
-        if (configString == null || index == -1) {
-            throw IllegalArgumentException("Missing extra, use ProfileActivity.newIntent()")
+        val index = intent.getIntExtra(EXTRA_HAAPI_INDEX_CONFIGURATION, -9999)
+        if (configString == null || index == -9999) {
+            throw IllegalArgumentException("Missing extra arguments, use ProfileActivity.newIntent(...)")
         }
         val configuration: HaapiFlowConfiguration = Json.decodeFromString(configString)
 
@@ -74,6 +75,13 @@ class ProfileActivity : AppCompatActivity() {
                 adapter.submitList(list)
             }
         }
+
+        val button: Button = findViewById(R.id.button)
+        val isActiveConfiguration = intent.getBooleanExtra(EXTRA_HAAPI_IS_ACTIVE_CONFIGURATION, false)
+        button.visibility = if (isActiveConfiguration) View.GONE else View.VISIBLE
+        button.setOnClickListener {
+            makeConfigurationActive()
+        }
     }
 
     private fun selectItem(content: ProfileItem.Content, atIndex: Int) {
@@ -84,7 +92,7 @@ class ProfileActivity : AppCompatActivity() {
         inputText.setText(content.text)
         builder.setView(inputText)
 
-        builder.setPositiveButton("Save") { dialog, id ->
+        builder.setPositiveButton("Save") { _, _ ->
             lifecycleScope.launch(Dispatchers.Default) {
                 viewModel.update(inputText.text.toString(), atIndex = ProfileIndex.fromInt(atIndex))
             }
@@ -94,6 +102,13 @@ class ProfileActivity : AppCompatActivity() {
         builder.show()
     }
 
+    private fun makeConfigurationActive() {
+        lifecycleScope.launch {
+            viewModel.makeConfigurationActive()
+        }
+        finish()
+    }
+
     private fun toggleItem(index: Int) {
         lifecycleScope.launch {
             viewModel.updateBoolean(index = ProfileIndex.fromInt(index))
@@ -101,13 +116,20 @@ class ProfileActivity : AppCompatActivity() {
     }
 
     companion object {
-        private const val EXTRA_HAAPI_CONFIGURATION = "io.curity.haapidemo.profileActivity.extra.configuration"
-        private const val EXTRA_HAAPI_INDEX_CONFIGURATION = "io.curity.haapidemo.profileActivity.extra.index.configuration"
+        private const val EXTRA_HAAPI_CONFIGURATION = "io.curity.haapidemo.profileActivity.extra_configuration"
+        private const val EXTRA_HAAPI_INDEX_CONFIGURATION = "io.curity.haapidemo.profileActivity.extra_index_configuration"
+        private const val EXTRA_HAAPI_IS_ACTIVE_CONFIGURATION = "io.curity.haapidemo.profileActivity.extra_is_active_configuration"
 
-        fun newIntent(context: Context, haapiConfiguration: HaapiFlowConfiguration, index: Int): Intent {
+        fun newIntent(
+            context: Context,
+            haapiConfiguration: HaapiFlowConfiguration,
+            index: Int,
+            isActiveConfiguration: Boolean): Intent
+        {
             val intent = Intent(context, ProfileActivity::class.java)
             intent.putExtra(EXTRA_HAAPI_CONFIGURATION, Json.encodeToString(haapiConfiguration))
             intent.putExtra(EXTRA_HAAPI_INDEX_CONFIGURATION, index)
+            intent.putExtra(EXTRA_HAAPI_IS_ACTIVE_CONFIGURATION, isActiveConfiguration)
             return intent
         }
     }
@@ -131,6 +153,6 @@ enum class ProfileIndex {
     ItemSSLTrustVerification;
 
     companion object {
-        fun fromInt(value: Int) = ProfileIndex.values().first { it.ordinal == value }
+        fun fromInt(value: Int) = values().first { it.ordinal == value }
     }
 }

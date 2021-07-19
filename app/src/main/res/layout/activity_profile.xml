@@ -30,10 +30,24 @@
         android:layout_marginStart="@dimen/spacing"
         android:layout_marginTop="13dp"
         android:layout_marginEnd="@dimen/spacing"
-        android:text="@string/title_settings"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:text="@string/profile_configuration"
+        app:layout_constraintEnd_toStartOf="@+id/button"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/profile_configuration_make_active"
+        android:background="@android:color/transparent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/title"
+        app:layout_constraintBottom_toBottomOf="@id/title"
+        android:gravity="center_vertical"
+        android:padding="@dimen/padding"
+        android:layout_marginEnd="@dimen/spacing"
+        />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"
@@ -44,7 +58,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/title"
         app:layout_constraintBottom_toBottomOf="parent"
-        android:paddingTop="@dimen/spacing"
-        android:paddingBottom="@dimen/spacing"/>
+        android:paddingTop="@dimen/paddingTopBottom"
+        android:paddingBottom="@dimen/paddingTopBottom"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

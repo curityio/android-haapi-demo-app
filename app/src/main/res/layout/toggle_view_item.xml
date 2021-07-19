@@ -20,10 +20,10 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:paddingTop="@dimen/componentSpacing"
-    android:paddingBottom="@dimen/componentSpacing"
-    android:paddingStart="@dimen/spacing"
-    android:paddingEnd="@dimen/spacing">
+    android:paddingTop="@dimen/paddingTopBottom"
+    android:paddingBottom="@dimen/paddingTopBottom"
+    android:paddingStart="@dimen/paddingStartEnd"
+    android:paddingEnd="@dimen/paddingStartEnd">
 
     <com.google.android.material.switchmaterial.SwitchMaterial
         android:id="@+id/toggle"
