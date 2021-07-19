@@ -66,4 +66,25 @@ data class HaapiFlowConfiguration(
     val uri: URI
         get() = URI(tokenEndpointURI)
 
+
+    companion object {
+        fun newInstance(name: String = "haapi-android-client"): HaapiFlowConfiguration {
+            return HaapiFlowConfiguration(
+                name = name,
+                clientId = "haapi-android-client",
+                baseURLString = "https://10.0.2.2:8443",
+                tokenEndpointURI = "https://10.0.2.2:8443/dev/oauth/token",
+                authorizationEndpointURI = "https://10.0.2.2:8443/dev/oauth/authorize",
+                metaDataBaseURLString = "https://10.0.2.2:8443/dev/oauth/anonymous",
+                redirectURI = "haapi:start",
+                followRedirect = true,
+                isSSLTrustVerificationEnabled = false,
+                selectedScopes = emptyList()
+            )
+        }
+
+        fun newInstance(number: Int): HaapiFlowConfiguration {
+            return newInstance("New Profile ($number)")
+        }
+    }
 }

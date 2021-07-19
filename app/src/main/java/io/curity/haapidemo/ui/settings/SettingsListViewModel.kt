@@ -58,18 +58,3 @@ class SettingsListViewModelFactory(
         throw IllegalArgumentException("Unknown ViewModel class SettingsListViewModel")
     }
 }
-
-private fun HaapiFlowConfiguration.Companion.newInstance(name: String): HaapiFlowConfiguration {
-    return HaapiFlowConfiguration(
-        name = name,
-        clientId = "haapi-android-client",
-        baseURLString = "https://",
-        tokenEndpointURI = "https:///dev/oauth/token",
-        authorizationEndpointURI = "https:///dev/oauth/authorize",
-        metaDataBaseURLString = "",
-        redirectURI = "haapi:start",
-        followRedirect = true,
-        isSSLTrustVerificationEnabled = false,
-        selectedScopes = listOf("open", "profile")
-    )
-}
