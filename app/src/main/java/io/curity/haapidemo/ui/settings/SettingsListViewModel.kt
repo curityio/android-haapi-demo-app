@@ -68,9 +68,11 @@ class SettingsListViewModel(
     }
 
     fun settingsItemCanBeSwippedAt(index: Int): Boolean {
-        return when (models.value!![index]) {
+        return when (val model = models.value!![index]) {
             is SettingsItem.Header -> { false }
-            else -> { true }
+            is SettingsItem.Configuration -> {
+                model.configuration != activeConfiguration
+            }
         }
     }
 

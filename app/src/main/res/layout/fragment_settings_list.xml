@@ -55,8 +55,8 @@
         android:layout_marginBottom="72dp"
         android:clickable="true"
         android:src="@android:drawable/ic_input_add"
-        android:tint="@color/spot_green"
-        android:backgroundTint="@color/spot_magenta"
+        android:tint="@android:color/white"
+        android:backgroundTint="@color/spot_green"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
 
