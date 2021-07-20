@@ -1,17 +1,3 @@
-package io.curity.haapidemo.uicomponents
-
-import android.content.Context
-import android.graphics.Color
-import android.util.AttributeSet
-import android.util.TypedValue
-import android.view.LayoutInflater
-import android.view.View
-import android.widget.ProgressBar
-import android.widget.TextView
-import androidx.appcompat.content.res.AppCompatResources
-import androidx.constraintlayout.widget.ConstraintLayout
-import io.curity.haapidemo.R
-
 /*
  *  Copyright (C) 2021 Curity AB
  *
@@ -27,6 +13,20 @@ import io.curity.haapidemo.R
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
+
+package io.curity.haapidemo.uicomponents
+
+import android.content.Context
+import android.graphics.Color
+import android.util.AttributeSet
+import android.util.TypedValue
+import android.view.LayoutInflater
+import android.view.View
+import android.widget.ProgressBar
+import android.widget.TextView
+import androidx.appcompat.content.res.AppCompatResources
+import androidx.constraintlayout.widget.ConstraintLayout
+import io.curity.haapidemo.R
 
 /**
  * `ProgressButton` is an UI component that is similar to a `Button` with a "spinner" `ProgressBar` in the center.
