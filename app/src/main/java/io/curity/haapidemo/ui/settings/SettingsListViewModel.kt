@@ -20,6 +20,7 @@ import io.curity.haapidemo.flow.HaapiFlowConfiguration
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.launch
 
 class SettingsListViewModel(
     private val repository: HaapiFlowConfigurationRepository
@@ -58,6 +59,21 @@ class SettingsListViewModel(
         return result
     }
 
+    fun removeConfigurationAt(index: Int) {
+        val item = models.value!![index] as SettingsItem.Configuration
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.removeConfiguration(item.configuration)
+
+        }
+    }
+
+    fun settingsItemCanBeSwippedAt(index: Int): Boolean {
+        return when (models.value!![index]) {
+            is SettingsItem.Header -> { false }
+            else -> { true }
+        }
+    }
+
     fun isActiveConfiguration(config: HaapiFlowConfiguration): Boolean {
         return activeConfiguration == config
     }
@@ -73,6 +89,7 @@ class SettingsListViewModelFactory(
 
     override fun <T : ViewModel?> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(SettingsListViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
             return SettingsListViewModel(repository) as T
         }
 

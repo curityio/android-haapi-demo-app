@@ -22,6 +22,7 @@ import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import io.curity.haapidemo.ProfileActivity
@@ -49,6 +50,30 @@ class SettingsListFragment : Fragment() {
         addButton = root.findViewById(R.id.floatingActionButton)
 
         settingsListViewModel = ViewModelProvider(requireActivity()).get(SettingsListViewModel::class.java)
+
+        val helper = object : ItemTouchHelper.SimpleCallback(ItemTouchHelper.LEFT, ItemTouchHelper.LEFT) {
+            override fun onMove(
+                recyclerView: RecyclerView,
+                viewHolder: RecyclerView.ViewHolder,
+                target: RecyclerView.ViewHolder
+            ): Boolean {
+                return false
+            }
+
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                settingsListViewModel.removeConfigurationAt(viewHolder.adapterPosition)
+            }
+
+            override fun getSwipeDirs(recyclerView: RecyclerView, viewHolder: RecyclerView.ViewHolder): Int {
+                return if (settingsListViewModel.settingsItemCanBeSwippedAt(viewHolder.adapterPosition)) {
+                    super.getSwipeDirs(recyclerView, viewHolder)
+                } else {
+                    0
+                }
+            }
+        }
+        val onTouchItemListener = ItemTouchHelper(helper)
+        onTouchItemListener.attachToRecyclerView(recyclerView)
 
         return root
     }
