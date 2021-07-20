@@ -107,9 +107,7 @@ class ProfileActivity : AppCompatActivity() {
                 builder.setView(inputText)
 
                 builder.setPositiveButton("Save") { _, _ ->
-                    lifecycleScope.launch(Dispatchers.Default) {
-                        viewModel.update(inputText.text.toString(), atIndex = ProfileIndex.fromInt(atIndex))
-                    }
+                    viewModel.update(inputText.text.toString(), atIndex = ProfileIndex.fromInt(atIndex))
                 }
                 builder.setNegativeButton("Cancel") { _, _ -> }
                 builder.show()
@@ -126,16 +124,12 @@ class ProfileActivity : AppCompatActivity() {
     }
 
     private fun makeConfigurationActive() {
-        lifecycleScope.launch {
-            viewModel.makeConfigurationActive()
-        }
+        viewModel.makeConfigurationActive()
         finish()
     }
 
     private fun toggleItem(index: Int) {
-        lifecycleScope.launch {
-            viewModel.updateBoolean(index = ProfileIndex.fromInt(index))
-        }
+        viewModel.updateBoolean(index = ProfileIndex.fromInt(index))
     }
 
     companion object {

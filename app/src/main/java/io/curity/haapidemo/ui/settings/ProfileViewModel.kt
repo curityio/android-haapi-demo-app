@@ -81,46 +81,61 @@ class ProfileViewModel(
         refreshScopes()
     }
 
-    suspend fun update(value: String, atIndex: ProfileIndex) {
-        when (atIndex) {
-            ProfileIndex.ItemName -> { configuration.name = value }
-            ProfileIndex.ItemClientId -> { configuration.clientId = value }
-            ProfileIndex.ItemBaseURL -> { configuration.baseURLString = value }
-            ProfileIndex.ItemRedirectURI -> { configuration.redirectURI = value }
-            ProfileIndex.ItemMetaDataURL -> { configuration.metaDataBaseURLString = value }
-            ProfileIndex.ItemTokenEndpointURI -> { configuration.tokenEndpointURI = value }
-            ProfileIndex.ItemAuthorizationEndpointURI -> { configuration.authorizationEndpointURI = value }
+    fun update(value: String, atIndex: ProfileIndex) {
+        viewModelScope.launch(Dispatchers.IO) {
+            when (atIndex) {
+                ProfileIndex.ItemName -> { configuration.name = value }
+                ProfileIndex.ItemClientId -> { configuration.clientId = value }
+                ProfileIndex.ItemBaseURL -> { configuration.baseURLString = value }
+                ProfileIndex.ItemRedirectURI -> { configuration.redirectURI = value }
+                ProfileIndex.ItemMetaDataURL -> { configuration.metaDataBaseURLString = value }
+                ProfileIndex.ItemTokenEndpointURI -> { configuration.tokenEndpointURI = value }
+                ProfileIndex.ItemAuthorizationEndpointURI -> { configuration.authorizationEndpointURI = value }
 
-            else -> throw IllegalArgumentException("Invalid index $atIndex for updating a String to configuration")
+                else -> throw IllegalArgumentException("Invalid index $atIndex for updating a String to configuration")
+            }
+            val oldProfileItem = _list.value!![atIndex.ordinal] as ProfileItem.Content
+            val newProfileItem = ProfileItem.Content(header = oldProfileItem.header, text = value)
+            val newList =_list.value!!
+            newList[atIndex.ordinal] = newProfileItem
+            _list.postValue(newList)
+
+            repository.updateConfiguration(configuration, indexConfiguration)
         }
-        val oldProfileItem = _list.value!![atIndex.ordinal] as ProfileItem.Content
-        val newProfileItem = ProfileItem.Content(header = oldProfileItem.header, text = value)
-        val newList =_list.value!!
-        newList[atIndex.ordinal] = newProfileItem
-        _list.postValue(newList)
-        repository.updateConfiguration(configuration, indexConfiguration)
     }
 
-    suspend fun updateBoolean(index: ProfileIndex) {
-        when (index) {
-            ProfileIndex.ItemFollowRedirect -> { configuration.followRedirect = !configuration.followRedirect }
-            ProfileIndex.ItemAutomaticPolling -> { configuration.isAutoPollingEnabled = !configuration.isAutoPollingEnabled }
-            ProfileIndex.ItemAutoAuthorizationChallenged -> { configuration.isAutoAuthorizationChallengedEnabled = !configuration.isAutoAuthorizationChallengedEnabled }
-            ProfileIndex.ItemSSLTrustVerification -> { configuration.isSSLTrustVerificationEnabled = !configuration.isSSLTrustVerificationEnabled }
+    fun updateBoolean(index: ProfileIndex) {
+        viewModelScope.launch(Dispatchers.IO) {
+            when (index) {
+                ProfileIndex.ItemFollowRedirect -> { configuration.followRedirect = !configuration.followRedirect }
+                ProfileIndex.ItemAutomaticPolling -> { configuration.isAutoPollingEnabled = !configuration.isAutoPollingEnabled }
+                ProfileIndex.ItemAutoAuthorizationChallenged -> { configuration.isAutoAuthorizationChallengedEnabled = !configuration.isAutoAuthorizationChallengedEnabled }
+                ProfileIndex.ItemSSLTrustVerification -> { configuration.isSSLTrustVerificationEnabled = !configuration.isSSLTrustVerificationEnabled }
 
-            else -> throw IllegalArgumentException("Invalid index $index for updating a Boolean to configuration")
+                else -> throw IllegalArgumentException("Invalid index $index for updating a Boolean to configuration")
+            }
+
+            repository.updateConfiguration(configuration, indexConfiguration)
         }
-        repository.updateConfiguration(configuration, indexConfiguration)
     }
 
-    suspend fun makeConfigurationActive() {
-        repository.setActiveConfiguration(configuration)
+    fun makeConfigurationActive() {
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.setActiveConfiguration(configuration)
+        }
     }
 
     private val httpClient: OkHttpClient by lazy {
         OkHttpClient.Builder().disableSslTrustVerification().build()
     }
 
+    /**
+     * Fetches the metaData from [HaapiFlowConfiguration.metaDataBaseURLString]
+     *
+     * If it succeeds then [listLiveData] and [scopesLiveData] will be triggered.
+     * If it fails then an [Exception] will be thrown.
+     * @exception Exception An [IllegalArgumentException] or a generic [Exception]
+     */
     fun fetchMetaData() {
         val metaDataURLString = configuration.metaDataBaseURLString.plus("/.well-known/openid-configuration")
         val request: Request
@@ -204,6 +219,7 @@ class ProfileViewModel(
                 text = it,
                 isChecked = configuration.selectedScopes.contains(it))
         }.toMutableList()
+
         _scopesLiveData.postValue(scopes)
     }
 
