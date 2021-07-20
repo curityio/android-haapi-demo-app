@@ -60,7 +60,9 @@ data class HaapiFlowConfiguration(
     var isAutoPollingEnabled: Boolean = true,
     var isAutoAuthorizationChallengedEnabled: Boolean = true,
     var isSSLTrustVerificationEnabled: Boolean = true,
-    val selectedScopes: List<String> = emptyList()
+    var selectedScopes: List<String> = emptyList(),
+
+    var supportedScopes: List<String> = emptyList()
 ) {
 
     val uri: URI

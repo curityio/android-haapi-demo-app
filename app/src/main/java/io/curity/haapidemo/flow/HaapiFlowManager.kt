@@ -385,7 +385,7 @@ private val trustManager = object : X509TrustManager
     override fun getAcceptedIssuers() = arrayOf<X509Certificate>()
 }
 
-private fun OkHttpClient.Builder.disableSslTrustVerification(): OkHttpClient.Builder
+fun OkHttpClient.Builder.disableSslTrustVerification(): OkHttpClient.Builder
 {
 
     val sslContext = SSLContext.getInstance("SSL")

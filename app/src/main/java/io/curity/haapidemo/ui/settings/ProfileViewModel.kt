@@ -15,15 +15,24 @@
  */
 package io.curity.haapidemo.ui.settings
 
+import android.accounts.NetworkErrorException
 import androidx.lifecycle.*
 import io.curity.haapidemo.ProfileIndex
 import io.curity.haapidemo.flow.HaapiFlowConfiguration
+import io.curity.haapidemo.flow.disableSslTrustVerification
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import org.json.JSONObject
+import kotlin.Exception
 import kotlin.IllegalArgumentException
 
 class ProfileViewModel(
     private val repository: HaapiFlowConfigurationRepository,
     private val configuration: HaapiFlowConfiguration,
-    private val indexConfiguration: Int
+    private val indexConfiguration: Int,
+    private val scopesAdapter: ScopesAdapter
 ): ViewModel() {
 
     private var _list: MutableLiveData<MutableList<ProfileItem>> = MutableLiveData()
@@ -31,6 +40,10 @@ class ProfileViewModel(
         get() = _list.map {
             it.toList()
         }
+
+    private var _scopesLiveData: MutableLiveData<MutableList<ProfileItem.Checkbox>> = MutableLiveData()
+    val scopesLiveData: LiveData<List<ProfileItem.Checkbox>>
+        get() = _scopesLiveData.map { it.toList() }
 
     fun initialize() {
         val newList: MutableList<ProfileItem> = mutableListOf()
@@ -44,10 +57,16 @@ class ProfileViewModel(
 
                 ProfileIndex.SectionMetaData -> { newList.add(ProfileItem.Header(title = "META DATA Configuration")) }
                 ProfileIndex.ItemMetaDataURL -> { newList.add(ProfileItem.Content(header = "Meta Data URL", text = configuration.metaDataBaseURLString)) }
+                ProfileIndex.ItemLoadingMetaData -> { newList.add(ProfileItem.LoadingAction(text = "Fetch latest configuration", dateLong = System.currentTimeMillis())) }
 
                 ProfileIndex.SectionEndpoints -> { newList.add(ProfileItem.Header(title = "Endpoints")) }
                 ProfileIndex.ItemTokenEndpointURI -> { newList.add(ProfileItem.Content(header = "Token endpoint URI", text = configuration.tokenEndpointURI)) }
                 ProfileIndex.ItemAuthorizationEndpointURI -> { newList.add(ProfileItem.Content(header = "Authorization endpoint URI", text = configuration.authorizationEndpointURI)) }
+
+                ProfileIndex.SectionSupportedScopes -> { newList.add(ProfileItem.Header(title = "Supported scopes")) }
+                ProfileIndex.ItemScopes -> {
+                    newList.add(ProfileItem.Recycler(adapter = scopesAdapter))
+                }
 
                 ProfileIndex.SectionToggles -> { newList.add(ProfileItem.Header(title = "Toggles")) }
                 ProfileIndex.ItemFollowRedirect -> { newList.add(ProfileItem.Toggle(label = "Follow redirect", isToggled = configuration.followRedirect)) }
@@ -57,8 +76,9 @@ class ProfileViewModel(
             }
         }
 
-        assert(newList.size == ProfileIndex.values().size) { "Size is not matching for ProfileItem list... ${newList.size} VS ${ProfileIndex.values().size}" }
         _list.postValue(newList)
+
+        refreshScopes()
     }
 
     suspend fun update(value: String, atIndex: ProfileIndex) {
@@ -96,18 +116,119 @@ class ProfileViewModel(
     suspend fun makeConfigurationActive() {
         repository.setActiveConfiguration(configuration)
     }
+
+    private val httpClient: OkHttpClient by lazy {
+        OkHttpClient.Builder().disableSslTrustVerification().build()
+    }
+
+    fun fetchMetaData() {
+        val metaDataURLString = configuration.metaDataBaseURLString.plus("/.well-known/openid-configuration")
+        val request: Request
+        try {
+            Request.Builder()
+                .url(metaDataURLString)
+                .get()
+                .build()
+        } catch (e: IllegalArgumentException) {
+            refreshLoadingMetaData()
+            throw e
+        }.apply {
+            request = this
+        }
+
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                val response = httpClient.newCall(request).execute()
+                val responseBody = response.body
+
+                if (!response.isSuccessful || responseBody == null) {
+                    throw NetworkErrorException("Impossible to fetch the meta data")
+                }
+
+                val jsonObject = JSONObject(responseBody.string())
+
+                val scopesJSONArray = jsonObject.getJSONArray("scopes_supported")
+                val scopesList = List(scopesJSONArray.length()) {
+                    scopesJSONArray.getString(it)
+                }
+
+                jsonObject.getString("token_endpoint").let {
+                    configuration.tokenEndpointURI = it
+
+                    val index = ProfileIndex.ItemTokenEndpointURI.ordinal
+                    val oldItem = _list.value!![index] as ProfileItem.Content
+                    val newItem = ProfileItem.Content(header = oldItem.header, text = configuration.tokenEndpointURI)
+                    _list.value!![index] = newItem
+                }
+
+                jsonObject.getString("authorization_endpoint").let {
+                    configuration.authorizationEndpointURI = it
+
+                    val index = ProfileIndex.ItemTokenEndpointURI.ordinal
+                    val oldItem = _list.value!![index] as ProfileItem.Content
+                    val newItem = ProfileItem.Content(header = oldItem.header, text = configuration.authorizationEndpointURI)
+                    _list.value!![index] = newItem
+                }
+
+                configuration.supportedScopes = scopesList.sorted()
+                repository.updateConfiguration(configuration, indexConfiguration)
+
+                refreshLoadingMetaData()
+                refreshScopes()
+
+            } catch (e: Exception) {
+                throw e
+            }
+        }
+    }
+
+    fun toggleScope(index: Int) {
+        val mutableScopes = configuration.selectedScopes.toMutableList()
+        val scope = configuration.supportedScopes[index]
+
+        if (mutableScopes.contains(scope)) {
+            mutableScopes.remove(scope)
+        } else {
+            mutableScopes.add(scope)
+        }
+
+        configuration.selectedScopes = mutableScopes
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.updateConfiguration(configuration,indexConfiguration)
+        }
+    }
+
+    private fun refreshScopes() {
+        val scopes = configuration.supportedScopes.map {
+            ProfileItem.Checkbox(
+                text = it,
+                isChecked = configuration.selectedScopes.contains(it))
+        }.toMutableList()
+        _scopesLiveData.postValue(scopes)
+    }
+
+    private fun refreshLoadingMetaData() {
+        val index = ProfileIndex.ItemLoadingMetaData.ordinal
+        val oldProfileItem = _list.value!![index] as ProfileItem.LoadingAction
+        val newItem = ProfileItem.LoadingAction(text = oldProfileItem.text, dateLong = System.currentTimeMillis())
+        val newList =_list.value!!
+        newList[index] = newItem
+
+        _list.postValue(newList)
+    }
 }
 
 class ProfileViewModelFactory(
     private val repository: HaapiFlowConfigurationRepository,
     private val configuration: HaapiFlowConfiguration,
-    private val index: Int
+    private val index: Int,
+    private val scopesAdapter: ScopesAdapter
     ): ViewModelProvider.Factory {
 
     override fun <T : ViewModel?> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(ProfileViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return ProfileViewModel(repository, configuration, index) as T
+            return ProfileViewModel(repository, configuration, index, scopesAdapter) as T
         }
 
         throw IllegalArgumentException("Unknown ViewModel class ProfileViewModel")

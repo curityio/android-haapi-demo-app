@@ -20,12 +20,10 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import io.curity.haapidemo.uicomponents.SectionViewHolder
-import io.curity.haapidemo.uicomponents.TextViewHolder
-import io.curity.haapidemo.uicomponents.ToggleViewHolder
+import io.curity.haapidemo.uicomponents.*
 
 class ProfileAdapter(
-    private val clickHandler: (ProfileItem.Content, Int) -> Unit,
+    private val clickHandler: (ProfileItem, Int) -> Unit,
     private val toggleHandler: (Int) -> Unit
 ): ListAdapter<ProfileItem, RecyclerView.ViewHolder>(CONFIG_COMPARATOR) {
 
@@ -34,6 +32,9 @@ class ProfileAdapter(
             ItemType.Header.ordinal -> SectionViewHolder.from(parent)
             ItemType.Content.ordinal -> TextViewHolder.from(parent)
             ItemType.Toggle.ordinal -> ToggleViewHolder.from(parent)
+            ItemType.LoadingAction.ordinal -> LoadingActionViewHolder.from(parent)
+            ItemType.Checkbox.ordinal -> CheckboxViewHolder.from(parent)
+            ItemType.Recycler.ordinal -> RecyclerViewHolder.from(parent)
             else -> throw ClassCastException("No class for viewType $viewType")
         }
     }
@@ -58,6 +59,26 @@ class ProfileAdapter(
                     toggleHandler(position)
                 }
             }
+            is LoadingActionViewHolder -> {
+                val loadingAction = getItem(position) as ProfileItem.LoadingAction
+                holder.bind(loadingAction.text)
+                holder.itemView.setOnClickListener {
+                    clickHandler(loadingAction, position)
+                    holder.setLoading(true)
+                }
+            }
+            is CheckboxViewHolder -> {
+                val item = getItem(position) as ProfileItem.Checkbox
+                holder.bind(
+                    text = item.text,
+                    isChecked = item.isChecked,
+                    didToggle =  { toggleHandler(position) }
+                )
+            }
+            is RecyclerViewHolder -> {
+                val item = getItem(position) as ProfileItem.Recycler
+                holder.bind(item.adapter)
+            }
         }
     }
 
@@ -66,6 +87,9 @@ class ProfileAdapter(
             is ProfileItem.Header -> ItemType.Header.ordinal
             is ProfileItem.Content -> ItemType.Content.ordinal
             is ProfileItem.Toggle -> ItemType.Toggle.ordinal
+            is ProfileItem.LoadingAction -> ItemType.LoadingAction.ordinal
+            is ProfileItem.Checkbox -> ItemType.Checkbox.ordinal
+            is ProfileItem.Recycler -> ItemType.Recycler.ordinal
         }
     }
 
@@ -84,7 +108,10 @@ class ProfileAdapter(
     private enum class ItemType {
         Header,
         Content,
-        Toggle
+        Toggle,
+        LoadingAction,
+        Checkbox,
+        Recycler
     }
 
 }
@@ -105,4 +132,15 @@ sealed class ProfileItem {
         override val id: Long = label.hashCode().toLong()
     }
 
+    data class LoadingAction(val text: String, val dateLong: Long): ProfileItem() {
+        override val id: Long = text.hashCode().toLong() + dateLong
+    }
+
+    data class Checkbox(val text: String, var isChecked: Boolean): ProfileItem() {
+        override val id: Long = text.hashCode().toLong() + isChecked.hashCode().toLong()
+    }
+
+    data class Recycler(val adapter: ListAdapter<Checkbox, CheckboxViewHolder>): ProfileItem() {
+        override val id: Long = adapter.hashCode().toLong()
+    }
 }

@@ -15,6 +15,7 @@
  */
 package io.curity.haapidemo
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
@@ -22,6 +23,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
+import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -46,6 +48,8 @@ class ProfileActivity : AppCompatActivity() {
         )
     }
 
+    private val scopesAdapter by lazy { ScopesAdapter(checkHandler = { index -> viewModel.toggleScope(index) }) }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_profile)
@@ -65,7 +69,8 @@ class ProfileActivity : AppCompatActivity() {
             ProfileViewModelFactory(
                 HaapiFlowConfigurationRepository(dataStore = configurationDataStore),
                 configuration = configuration,
-                index = index
+                index = index,
+                scopesAdapter
             )
         ).get(ProfileViewModel::class.java)
 
@@ -73,6 +78,12 @@ class ProfileActivity : AppCompatActivity() {
         viewModel.listLiveData.observe(this) { list ->
             lifecycleScope.launch(Dispatchers.Main) {
                 adapter.submitList(list)
+            }
+        }
+
+        viewModel.scopesLiveData.observe(this) { list ->
+            lifecycleScope.launch(Dispatchers.Main) {
+                scopesAdapter.submitList(list)
             }
         }
 
@@ -84,22 +95,34 @@ class ProfileActivity : AppCompatActivity() {
         }
     }
 
-    private fun selectItem(content: ProfileItem.Content, atIndex: Int) {
-        val builder = AlertDialog.Builder(this)
-        builder.setTitle(content.header)
+    @SuppressLint("Assert")
+    private fun selectItem(item: ProfileItem, atIndex: Int) {
+        when (item) {
+            is ProfileItem.Content -> {
+                val builder = AlertDialog.Builder(this)
+                builder.setTitle(item.header)
 
-        val inputText = EditText(this)
-        inputText.setText(content.text)
-        builder.setView(inputText)
+                val inputText = EditText(this)
+                inputText.setText(item.text)
+                builder.setView(inputText)
 
-        builder.setPositiveButton("Save") { _, _ ->
-            lifecycleScope.launch(Dispatchers.Default) {
-                viewModel.update(inputText.text.toString(), atIndex = ProfileIndex.fromInt(atIndex))
+                builder.setPositiveButton("Save") { _, _ ->
+                    lifecycleScope.launch(Dispatchers.Default) {
+                        viewModel.update(inputText.text.toString(), atIndex = ProfileIndex.fromInt(atIndex))
+                    }
+                }
+                builder.setNegativeButton("Cancel") { _, _ -> }
+                builder.show()
             }
+            is ProfileItem.LoadingAction -> {
+                try {
+                    viewModel.fetchMetaData()
+                } catch(e: IllegalArgumentException) {
+                    Toast.makeText(this, e.toString(), Toast.LENGTH_LONG).show()
+                }
+            }
+            else -> { assert(value = false, lazyMessage = { "ProfileItem.Type is not handled" }) }
         }
-        builder.setNegativeButton("Cancel") { _, _ -> }
-
-        builder.show()
     }
 
     private fun makeConfigurationActive() {
@@ -143,9 +166,12 @@ enum class ProfileIndex {
     ItemRedirectURI,
     SectionMetaData,
     ItemMetaDataURL,
+    ItemLoadingMetaData,
     SectionEndpoints,
     ItemTokenEndpointURI,
     ItemAuthorizationEndpointURI,
+    SectionSupportedScopes,
+    ItemScopes,
     SectionToggles,
     ItemFollowRedirect,
     ItemAutomaticPolling,
