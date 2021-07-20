@@ -14,6 +14,7 @@ package io.curity.haapidemo.models
 import io.curity.haapidemo.models.haapi.*
 import io.curity.haapidemo.models.haapi.actions.Action
 import io.curity.haapidemo.models.haapi.actions.ActionModel
+import io.curity.haapidemo.models.haapi.problems.HaapiProblem
 
 /**
  * Sealed class hierarchy to represent the high-level steps described by the [HaapiRepresentation] class.
@@ -24,8 +25,6 @@ import io.curity.haapidemo.models.haapi.actions.ActionModel
  *   (e.g. a `redirect-step` with more than one action).
  *
  *  Use [HaapiRepresentation.toHaapiStep] to create a [HaapiStep] from an [HaapiRepresentation]
- *
- *  TODO the goal is to make these classes public in a SDK.
  */
 sealed class HaapiStep
 
@@ -46,7 +45,8 @@ data class AuthenticatorSelector(
 
 data class InteractiveForm(
     val action: Action.Form,
-    val cancel: Action.Form?
+    val cancel: Action.Form?,
+    val links: List<Link>
 ) : HaapiStep()
 
 data class ExternalBrowserClientOperation(
@@ -93,6 +93,14 @@ data class InvalidStep(
 ) : HaapiStep()
 
 data class ProblemStep(
-    val representation: HaapiRepresentation
+    val problem: HaapiProblem
 ) : HaapiStep()
 
+data class SystemErrorStep(
+    val title: String,
+    val description: String
+) : HaapiStep()
+
+data class TokensStep(
+    val oAuthTokenResponse: OAuthTokenResponse
+): HaapiStep()

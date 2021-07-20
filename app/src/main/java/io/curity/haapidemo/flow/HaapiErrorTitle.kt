@@ -14,16 +14,14 @@
  *  limitations under the License.
  */
 
-package io.curity.haapidemo.models.haapi.problems
+package io.curity.haapidemo.flow
 
-import io.curity.haapidemo.models.haapi.Link
-import io.curity.haapidemo.models.haapi.UserMessage
-
-data class AuhtorizationProblem(
-    override val title: String,
-    override val code: String?,
-    override val messages: List<UserMessage>?,
-    override val links: List<Link>?,
-    val error: String,
-    val errorDescription: String
-): HaapiProblem
+/**
+ * A list of unlocalized Haapi errors
+ */
+enum class HaapiErrorTitle(val title: String) {
+    HAAPI("Haapi Error"),
+    INVALID_ACTION("Invalid action"),
+    NETWORK("Network error"),
+    UNEXPECTED("Unexpected error")
+}

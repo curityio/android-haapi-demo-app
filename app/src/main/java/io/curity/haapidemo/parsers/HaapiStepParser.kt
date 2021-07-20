@@ -41,10 +41,7 @@ fun HaapiRepresentation.toHaapiStep(): HaapiStep =
         is RepresentationType.OauthAuthorizationResponse -> handleAuthorizationStep(this)
         is RepresentationType.Unknown -> UnknownStep(this)
 
-        is RepresentationType.IncorrectCredentialsProblem -> ProblemStep(this)
-        is RepresentationType.InvalidInputProblem -> ProblemStep(this)
-        is RepresentationType.UnexpectedProblem -> ProblemStep(this)
-        is RepresentationType.AuthorizationResponseProblem -> ProblemStep(this)
+        else -> UnknownStep(this)
     }
 
 private fun handleAuthenticatorSelector(
@@ -126,7 +123,7 @@ private fun handleAuthenticationStep(representation: HaapiRepresentation): Haapi
         val action = representation.actions.findForm {
             it.kind != "cancel" && it.kind != "continue"
         } ?: return UnknownStep(representation)
-        InteractiveForm(action, cancel)
+        InteractiveForm(action, cancel, representation.links)
     }
 }
 

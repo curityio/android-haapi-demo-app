@@ -16,14 +16,14 @@ import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import java.net.URI
 
-const val EMULATOR_HOST_IP = "f97d8a277bc1.ngrok.io"
-val BASE_URI: URI = URI("https://$EMULATOR_HOST_IP")
+const val EMULATOR_HOST_IP = "10.0.2.2"
+val BASE_URI: URI = URI("https://$EMULATOR_HOST_IP:8443")
 val HOST_NAME = BASE_URI.host
 val SCHEME = BASE_URI.scheme
 val PORT = ":${BASE_URI.port}"
 
-val TOKEN_ENDPOINT = "$SCHEME://$HOST_NAME/dev/oauth/token"
-val AUTHORIZATION_ENDPOINT = "$SCHEME://$HOST_NAME/dev/oauth/authorize"
+val TOKEN_ENDPOINT = "$SCHEME://$HOST_NAME$PORT/dev/oauth/token"
+val AUTHORIZATION_ENDPOINT = "$SCHEME://$HOST_NAME$PORT/dev/oauth/authorize"
 const val API_MEDIA_TYPE = "application/vnd.auth+json"
 
 @JvmField

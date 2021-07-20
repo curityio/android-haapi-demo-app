@@ -32,8 +32,7 @@ sealed class Properties
         val tokenType: String?,
         val expiresIn: Duration?,
         val idToken: String?,
-        val sessionState: String?,
-        val refreshToken: String?
+        val sessionState: String?
     ) : Properties()
 
     data class Polling(

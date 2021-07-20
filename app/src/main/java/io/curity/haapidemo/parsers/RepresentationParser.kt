@@ -16,6 +16,7 @@
 
 package io.curity.haapidemo.parsers
 
+import io.curity.haapidemo.models.OAuthTokenResponse
 import org.json.JSONException
 import org.json.JSONObject
 import java.time.Duration
@@ -24,6 +25,10 @@ import io.curity.haapidemo.models.haapi.actions.Action
 import io.curity.haapidemo.models.haapi.actions.ActionModel
 import io.curity.haapidemo.models.haapi.actions.ActionTemplate
 import io.curity.haapidemo.models.haapi.actions.Arguments
+import io.curity.haapidemo.models.haapi.problems.AuthorizationProblem
+import io.curity.haapidemo.models.haapi.problems.InvalidField
+import io.curity.haapidemo.models.haapi.problems.InvalidInputProblem
+import io.curity.haapidemo.models.haapi.problems.Problem
 
 class ModelException(msg: String, cause: Throwable? = null) : RuntimeException(msg, cause)
 
@@ -39,6 +44,49 @@ object RepresentationParser
             metadata = obj.mapOfStrings("metadata"),
             messages = obj.list("messages", RepresentationParser::parseUserMessage)
         )
+    }
+
+    fun parseAccessToken(obj: JSONObject) = parsing("AccessToken") {
+        OAuthTokenResponse(
+            accessToken = obj.string("access_token"),
+            tokenType = obj.stringOpt("token_type"),
+            scope = obj.stringOpt("scope"),
+            expiresIn = obj.longFromNumberOrStringOpt("expires_in")?.let { Duration.ofSeconds(it) },
+            refreshToken = obj.stringOpt("refresh_token"),
+            idToken = obj.stringOpt("id_token")
+        )
+    }
+
+    fun parseProblem(obj: JSONObject) = parsing("Problem") {
+        val type = parseType(obj.string("type"))
+        when (type) {
+            RepresentationType.InvalidInputProblem ->
+                InvalidInputProblem(
+                    title = obj.string("title"),
+                    code = obj.stringOpt("code"),
+                    messages = obj.list("messages", RepresentationParser::parseUserMessage),
+                    links = obj.list("links", LinkParser::parse),
+                    invalidFields = obj.list("invalidFields", InvalidFieldParser::parse),
+                    errorDescription = obj.stringOpt("error_description")
+                )
+            RepresentationType.IncorrectCredentialsProblem, RepresentationType.UnexpectedProblem ->
+                Problem(
+                    title = obj.string("title"),
+                    code = obj.stringOpt("code"),
+                    messages = obj.list("messages", RepresentationParser::parseUserMessage),
+                    links = obj.list("links", LinkParser::parse)
+                )
+            RepresentationType.AuthorizationResponseProblem ->
+                AuthorizationProblem(
+                    title = obj.string("title"),
+                    code = obj.stringOpt("code"),
+                    messages = obj.list("messages", RepresentationParser::parseUserMessage),
+                    links = obj.list("links", LinkParser::parse),
+                    error = obj.string("error"),
+                    errorDescription =  obj.string("error_description")
+                )
+            else -> throw ModelException("Invalid Problem for '$type'")
+        }
     }
 
     private val parseType = createParser<RepresentationType> { RepresentationType.Unknown(it) }
@@ -78,8 +126,7 @@ private object PropertiesParser
             tokenType = obj.stringOpt("token_type"),
             idToken = obj.stringOpt("id_token"),
             sessionState = obj.stringOpt("session_state"),
-            expiresIn = obj.longFromNumberOrStringOpt("expires_in")?.let { Duration.ofSeconds(it) },
-            refreshToken = obj.stringOpt("refresh_token")
+            expiresIn = obj.longFromNumberOrStringOpt("expires_in")?.let { Duration.ofSeconds(it) }
         )
     }
 
@@ -263,6 +310,7 @@ private object FieldParser
             name = obj.string("name"),
             label = obj.messageOpt("label"),
             placeholder = obj.stringOpt("placeholder"),
+            value = obj.stringOpt("value")
         )
 
     private fun parseCheckbox(obj: JSONObject) =
@@ -282,15 +330,27 @@ private object FieldParser
                 Field.Select.Option(
                     label = it.message("label"),
                     value = it.string("value"),
-                    selected = it.boolean("selected")
+                    selected = it.boolean("selected"),
                 )
-            }
+            },
+            value = obj.stringOpt("value")
         )
 
     private fun parseContext(obj: JSONObject) =
         Field.Context(
             name = obj.string("name")
         )
+}
+
+private object InvalidFieldParser
+{
+    fun parse(obj: JSONObject) = parsing("InvalidField") {
+        InvalidField(
+            name = obj.string("name"),
+            reason = obj.stringOpt("reason"),
+            detail = obj.stringOpt("detail")
+        )
+    }
 }
 
 private fun <T> parsing(context: String, block: () -> T) =
