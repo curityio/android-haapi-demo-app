@@ -20,6 +20,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import io.curity.haapidemo.flow.HaapiFlowConfiguration
+import io.curity.haapidemo.ui.settings.profile.ProfileViewHolder
 import io.curity.haapidemo.uicomponents.SectionViewHolder
 
 class ProfilesAdapter(private val clickHandler: (HaapiFlowConfiguration) -> Unit): ListAdapter<SettingsItem, RecyclerView.ViewHolder>(CONFIG_COMPARATOR) {

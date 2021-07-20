@@ -22,7 +22,6 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import io.curity.haapidemo.R
-import io.curity.haapidemo.ui.settings.ProfileItem
 
 class RecyclerViewHolder private constructor(itemView: View): RecyclerView.ViewHolder(itemView) {
 

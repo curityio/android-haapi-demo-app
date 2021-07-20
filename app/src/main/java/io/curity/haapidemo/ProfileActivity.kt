@@ -30,6 +30,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
 import io.curity.haapidemo.flow.HaapiFlowConfiguration
 import io.curity.haapidemo.ui.settings.*
+import io.curity.haapidemo.ui.settings.profile.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.serialization.decodeFromString

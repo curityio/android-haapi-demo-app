@@ -14,7 +14,7 @@
  *  limitations under the License.
  */
 
-package io.curity.haapidemo.ui.settings
+package io.curity.haapidemo.ui.settings.profile
 
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil

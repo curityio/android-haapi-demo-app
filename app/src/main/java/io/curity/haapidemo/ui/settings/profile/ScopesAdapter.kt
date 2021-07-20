@@ -14,14 +14,16 @@
  *  limitations under the License.
  */
 
-package io.curity.haapidemo.ui.settings
+package io.curity.haapidemo.ui.settings.profile
 
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import io.curity.haapidemo.uicomponents.CheckboxViewHolder
 
-class ScopesAdapter(private val checkHandler: (Int) -> Unit): ListAdapter<ProfileItem.Checkbox, CheckboxViewHolder>(CONFIG_COMPARATOR) {
+class ScopesAdapter(private val checkHandler: (Int) -> Unit): ListAdapter<ProfileItem.Checkbox, CheckboxViewHolder>(
+    CONFIG_COMPARATOR
+) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CheckboxViewHolder {
         return CheckboxViewHolder.from(parent)
