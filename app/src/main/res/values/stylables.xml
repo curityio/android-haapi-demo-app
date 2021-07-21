@@ -15,11 +15,24 @@
       limitations under the License.
     -->
 <resources>
+    <attr name="background" format="reference" />
+    <attr name="tintColor" format="color" />
+
     <declare-styleable name="ProgressButton"> <!--  It is mandatory it has the same name as the UI component  -->
-        <attr name="background" format="reference" />
+        <attr name="background"/>
         <attr name="textAppearanceButton" format="reference"/>
-        <attr name="tintColor" format="color" />
+        <attr name="tintColor"/>
         <attr name="android:foreground" />
         <attr name="android:text" />
+    </declare-styleable>
+
+    <declare-styleable name="MessageView">
+        <attr name="background"/>
+        <attr name="backgroundColor" format="color" />
+        <attr name="android:textColor" format="reference"/>
+        <attr name="tintColor" />
+        <attr name="android:text" />
+        <attr name="srcCompat" format="reference"/>
+        <attr name="textAppearance" format="reference"/>
     </declare-styleable>
 </resources>
