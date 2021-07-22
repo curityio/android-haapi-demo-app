@@ -113,6 +113,11 @@
 
     <style name="TextAppearance.Caption" parent="@style/TextAppearance.MaterialComponents.Caption">
     </style>
+
+    <style name="TextAppearance.TitleHeader" parent="@style/TextAppearance.MaterialComponents.Headline5">
+        <item name="android:textColor">@color/text</item>
+        <item name="android:letterSpacing">-0.02</item>
+    </style>
     
     <style name="Theme.BottomUpAnimation" parent="AppTheme">
         <item name="android:activityOpenEnterAnimation">@anim/bottom_up_anim</item>

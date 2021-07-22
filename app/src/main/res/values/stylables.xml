@@ -17,6 +17,8 @@
 <resources>
     <attr name="background" format="reference" />
     <attr name="tintColor" format="color" />
+    <attr name="textAppearance" format="reference"/>
+    <attr name="srcCompat" format="reference"/>
 
     <declare-styleable name="ProgressButton"> <!--  It is mandatory it has the same name as the UI component  -->
         <attr name="background"/>
@@ -32,7 +34,13 @@
         <attr name="android:textColor" format="reference"/>
         <attr name="tintColor" />
         <attr name="android:text" />
-        <attr name="srcCompat" format="reference"/>
-        <attr name="textAppearance" format="reference"/>
+        <attr name="srcCompat"/>
+        <attr name="textAppearance"/>
+    </declare-styleable>
+
+    <declare-styleable name="HeaderView">
+        <attr name="textAppearance" />
+        <attr name="srcCompat" />
+        <attr name="android:text" />
     </declare-styleable>
 </resources>

@@ -22,4 +22,6 @@
     <dimen name="padding">8dp</dimen>
     <dimen name="paddingTopBottom">8dp</dimen>
     <dimen name="paddingStartEnd">16dp</dimen>
+
+    <dimen name="app_bar_height">180dp</dimen>
 </resources>

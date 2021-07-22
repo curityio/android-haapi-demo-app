@@ -21,13 +21,16 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.ImageView
 import androidx.fragment.app.Fragment
 import io.curity.haapidemo.FlowActivity
 import io.curity.haapidemo.R
+import io.curity.haapidemo.ShowcaseActivity
 
 class HomeFragment : Fragment() {
 
     private lateinit var button: Button
+    private lateinit var imageView: ImageView
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -36,6 +39,7 @@ class HomeFragment : Fragment() {
     ): View? {
         val root = inflater.inflate(R.layout.fragment_home, container, false)
         button = root.findViewById(R.id.button)
+        imageView = root.findViewById(R.id.imageView)
         return root
     }
 
@@ -45,6 +49,11 @@ class HomeFragment : Fragment() {
         button.setOnClickListener {
             val intent = Intent(activity, FlowActivity::class.java)
             startActivity(intent)
+        }
+
+        imageView.setOnLongClickListener {
+            startActivity(ShowcaseActivity.newIntent(requireContext()))
+            true
         }
     }
 }
