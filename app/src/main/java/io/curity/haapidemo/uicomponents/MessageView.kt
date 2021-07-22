@@ -70,11 +70,11 @@ class MessageView @JvmOverloads constructor(
                 val tintColor = getColor(R.styleable.MessageView_tintColor, Color.BLACK)
                 imageView.setColorFilter(tintColor)
 
-                val textColor = getColor(R.styleable.MessageView_android_textColor, Color.BLACK)
-                textView.setTextColor(textColor)
-
                 val textAppearance = getResourceId(R.styleable.MessageView_textAppearance, R.style.TextAppearance_Caption)
                 textView.setTextAppearance(textAppearance)
+
+                val textColor = getColor(R.styleable.MessageView_android_textColor, Color.BLACK)
+                textView.setTextColor(textColor)
 
                 val text = getText(R.styleable.MessageView_android_text)
                 textView.text = text
