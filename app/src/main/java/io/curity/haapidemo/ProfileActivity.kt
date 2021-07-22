@@ -75,7 +75,6 @@ class ProfileActivity : AppCompatActivity() {
             )
         ).get(ProfileViewModel::class.java)
 
-        viewModel.initialize()
         viewModel.listLiveData.observe(this) { list ->
             lifecycleScope.launch(Dispatchers.Main) {
                 adapter.submitList(list)

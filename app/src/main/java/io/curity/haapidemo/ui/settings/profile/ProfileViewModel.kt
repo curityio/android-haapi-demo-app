@@ -46,7 +46,11 @@ class ProfileViewModel(
     val scopesLiveData: LiveData<List<ProfileItem.Checkbox>>
         get() = _scopesLiveData.map { it.toList() }
 
-    fun initialize() {
+    init {
+        initialize()
+    }
+
+    private fun initialize() {
         val newList: MutableList<ProfileItem> = mutableListOf()
         ProfileIndex.values().forEach { index ->
             when (index) {
