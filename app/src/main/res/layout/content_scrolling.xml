@@ -57,6 +57,22 @@
             android:text="@string/lorem_ipsum"
             android:layout_margin="@dimen/padding"
             style="@style/InfoMessageView"/>
+
+        <CheckBox
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="@style/Haapi.Checkbox"
+            android:text="@string/lorem_ipsum"
+            android:layout_margin="@dimen/padding"
+             />
+
+        <CheckBox
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            style="@style/Haapi.Checkbox.Small"
+            android:text="@string/lorem_ipsum"
+            android:layout_margin="@dimen/padding"
+            />
     </LinearLayout>
 
 

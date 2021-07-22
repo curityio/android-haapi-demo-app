@@ -125,4 +125,17 @@
         <item name="android:activityCloseEnterAnimation">@anim/initial_anim</item>
         <item name="android:activityCloseExitAnimation">@anim/bottom_down_anim</item>
     </style>
+
+<!--    Checkbox-->
+    <style name="Haapi.Checkbox" parent="">
+        <item name="android:button">@drawable/haapi_checkbox</item>
+        <item name="android:paddingLeft">19dp</item>
+        <item name="android:textAppearance">@style/TextAppearance.Caption</item>
+        <item name="android:textColor">@color/text</item>
+    </style>
+
+    <style name="Haapi.Checkbox.Small" parent="Haapi.Checkbox">
+        <item name="android:button">@drawable/haapi_checkbox_small</item>
+        <item name="android:paddingLeft">13dp</item>
+    </style>
 </resources>
