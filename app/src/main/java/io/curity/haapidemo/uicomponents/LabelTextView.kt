@@ -16,6 +16,7 @@
 
 package io.curity.haapidemo.uicomponents
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.util.AttributeSet
 import android.view.LayoutInflater
@@ -41,6 +42,7 @@ class LabelTextView @JvmOverloads constructor(
         loadAttrs(attrs, defStyleAttr)
     }
 
+    @SuppressLint("Recycle")
     private fun loadAttrs(attrs: AttributeSet?, defStyleAttr: Int) {
         context.obtainStyledAttributes(
             attrs,
