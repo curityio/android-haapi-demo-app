@@ -118,6 +118,16 @@
         <item name="android:textColor">@color/text</item>
         <item name="android:letterSpacing">-0.02</item>
     </style>
+
+    <style name="TextAppearance.Code18" parent="">
+        <item name="fontFamily">@font/ibm_plex_mono_regular</item>
+        <item name="android:textColor">@color/text</item>
+        <item name="android:textSize">18sp</item>
+    </style>
+
+    <style name="TextAppearance.Code14" parent="TextAppearance.Code18">
+        <item name="android:textSize">14sp</item>
+    </style>
     
     <style name="Theme.BottomUpAnimation" parent="AppTheme">
         <item name="android:activityOpenEnterAnimation">@anim/bottom_up_anim</item>

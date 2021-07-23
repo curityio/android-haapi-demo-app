@@ -43,4 +43,11 @@
         <attr name="srcCompat" />
         <attr name="android:text" />
     </declare-styleable>
+
+    <declare-styleable name="LabelTextView">
+        <attr name="labelStyle" format="reference" />
+        <attr name="valueStyle" format="reference" />
+        <attr name="labelText" format="string" />
+        <attr name="valueText" format="string" />
+    </declare-styleable>
 </resources>
