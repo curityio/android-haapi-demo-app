@@ -50,4 +50,11 @@
         <attr name="labelText" format="string" />
         <attr name="valueText" format="string" />
     </declare-styleable>
+
+    <declare-styleable name="DisclosureView">
+        <attr name="titleStyle" format="reference" />
+        <attr name="contentStyle" format="reference" />
+        <attr name="titleText" format="string" />
+        <attr name="contentText" format="string" />
+    </declare-styleable>
 </resources>

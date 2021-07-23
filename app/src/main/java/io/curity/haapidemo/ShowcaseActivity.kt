@@ -21,14 +21,27 @@ import android.content.Intent
 import android.os.Bundle
 import com.google.android.material.appbar.CollapsingToolbarLayout
 import androidx.appcompat.app.AppCompatActivity
+import io.curity.haapidemo.uicomponents.DisclosureContent
+import io.curity.haapidemo.uicomponents.DisclosureView
 
 class ShowcaseActivity : AppCompatActivity() {
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_showcase)
         setSupportActionBar(findViewById(R.id.toolbar))
         findViewById<CollapsingToolbarLayout>(R.id.toolbar_layout).title = title
+
+        val disclosureView: DisclosureView = findViewById(R.id.disclosureView)
+        disclosureView.let {
+            it.setContentText("Hello World")
+
+            val contents: MutableList<DisclosureContent> = mutableListOf()
+            contents.add(DisclosureContent("A label 1", "A description 1"))
+            contents.add(DisclosureContent("A label 2", "A description 2"))
+
+            it.setDisclosureContents(contents)
+        }
+
     }
 
     companion object {

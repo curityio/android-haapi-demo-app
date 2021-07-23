@@ -73,6 +73,13 @@
             android:text="@string/lorem_ipsum"
             android:layout_margin="@dimen/padding"
             />
+
+        <io.curity.haapidemo.uicomponents.DisclosureView
+            android:id="@+id/disclosureView"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/padding"
+            app:titleText="@string/tab_home"/>
     </LinearLayout>
 
 

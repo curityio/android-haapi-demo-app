@@ -121,12 +121,17 @@
 
     <style name="TextAppearance.Code18" parent="">
         <item name="fontFamily">@font/ibm_plex_mono_regular</item>
-        <item name="android:textColor">@color/text</item>
+        <item name="android:textColor">@color/spot_green</item>
         <item name="android:textSize">18sp</item>
     </style>
 
     <style name="TextAppearance.Code14" parent="TextAppearance.Code18">
+        <item name="android:textColor">@color/text</item>
         <item name="android:textSize">14sp</item>
+    </style>
+
+    <style name="TextAppearance.BodyMedium" parent="TextAppearance.Body">
+        <item name="fontFamily">@font/ibm_plex_mono_medium</item>
     </style>
     
     <style name="Theme.BottomUpAnimation" parent="AppTheme">
