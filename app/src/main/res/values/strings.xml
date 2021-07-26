@@ -21,4 +21,12 @@
     <string name="submit_button">Submit</string>
     <string name="show_json">JSON</string>
     <string name="json_placeholder">Here raw JSON API responses will be shown.</string>
+
+    <string name="tab_home">Home</string>
+    <string name="title_home">Curity Demo App</string>
+    <string name="description_home">Welcome to the Curity Android Hypermedia Authentication  API (HAAPI) demo app.</string>
+    <string name="button_home">Start authentication</string>
+
+    <string name="tab_settings">Settings</string>
+    <string name="title_settings">Settings Page</string>
 </resources>

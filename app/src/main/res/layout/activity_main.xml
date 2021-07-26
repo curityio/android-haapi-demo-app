@@ -16,111 +16,36 @@
     -->
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/mainLayout"
+    android:id="@+id/container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_margin="8dp"
-    tools:context="io.curity.haapidemo.MainActivity">
+    android:paddingTop="?attr/actionBarSize">
 
-    <ProgressBar
-        android:id="@+id/loader"
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/nav_view"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:visibility="gone"
-        app:layout_constraintBottom_toTopOf="@+id/api_response"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="@+id/authenticatorLayout"
-        tools:visibility="visible" />
-
-    <LinearLayout
-        android:id="@+id/authenticatorLayout"
-        android:layout_width="365dp"
-        android:layout_height="606dp"
-        android:clickable="true"
-        android:focusableInTouchMode="true"
-        android:gravity="center|top"
-        android:orientation="vertical"
-        android:overScrollMode="always"
-        android:padding="20dp"
-        android:scrollbars="vertical"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-
-    </LinearLayout>
-
-    <Button
-        android:id="@+id/main_login"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:backgroundTint="@color/primary"
-        android:onClick="startLogin"
-        android:text="@string/login_button"
-        android:textColor="@color/button_text"
-        android:layout_marginLeft="30dp"
-        android:layout_marginRight="30dp"
+        android:layout_height="56dp"
+        android:layout_marginStart="0dp"
+        android:layout_marginEnd="0dp"
+        android:background="@color/primary_medium"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.498"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:menu="@menu/bottom_nav_menu"
+        app:itemIconTint="@drawable/tab_item_foreground"
+        app:itemTextColor="@drawable/tab_item_foreground"/>
+
+    <fragment
+        android:id="@+id/nav_host_fragment"
+        android:name="androidx.navigation.fragment.NavHostFragment"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        app:defaultNavHost="true"
+        app:layout_constraintBottom_toTopOf="@id/nav_view"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.04" />
-
-    <Button
-        android:id="@+id/restart_flow"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="30dp"
-        android:layout_marginRight="30dp"
-        android:backgroundTint="@color/primary"
-        android:onClick="restart"
-        android:text="@string/restart"
-        android:textColor="@color/button_text"
-        android:visibility="visible"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.937"
-        tools:visibility="visible" />
-
-    <Button
-        android:id="@+id/show_json"
-        android:layout_width="58dp"
-        android:layout_height="39dp"
-        android:layout_marginEnd="52dp"
-        android:backgroundTint="@color/primary"
-        android:onClick="toggleJSON"
-        android:text="@string/show_json"
-        android:textColor="@color/button_text"
-        android:textSize="10sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toStartOf="@+id/restart_flow"
-        app:layout_constraintHorizontal_bias="0.0"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/authenticatorLayout"
-        app:layout_constraintVertical_bias="0.954" />
-
-    <TextView
-        android:id="@+id/api_response"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="90dp"
-        android:background="#4CAF50"
-        android:padding="5dp"
-        android:scrollbars="horizontal|vertical"
-        android:text="@string/json_placeholder"
-        android:textAlignment="inherit"
-        android:textIsSelectable="true"
-        android:translationY="495dp"
-        android:visibility="visible"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHeight_max="405dp"
-        app:layout_constraintStart_toStartOf="parent"
-        tools:visibility="visible" />
+        app:navGraph="@navigation/mobile_navigation" />
 
     <io.curity.haapidemo.uicomponents.ProgressButton
         android:layout_width="match_parent"
