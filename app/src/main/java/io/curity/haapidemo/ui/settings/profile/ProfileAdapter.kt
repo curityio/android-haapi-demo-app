@@ -29,12 +29,12 @@ class ProfileAdapter(
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return when(viewType) {
-            ItemType.Header.ordinal -> SectionViewHolder.from(parent)
-            ItemType.Content.ordinal -> TextViewHolder.from(parent)
-            ItemType.Toggle.ordinal -> ToggleViewHolder.from(parent)
-            ItemType.LoadingAction.ordinal -> LoadingActionViewHolder.from(parent)
-            ItemType.Checkbox.ordinal -> CheckboxViewHolder.from(parent)
-            ItemType.Recycler.ordinal -> RecyclerViewHolder.from(parent)
+            ProfileItem.Type.Header.ordinal -> SectionViewHolder.from(parent)
+            ProfileItem.Type.Content.ordinal -> TextViewHolder.from(parent)
+            ProfileItem.Type.Toggle.ordinal -> ToggleViewHolder.from(parent)
+            ProfileItem.Type.LoadingAction.ordinal -> LoadingActionViewHolder.from(parent)
+            ProfileItem.Type.Checkbox.ordinal -> CheckboxViewHolder.from(parent)
+            ProfileItem.Type.Recycler.ordinal -> RecyclerViewHolder.from(parent)
             else -> throw ClassCastException("No class for viewType $viewType")
         }
     }
@@ -83,14 +83,7 @@ class ProfileAdapter(
     }
 
     override fun getItemViewType(position: Int): Int {
-        return when(getItem(position)) {
-            is ProfileItem.Header -> ItemType.Header.ordinal
-            is ProfileItem.Content -> ItemType.Content.ordinal
-            is ProfileItem.Toggle -> ItemType.Toggle.ordinal
-            is ProfileItem.LoadingAction -> ItemType.LoadingAction.ordinal
-            is ProfileItem.Checkbox -> ItemType.Checkbox.ordinal
-            is ProfileItem.Recycler -> ItemType.Recycler.ordinal
-        }
+        return getItem(position).type.ordinal
     }
 
     companion object {
@@ -104,8 +97,11 @@ class ProfileAdapter(
             }
         }
     }
+}
 
-    private enum class ItemType {
+sealed class ProfileItem {
+
+    enum class Type {
         Header,
         Content,
         Toggle,
@@ -113,34 +109,36 @@ class ProfileAdapter(
         Checkbox,
         Recycler
     }
-
-}
-
-sealed class ProfileItem {
-
     abstract val id: Long
+    abstract val type: Type
 
     data class Header(val title: String): ProfileItem() {
         override val id: Long = title.hashCode().toLong()
+        override val type: Type = Type.Header
     }
 
     data class Content(val header: String, val text: String): ProfileItem() {
         override val id: Long = header.hashCode().toLong()
+        override val type: Type = Type.Content
     }
 
     data class Toggle(val label: String, val isToggled: Boolean): ProfileItem() {
         override val id: Long = label.hashCode().toLong()
+        override val type: Type = Type.Toggle
     }
 
     data class LoadingAction(val text: String, val dateLong: Long): ProfileItem() {
         override val id: Long = text.hashCode().toLong() + dateLong
+        override val type: Type = Type.LoadingAction
     }
 
     data class Checkbox(val text: String, var isChecked: Boolean): ProfileItem() {
         override val id: Long = text.hashCode().toLong() + isChecked.hashCode().toLong()
+        override val type: Type = Type.Checkbox
     }
 
     data class Recycler(val adapter: ListAdapter<Checkbox, CheckboxViewHolder>): ProfileItem() {
         override val id: Long = adapter.hashCode().toLong()
+        override val type: Type = Type.Recycler
     }
 }
