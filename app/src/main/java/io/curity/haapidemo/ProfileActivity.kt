@@ -31,6 +31,7 @@ import androidx.recyclerview.widget.RecyclerView
 import io.curity.haapidemo.flow.HaapiFlowConfiguration
 import io.curity.haapidemo.ui.settings.*
 import io.curity.haapidemo.ui.settings.profile.*
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.serialization.decodeFromString
@@ -113,11 +114,11 @@ class ProfileActivity : AppCompatActivity() {
                 builder.show()
             }
             is ProfileItem.LoadingAction -> {
-                try {
-                    viewModel.fetchMetaData()
-                } catch(e: IllegalArgumentException) {
-                    Toast.makeText(this, e.toString(), Toast.LENGTH_LONG).show()
-                }
+                viewModel.fetchMetaData(CoroutineExceptionHandler({ _, exception ->
+                    lifecycleScope.launch(Dispatchers.Main) {
+                        Toast.makeText(this@ProfileActivity, exception.toString(), Toast.LENGTH_LONG).show()
+                    }
+                }))
             }
             else -> { assert(value = false, lazyMessage = { "ProfileItem.Type is not handled" }) }
         }

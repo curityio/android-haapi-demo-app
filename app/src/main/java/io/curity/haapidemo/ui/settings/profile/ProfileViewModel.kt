@@ -21,8 +21,7 @@ import io.curity.haapidemo.ProfileIndex
 import io.curity.haapidemo.flow.HaapiFlowConfiguration
 import io.curity.haapidemo.flow.disableSslTrustVerification
 import io.curity.haapidemo.ui.settings.HaapiFlowConfigurationRepository
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.json.JSONObject
@@ -199,65 +198,62 @@ class ProfileViewModel(
      * If it fails then an [Exception] will be thrown.
      * @exception Exception An [IllegalArgumentException] or a generic [Exception]
      */
-    fun fetchMetaData() {
+    fun fetchMetaData(coroutineExceptionHandler: CoroutineExceptionHandler) {
         val metaDataURLString = editableConfiguration.metaDataBaseURLString.plus("/.well-known/openid-configuration")
-        val request: Request
         try {
-            Request.Builder()
+            val request = Request.Builder()
                 .url(metaDataURLString)
                 .get()
                 .build()
+
+            viewModelScope.launch(Dispatchers.IO + coroutineExceptionHandler) {
+                try {
+                    val response = httpClient.newCall(request).execute()
+                    val responseBody = response.body
+
+                    if (!response.isSuccessful || responseBody == null) {
+                        throw NetworkErrorException("Impossible to fetch the meta data")
+                    }
+
+                    val jsonObject = JSONObject(responseBody.string())
+
+                    val scopesJSONArray = jsonObject.getJSONArray("scopes_supported")
+                    val scopesList = List(scopesJSONArray.length()) {
+                        scopesJSONArray.getString(it)
+                    }
+
+                    jsonObject.getString("token_endpoint").let {
+                        editableConfiguration.tokenEndpointURI = it
+
+                        val index = ProfileIndex.ItemTokenEndpointURI.ordinal
+                        val oldItem = _list.value!![index] as ProfileItem.Content
+                        val newItem = ProfileItem.Content(header = oldItem.header, text = editableConfiguration.tokenEndpointURI)
+                        _list.value!![index] = newItem
+                    }
+
+                    jsonObject.getString("authorization_endpoint").let {
+                        editableConfiguration.authorizationEndpointURI = it
+
+                        val index = ProfileIndex.ItemTokenEndpointURI.ordinal
+                        val oldItem = _list.value!![index] as ProfileItem.Content
+                        val newItem =
+                            ProfileItem.Content(header = oldItem.header, text = editableConfiguration.authorizationEndpointURI)
+                        _list.value!![index] = newItem
+                    }
+
+                    editableConfiguration.supportedScopes = scopesList.sorted()
+                    updateConfiguration()
+
+                    refreshLoadingMetaData()
+                    refreshScopes()
+                } catch (e: Exception) {
+                    refreshLoadingMetaData()
+                    throw e // coroutineExceptionHandler will consume it
+                }
+            }
         } catch (e: IllegalArgumentException) {
             refreshLoadingMetaData()
-            throw e
-        }.apply {
-            request = this
-        }
-
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val response = httpClient.newCall(request).execute()
-                val responseBody = response.body
-
-                if (!response.isSuccessful || responseBody == null) {
-                    throw NetworkErrorException("Impossible to fetch the meta data")
-                }
-
-                val jsonObject = JSONObject(responseBody.string())
-
-                val scopesJSONArray = jsonObject.getJSONArray("scopes_supported")
-                val scopesList = List(scopesJSONArray.length()) {
-                    scopesJSONArray.getString(it)
-                }
-
-                jsonObject.getString("token_endpoint").let {
-                    editableConfiguration.tokenEndpointURI = it
-
-                    val index = ProfileIndex.ItemTokenEndpointURI.ordinal
-                    val oldItem = _list.value!![index] as ProfileItem.Content
-                    val newItem = ProfileItem.Content(header = oldItem.header, text = editableConfiguration.tokenEndpointURI)
-                    _list.value!![index] = newItem
-                }
-
-                jsonObject.getString("authorization_endpoint").let {
-                    editableConfiguration.authorizationEndpointURI = it
-
-                    val index = ProfileIndex.ItemTokenEndpointURI.ordinal
-                    val oldItem = _list.value!![index] as ProfileItem.Content
-                    val newItem =
-                        ProfileItem.Content(header = oldItem.header, text = editableConfiguration.authorizationEndpointURI)
-                    _list.value!![index] = newItem
-                }
-
-                editableConfiguration.supportedScopes = scopesList.sorted()
-                updateConfiguration()
-
-                refreshLoadingMetaData()
-                refreshScopes()
-
-            } catch (e: Exception) {
-                throw e
-            }
+            coroutineExceptionHandler.handleException(Dispatchers.IO, e)
         }
     }
 
