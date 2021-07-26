@@ -23,7 +23,7 @@ import io.curity.haapidemo.flow.HaapiFlowConfiguration
 import io.curity.haapidemo.ui.settings.profile.ProfileViewHolder
 import io.curity.haapidemo.uicomponents.SectionViewHolder
 
-class ProfilesAdapter(private val clickHandler: (HaapiFlowConfiguration) -> Unit): ListAdapter<SettingsItem, RecyclerView.ViewHolder>(CONFIG_COMPARATOR) {
+class SettingsListAdapter(private val clickHandler: (HaapiFlowConfiguration) -> Unit): ListAdapter<SettingsItem, RecyclerView.ViewHolder>(CONFIG_COMPARATOR) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return when(viewType) {
