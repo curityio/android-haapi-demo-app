@@ -17,9 +17,11 @@
 package io.curity.haapidemo
 
 import android.animation.ObjectAnimator
+import android.content.Context
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
+import android.util.AttributeSet
 import android.util.Base64
 import android.util.Log
 import android.view.View
@@ -33,6 +35,7 @@ import io.curity.haapidemo.Configuration.Companion.clientId
 import io.curity.haapidemo.Configuration.Companion.host
 import io.curity.haapidemo.Configuration.Companion.redirectUri
 import io.curity.haapidemo.Configuration.Companion.scopes
+import io.curity.haapidemo.uicomponents.ProgressButton
 import java.security.MessageDigest
 
 class MainActivity : AppCompatActivity() {
@@ -68,6 +71,18 @@ class MainActivity : AppCompatActivity() {
             findViewById(R.id.api_response)
         )
         logAppInfo()
+
+        val primaryProgressButton: ProgressButton = findViewById(R.id.progress_button)
+        primaryProgressButton.setText("Primary Button")
+        primaryProgressButton.setOnClickListener {
+            primaryProgressButton.setLoading(true)
+        }
+
+        val secondaryProgressButton: ProgressButton = findViewById(R.id.progress_button_secondary)
+        secondaryProgressButton.setText("Secondary Button")
+        secondaryProgressButton.setOnClickListener {
+            secondaryProgressButton.setLoading(true)
+        }
     }
 
     fun restart(view: View) {
