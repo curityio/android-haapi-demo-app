@@ -103,7 +103,6 @@ class SettingsListFragment : Fragment() {
         val newIntent = ProfileActivity.newIntent(
             context = requireContext(),
             haapiConfiguration = config,
-            index = settingsListViewModel.indexOfConfiguration(config),
             isActiveConfiguration = settingsListViewModel.isActiveConfiguration(config)
         )
         startActivity(newIntent)

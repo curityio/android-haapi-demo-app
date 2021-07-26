@@ -79,10 +79,6 @@ class SettingsListViewModel(
     fun isActiveConfiguration(config: HaapiFlowConfiguration): Boolean {
         return activeConfiguration == config
     }
-
-    fun indexOfConfiguration(config: HaapiFlowConfiguration): Int {
-        return configurations.indexOf(config)
-    }
 }
 
 class SettingsListViewModelFactory(

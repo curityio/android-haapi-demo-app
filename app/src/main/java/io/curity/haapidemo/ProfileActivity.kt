@@ -59,18 +59,18 @@ class ProfileActivity : AppCompatActivity() {
         recyclerView.adapter = adapter
 
         val configString = intent.getStringExtra(EXTRA_HAAPI_CONFIGURATION)
-        val index = intent.getIntExtra(EXTRA_HAAPI_INDEX_CONFIGURATION, -9999)
-        if (configString == null || index == -9999) {
+        if (configString == null) {
             throw IllegalArgumentException("Missing extra arguments, use ProfileActivity.newIntent(...)")
         }
         val configuration: HaapiFlowConfiguration = Json.decodeFromString(configString)
+        val isActiveConfiguration = intent.getBooleanExtra(EXTRA_HAAPI_IS_ACTIVE_CONFIGURATION, false)
 
         viewModel = ViewModelProvider(
             this,
             ProfileViewModelFactory(
                 HaapiFlowConfigurationRepository(dataStore = configurationDataStore),
                 configuration = configuration,
-                index = index,
+                isActiveConfiguration = isActiveConfiguration,
                 scopesAdapter
             )
         ).get(ProfileViewModel::class.java)
@@ -88,7 +88,7 @@ class ProfileActivity : AppCompatActivity() {
         }
 
         val button: Button = findViewById(R.id.button)
-        val isActiveConfiguration = intent.getBooleanExtra(EXTRA_HAAPI_IS_ACTIVE_CONFIGURATION, false)
+
         button.visibility = if (isActiveConfiguration) View.GONE else View.VISIBLE
         button.setOnClickListener {
             makeConfigurationActive()
@@ -134,18 +134,15 @@ class ProfileActivity : AppCompatActivity() {
 
     companion object {
         private const val EXTRA_HAAPI_CONFIGURATION = "io.curity.haapidemo.profileActivity.extra_configuration"
-        private const val EXTRA_HAAPI_INDEX_CONFIGURATION = "io.curity.haapidemo.profileActivity.extra_index_configuration"
         private const val EXTRA_HAAPI_IS_ACTIVE_CONFIGURATION = "io.curity.haapidemo.profileActivity.extra_is_active_configuration"
 
         fun newIntent(
             context: Context,
             haapiConfiguration: HaapiFlowConfiguration,
-            index: Int,
             isActiveConfiguration: Boolean): Intent
         {
             val intent = Intent(context, ProfileActivity::class.java)
             intent.putExtra(EXTRA_HAAPI_CONFIGURATION, Json.encodeToString(haapiConfiguration))
-            intent.putExtra(EXTRA_HAAPI_INDEX_CONFIGURATION, index)
             intent.putExtra(EXTRA_HAAPI_IS_ACTIVE_CONFIGURATION, isActiveConfiguration)
             return intent
         }

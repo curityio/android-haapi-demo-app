@@ -31,10 +31,12 @@ import kotlin.IllegalArgumentException
 
 class ProfileViewModel(
     private val repository: HaapiFlowConfigurationRepository,
-    private val configuration: HaapiFlowConfiguration,
-    private val indexConfiguration: Int,
+    private var configuration: HaapiFlowConfiguration,
+    private val isActiveConfiguration: Boolean,
     private val scopesAdapter: ScopesAdapter
 ): ViewModel() {
+
+    private var editableConfiguration: HaapiFlowConfiguration
 
     private var _list: MutableLiveData<MutableList<ProfileItem>> = MutableLiveData()
     val listLiveData: LiveData<List<ProfileItem>>
@@ -47,6 +49,7 @@ class ProfileViewModel(
         get() = _scopesLiveData.map { it.toList() }
 
     init {
+        editableConfiguration = configuration.copy()
         initialize()
     }
 
@@ -144,13 +147,13 @@ class ProfileViewModel(
     fun update(value: String, atIndex: ProfileIndex) {
         viewModelScope.launch(Dispatchers.IO) {
             when (atIndex) {
-                ProfileIndex.ItemName -> { configuration.name = value }
-                ProfileIndex.ItemClientId -> { configuration.clientId = value }
-                ProfileIndex.ItemBaseURL -> { configuration.baseURLString = value }
-                ProfileIndex.ItemRedirectURI -> { configuration.redirectURI = value }
-                ProfileIndex.ItemMetaDataURL -> { configuration.metaDataBaseURLString = value }
-                ProfileIndex.ItemTokenEndpointURI -> { configuration.tokenEndpointURI = value }
-                ProfileIndex.ItemAuthorizationEndpointURI -> { configuration.authorizationEndpointURI = value }
+                ProfileIndex.ItemName -> { editableConfiguration.name = value }
+                ProfileIndex.ItemClientId -> { editableConfiguration.clientId = value }
+                ProfileIndex.ItemBaseURL -> { editableConfiguration.baseURLString = value }
+                ProfileIndex.ItemRedirectURI -> { editableConfiguration.redirectURI = value }
+                ProfileIndex.ItemMetaDataURL -> { editableConfiguration.metaDataBaseURLString = value }
+                ProfileIndex.ItemTokenEndpointURI -> { editableConfiguration.tokenEndpointURI = value }
+                ProfileIndex.ItemAuthorizationEndpointURI -> { editableConfiguration.authorizationEndpointURI = value }
 
                 else -> throw IllegalArgumentException("Invalid index $atIndex for updating a String to configuration")
             }
@@ -160,28 +163,28 @@ class ProfileViewModel(
             newList[atIndex.ordinal] = newProfileItem
             _list.postValue(newList)
 
-            repository.updateConfiguration(configuration, indexConfiguration)
+            updateConfiguration()
         }
     }
 
     fun updateBoolean(index: ProfileIndex) {
         viewModelScope.launch(Dispatchers.IO) {
             when (index) {
-                ProfileIndex.ItemFollowRedirect -> { configuration.followRedirect = !configuration.followRedirect }
-                ProfileIndex.ItemAutomaticPolling -> { configuration.isAutoPollingEnabled = !configuration.isAutoPollingEnabled }
-                ProfileIndex.ItemAutoAuthorizationChallenged -> { configuration.isAutoAuthorizationChallengedEnabled = !configuration.isAutoAuthorizationChallengedEnabled }
-                ProfileIndex.ItemSSLTrustVerification -> { configuration.isSSLTrustVerificationEnabled = !configuration.isSSLTrustVerificationEnabled }
+                ProfileIndex.ItemFollowRedirect -> { editableConfiguration.followRedirect = !configuration.followRedirect }
+                ProfileIndex.ItemAutomaticPolling -> { editableConfiguration.isAutoPollingEnabled = !configuration.isAutoPollingEnabled }
+                ProfileIndex.ItemAutoAuthorizationChallenged -> { editableConfiguration.isAutoAuthorizationChallengedEnabled = !configuration.isAutoAuthorizationChallengedEnabled }
+                ProfileIndex.ItemSSLTrustVerification -> { editableConfiguration.isSSLTrustVerificationEnabled = !configuration.isSSLTrustVerificationEnabled }
 
                 else -> throw IllegalArgumentException("Invalid index $index for updating a Boolean to configuration")
             }
 
-            repository.updateConfiguration(configuration, indexConfiguration)
+            updateConfiguration()
         }
     }
 
     fun makeConfigurationActive() {
         viewModelScope.launch(Dispatchers.IO) {
-            repository.setActiveConfiguration(configuration)
+            repository.setActiveConfiguration(editableConfiguration)
         }
     }
 
@@ -197,7 +200,7 @@ class ProfileViewModel(
      * @exception Exception An [IllegalArgumentException] or a generic [Exception]
      */
     fun fetchMetaData() {
-        val metaDataURLString = configuration.metaDataBaseURLString.plus("/.well-known/openid-configuration")
+        val metaDataURLString = editableConfiguration.metaDataBaseURLString.plus("/.well-known/openid-configuration")
         val request: Request
         try {
             Request.Builder()
@@ -228,26 +231,26 @@ class ProfileViewModel(
                 }
 
                 jsonObject.getString("token_endpoint").let {
-                    configuration.tokenEndpointURI = it
+                    editableConfiguration.tokenEndpointURI = it
 
                     val index = ProfileIndex.ItemTokenEndpointURI.ordinal
                     val oldItem = _list.value!![index] as ProfileItem.Content
-                    val newItem = ProfileItem.Content(header = oldItem.header, text = configuration.tokenEndpointURI)
+                    val newItem = ProfileItem.Content(header = oldItem.header, text = editableConfiguration.tokenEndpointURI)
                     _list.value!![index] = newItem
                 }
 
                 jsonObject.getString("authorization_endpoint").let {
-                    configuration.authorizationEndpointURI = it
+                    editableConfiguration.authorizationEndpointURI = it
 
                     val index = ProfileIndex.ItemTokenEndpointURI.ordinal
                     val oldItem = _list.value!![index] as ProfileItem.Content
                     val newItem =
-                        ProfileItem.Content(header = oldItem.header, text = configuration.authorizationEndpointURI)
+                        ProfileItem.Content(header = oldItem.header, text = editableConfiguration.authorizationEndpointURI)
                     _list.value!![index] = newItem
                 }
 
-                configuration.supportedScopes = scopesList.sorted()
-                repository.updateConfiguration(configuration, indexConfiguration)
+                editableConfiguration.supportedScopes = scopesList.sorted()
+                updateConfiguration()
 
                 refreshLoadingMetaData()
                 refreshScopes()
@@ -259,8 +262,8 @@ class ProfileViewModel(
     }
 
     fun toggleScope(index: Int) {
-        val mutableScopes = configuration.selectedScopes.toMutableList()
-        val scope = configuration.supportedScopes[index]
+        val mutableScopes = editableConfiguration.selectedScopes.toMutableList()
+        val scope = editableConfiguration.supportedScopes[index]
 
         if (mutableScopes.contains(scope)) {
             mutableScopes.remove(scope)
@@ -268,17 +271,17 @@ class ProfileViewModel(
             mutableScopes.add(scope)
         }
 
-        configuration.selectedScopes = mutableScopes
+        editableConfiguration.selectedScopes = mutableScopes
         viewModelScope.launch(Dispatchers.IO) {
-            repository.updateConfiguration(configuration,indexConfiguration)
+            updateConfiguration()
         }
     }
 
     private fun refreshScopes() {
-        val scopes = configuration.supportedScopes.map {
+        val scopes = editableConfiguration.supportedScopes.map {
             ProfileItem.Checkbox(
                 text = it,
-                isChecked = configuration.selectedScopes.contains(it)
+                isChecked = editableConfiguration.selectedScopes.contains(it)
             )
         }.toMutableList()
 
@@ -294,19 +297,33 @@ class ProfileViewModel(
 
         _list.postValue(newList)
     }
+
+    private suspend fun updateConfiguration() {
+        if (isActiveConfiguration) {
+            repository.updateActiveConfiguration(editableConfiguration)
+        } else {
+            repository.updateConfiguration(
+                newConfig = editableConfiguration,
+                oldConfig = configuration
+            )
+        }
+
+        configuration = editableConfiguration
+        editableConfiguration = configuration.copy()
+    }
 }
 
 class ProfileViewModelFactory(
     private val repository: HaapiFlowConfigurationRepository,
     private val configuration: HaapiFlowConfiguration,
-    private val index: Int,
+    private val isActiveConfiguration: Boolean,
     private val scopesAdapter: ScopesAdapter
     ): ViewModelProvider.Factory {
 
     override fun <T : ViewModel?> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(ProfileViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return ProfileViewModel(repository, configuration, index, scopesAdapter) as T
+            return ProfileViewModel(repository, configuration, isActiveConfiguration, scopesAdapter) as T
         }
 
         throw IllegalArgumentException("Unknown ViewModel class ProfileViewModel")

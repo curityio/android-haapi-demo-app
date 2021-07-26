@@ -72,24 +72,30 @@ class HaapiFlowConfigurationRepository(private val dataStore: DataStore<Preferen
     }
 
     /**
-     * Updates the configuration repository with a new [config] at the specified [index].
-     * If the [index] is equal to -1 then the [config] will update the activeConfiguration of the repository.
-     * If the [index] is out of bound of the repository list then nothing happens.
-     * Otherwise, the [config] will replace the previous [config] in the repository list.
+     * Updates the active configuration in the repository
      *
      * @param config A HaapiFlowConfiguration
-     * @param index An integer
      */
-    suspend fun updateConfiguration(config: HaapiFlowConfiguration, index: Int) {
+    suspend fun updateActiveConfiguration(config: HaapiFlowConfiguration) {
         dataStore.edit { preferences ->
-            if (index == -1) {
-                preferences[PreferencesKeys.ACTIVE_CONFIG] = Json.encodeToString(config)
-            } else {
-                val list = preferences[PreferencesKeys.CONFIGS].toHaapiConfigurations()
-                if (list.isNotEmpty() && index < list.size) {
-                    list[index] = config
-                    preferences[PreferencesKeys.CONFIGS] = Json.encodeToString(list)
-                }
+            preferences[PreferencesKeys.ACTIVE_CONFIG] = Json.encodeToString(config)
+        }
+    }
+
+    /**
+     * Updates a [newConfig] by replacing the [oldConfig] in the repository
+     * If the repository cannot find the [oldConfig] then nothing happens.
+     *
+     * @param newConfig An updated HaapiFlowConfiguration
+     * @param oldConfig An old HaapiFlowConfiguration to be replaced
+     */
+    suspend fun updateConfiguration(newConfig: HaapiFlowConfiguration, oldConfig: HaapiFlowConfiguration) {
+        dataStore.edit { preferences ->
+            val list = preferences[PreferencesKeys.CONFIGS].toHaapiConfigurations()
+            val idxConfig = list.indexOf(oldConfig)
+            if (idxConfig != -1) {
+                list[idxConfig] = newConfig
+                preferences[PreferencesKeys.CONFIGS] = Json.encodeToString(list)
             }
         }
     }
