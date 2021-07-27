@@ -118,8 +118,8 @@ sealed class MessageStyle {
     @Suppress("Unused")
     data class Warning(
         override val backgroundColor: Int = R.color.warning_background,
-        override val textColor: Int = R.color.warning,
-        override val tintColor: Int = R.color.warning,
+        override val textColor: Int = R.color.warning_text_color,
+        override val tintColor: Int = R.color.warning_text_color,
         override val imageResource: Int = R.drawable.ic_warningrounded,
         override val textAppearance: Int = R.style.TextAppearance_Caption
     ) : MessageStyle()
@@ -127,8 +127,8 @@ sealed class MessageStyle {
     @Suppress("Unused")
     data class Error(
         override val backgroundColor: Int = R.color.error_background,
-        override val textColor: Int = R.color.error,
-        override val tintColor: Int = R.color.error,
+        override val textColor: Int = R.color.error_text_color,
+        override val tintColor: Int = R.color.error_text_color,
         override val imageResource: Int = R.drawable.ic_warning,
         override val textAppearance: Int = R.style.TextAppearance_Caption
     ) : MessageStyle()
@@ -136,8 +136,8 @@ sealed class MessageStyle {
     @Suppress("Unused")
     data class Info(
         override val backgroundColor: Int = R.color.info_background,
-        override val textColor: Int = R.color.info,
-        override val tintColor: Int = R.color.info,
+        override val textColor: Int = R.color.info_text_color,
+        override val tintColor: Int = R.color.info_text_color,
         override val imageResource: Int = R.drawable.ic_warningrounded,
         override val textAppearance: Int = R.style.TextAppearance_Caption
     ) : MessageStyle()

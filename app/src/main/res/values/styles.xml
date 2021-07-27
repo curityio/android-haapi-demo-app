@@ -79,21 +79,21 @@
 
     <style name="WarningMessageview" parent="MessageView">
         <item name="backgroundColor">@color/warning_background</item>
-        <item name="android:textColor">@color/warning</item>
-        <item name="tintColor">@color/warning</item>
+        <item name="android:textColor">@color/warning_text_color</item>
+        <item name="tintColor">@color/warning_text_color</item>
     </style>
 
     <style name="ErrorMessageView" parent="MessageView">
         <item name="backgroundColor">@color/error_background</item>
-        <item name="android:textColor">@color/error</item>
-        <item name="tintColor">@color/error</item>
+        <item name="android:textColor">@color/error_text_color</item>
+        <item name="tintColor">@color/error_text_color</item>
         <item name="srcCompat">@drawable/ic_warning</item>
     </style>
 
     <style name="InfoMessageView" parent="MessageView">
         <item name="backgroundColor">@color/info_background</item>
-        <item name="android:textColor">@color/info</item>
-        <item name="tintColor">@color/info</item>
+        <item name="android:textColor">@color/info_text_color</item>
+        <item name="tintColor">@color/info_text_color</item>
     </style>
 <!--    end-->
 
