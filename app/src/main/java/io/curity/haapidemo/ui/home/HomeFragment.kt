@@ -39,7 +39,7 @@ class HomeFragment : Fragment() {
     ): View? {
         val root = inflater.inflate(R.layout.fragment_home, container, false)
         button = root.findViewById(R.id.button)
-        imageView = root.findViewById(R.id.imageView)
+        imageView = root.findViewById(R.id.image_view)
         return root
     }
 

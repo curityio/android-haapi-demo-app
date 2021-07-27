@@ -49,7 +49,7 @@ class ProgressButton @JvmOverloads constructor(
     init {
         val root = LayoutInflater.from(context).inflate(R.layout.progress_btn_layout, this, true)
         progressBar = root.findViewById(R.id.progressBar)
-        textView = root.findViewById(R.id.textView)
+        textView = root.findViewById(R.id.text_view)
 
         loadAttrs(attrs, defStyleAttr)
 

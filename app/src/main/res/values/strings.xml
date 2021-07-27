@@ -35,10 +35,11 @@
 
     <string name="lorem_ipsum">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi molestie nisl.</string>
 
+    <string name="title_activity_showcase">Showcase</string>
+
     <!--    // Content descriptions-->
     <string name="warning_content_description">A warning icon</string>
     <string name="logo_content_description">A header logo</string>
-    <string name="title_activity_showcase">Showcase</string>
-    <string name="action_settings">Settings</string>
-    <string name="toggle_password_visibilty">Toggle password visibility</string>
+    <string name="toggle_password_visibilty_content_description">Toggle password visibility</string>
+    <string name="error_icon_content_description">An error icon</string>
 </resources>

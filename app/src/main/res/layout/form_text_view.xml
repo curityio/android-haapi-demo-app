@@ -48,13 +48,12 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             tools:text="A Text"
-            android:hint="@string/toggle_password_visibilty"
             android:paddingStart="14dp"
             android:singleLine="true"
             android:background="@android:color/transparent"
             android:inputType="text"
             android:layout_weight="1"
-            />
+            tools:ignore="RtlSymmetry" />
 
         <ImageView
             android:id="@+id/image_view"
@@ -62,7 +61,8 @@
             android:layout_height="match_parent"
             android:src="@drawable/ic_warningrounded"
             android:layout_weight="0"
-            android:visibility="visible"/>
+            android:visibility="visible"
+            android:contentDescription="@string/error_icon_content_description"/>
 
         <ImageButton
             android:id="@+id/image_button"
@@ -75,7 +75,7 @@
             android:paddingEnd="14dp"
             android:scaleType="fitCenter"
             android:foreground="?android:attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/toggle_password_visibilty"/>
+            android:contentDescription="@string/toggle_password_visibilty_content_description"/>
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

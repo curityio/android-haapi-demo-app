@@ -44,10 +44,10 @@ class DisclosureView @JvmOverloads constructor(
         val root = LayoutInflater.from(context).inflate(R.layout.disclosure_view, this, true)
 
         titleTextView = root.findViewById(R.id.title)
-        toggleButton = root.findViewById(R.id.toggleButton)
+        toggleButton = root.findViewById(R.id.toggle_button)
 
         collapseLinearLayout = root.findViewById(R.id.collapse_linear_layout)
-        contentTextView = root.findViewById(R.id.contentText)
+        contentTextView = root.findViewById(R.id.content_text)
         verticalLinearLayout = root.findViewById(R.id.vertical_linear_layout)
 
         loadAttrs(attrs, defStyleAttr)

@@ -44,8 +44,8 @@ class MessageView @JvmOverloads constructor(
     init {
         val root = LayoutInflater.from(context).inflate(R.layout.message_view, this, true)
 
-        imageView = root.findViewById(R.id.imageView)
-        textView = root.findViewById(R.id.textView)
+        imageView = root.findViewById(R.id.image_view)
+        textView = root.findViewById(R.id.text_view)
 
         loadAttrs(attrs, defStyleAttr)
     }
