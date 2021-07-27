@@ -40,4 +40,5 @@
     <string name="logo_content_description">A header logo</string>
     <string name="title_activity_showcase">Showcase</string>
     <string name="action_settings">Settings</string>
+    <string name="toggle_password_visibilty">Toggle password visibility</string>
 </resources>

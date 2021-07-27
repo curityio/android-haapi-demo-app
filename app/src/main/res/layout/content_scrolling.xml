@@ -80,6 +80,37 @@
             android:layout_height="wrap_content"
             android:layout_margin="@dimen/padding"
             app:titleText="@string/tab_home"/>
+
+        <io.curity.haapidemo.uicomponents.FormTextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:labelText="Error only"
+            android:hint="A Hint"
+            app:valueText="Error"
+            app:errorEnabled="true"
+            android:layout_margin="@dimen/padding"
+            />
+
+        <io.curity.haapidemo.uicomponents.FormTextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:labelText="Password"
+            android:hint="A Hint"
+            app:valueText="My password"
+            android:layout_margin="@dimen/padding"
+            app:passwordToggleEnabled="true"
+            />
+
+        <io.curity.haapidemo.uicomponents.FormTextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:labelText="Password error"
+            android:hint="A Hint"
+            app:valueText="My password"
+            android:layout_margin="@dimen/padding"
+            app:passwordToggleEnabled="true"
+            app:errorEnabled="true"
+            />
     </LinearLayout>
 
 

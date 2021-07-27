@@ -111,6 +111,10 @@
         <item name="android:lineSpacingExtra">5sp</item>
     </style>
 
+    <style name="TextAppearance.Body.Black" parent="TextAppearance.Body">
+        <item name="android:textColor">@android:color/black</item>
+    </style>
+
     <style name="TextAppearance.Caption" parent="@style/TextAppearance.MaterialComponents.Caption">
     </style>
 
