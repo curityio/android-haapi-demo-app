@@ -19,10 +19,13 @@ package io.curity.haapidemo
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import com.google.android.material.appbar.CollapsingToolbarLayout
 import androidx.appcompat.app.AppCompatActivity
 import io.curity.haapidemo.uicomponents.DisclosureContent
 import io.curity.haapidemo.uicomponents.DisclosureView
+import io.curity.haapidemo.uicomponents.ProgressButton
 
 class ShowcaseActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -42,6 +45,22 @@ class ShowcaseActivity : AppCompatActivity() {
             it.setDisclosureContents(contents)
         }
 
+        val progressButton: ProgressButton = findViewById(R.id.progress_button)
+        progressButton.setOnClickListener {
+            demoLoadProgressButton(it as ProgressButton)
+        }
+
+        val secondaryProgressButton: ProgressButton = findViewById(R.id.progress_button_2)
+        secondaryProgressButton.setOnClickListener {
+            demoLoadProgressButton(it as ProgressButton)
+        }
+    }
+
+    private fun demoLoadProgressButton(button: ProgressButton) {
+        button.setLoading(true)
+        Handler(Looper.getMainLooper()).postDelayed({
+            button.setLoading(false)
+        }, 3000)
     }
 
     companion object {

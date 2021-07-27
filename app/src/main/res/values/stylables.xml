@@ -30,6 +30,7 @@
         <attr name="tintColor"/>
         <attr name="android:foreground" />
         <attr name="android:text" />
+        <attr name="strokeColor" />
     </declare-styleable>
 
     <declare-styleable name="MessageView">

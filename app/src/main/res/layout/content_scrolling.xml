@@ -111,6 +111,22 @@
             app:passwordToggleEnabled="true"
             app:errorEnabled="true"
             />
+
+        <io.curity.haapidemo.uicomponents.ProgressButton
+            android:id="@+id/progress_button"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_margin="@dimen/padding"
+            android:text="Press me"
+            style="@style/PrimaryProgressButton"/>
+
+        <io.curity.haapidemo.uicomponents.ProgressButton
+            android:id="@+id/progress_button_2"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:layout_margin="@dimen/padding"
+            android:text="Press me"
+            style="@style/SecondaryProgressButton"/>
     </LinearLayout>
 
 

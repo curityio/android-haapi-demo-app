@@ -16,6 +16,7 @@
 
 package io.curity.haapidemo.uicomponents
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Color
 import android.util.AttributeSet
@@ -27,6 +28,8 @@ import android.widget.TextView
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.constraintlayout.widget.ConstraintLayout
 import io.curity.haapidemo.R
+import io.curity.haapidemo.utils.setStroke
+import io.curity.haapidemo.utils.toDpi
 
 /**
  * `ProgressButton` is an UI component that is similar to a `Button` with a "spinner" `ProgressBar` in the center.
@@ -56,6 +59,7 @@ class ProgressButton @JvmOverloads constructor(
         progressBar.visibility = View.GONE
     }
 
+    @SuppressLint("Recycle")
     private fun loadAttrs(attrs: AttributeSet?, defStyleAttr: Int) {
         context.obtainStyledAttributes(
             attrs,
@@ -83,8 +87,12 @@ class ProgressButton @JvmOverloads constructor(
                     val progressBarColor = getColor(R.styleable.ProgressButton_tintColor, Color.parseColor("#FFFFFF"))
                     progressBar.indeterminateDrawable.setTint(progressBarColor)
 
+                    getColor(R.styleable.ProgressButton_strokeColor, Color.BLACK).let {
+                        background.setStroke(it, (1).toDpi(resources))
+                    }
+
                     val text = getText(R.styleable.ProgressButton_android_text)
-                    textView.setText(text)
+                    textView.text = text
 
                 } finally {
                     recycle()
@@ -97,6 +105,7 @@ class ProgressButton @JvmOverloads constructor(
      *
      * @param text A String
      */
+    @Suppress("Unused")
     fun setText(text: String) {
         textView.text = text
     }
@@ -104,6 +113,7 @@ class ProgressButton @JvmOverloads constructor(
     /**
      * Returns the text of ProgressButton
      */
+    @Suppress("Unused")
     fun getText(): String {
         return textView.text.toString()
     }

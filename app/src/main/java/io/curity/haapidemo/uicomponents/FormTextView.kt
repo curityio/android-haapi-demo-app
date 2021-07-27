@@ -18,20 +18,19 @@ package io.curity.haapidemo.uicomponents
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.graphics.drawable.Drawable
-import android.graphics.drawable.GradientDrawable
 import android.text.method.HideReturnsTransformationMethod
 import android.text.method.PasswordTransformationMethod
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.*
-import androidx.annotation.ColorInt
 import androidx.annotation.StyleRes
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.updatePadding
 import com.google.android.material.textfield.TextInputEditText
 import io.curity.haapidemo.R
+import io.curity.haapidemo.utils.setStroke
+import io.curity.haapidemo.utils.toDpi
 
 class FormTextView @JvmOverloads constructor(
     context: Context,
@@ -146,7 +145,7 @@ class FormTextView @JvmOverloads constructor(
      */
     @SuppressWarnings("WeakerAccess")
     fun enableError(isErrorEnabled: Boolean) {
-        val widthDp = (resources.displayMetrics.density * 2).toInt()
+        val widthDp = (2).toDpi(resources)
 
         if (isErrorEnabled) {
             imageView.visibility = View.VISIBLE
@@ -206,19 +205,7 @@ class FormTextView @JvmOverloads constructor(
         if (imageView.visibility == View.VISIBLE && visibilityToggleButton.visibility == View.VISIBLE) {
             imageView.updatePadding(right = 0)
         } else {
-            val rightDp = resources.displayMetrics.density * 14
-            imageView.updatePadding(right = rightDp.toInt())
+            imageView.updatePadding(right = (14).toDpi(resources))
         }
     }
 }
-
-//region Private extension for Drawable
-private fun Drawable.setStroke(@ColorInt colorInt: Int, width: Int) {
-    when (this) {
-        is GradientDrawable -> {
-            mutate()
-            setStroke(width, colorInt)
-        }
-    }
-}
-//endregion

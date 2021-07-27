@@ -19,18 +19,14 @@ package io.curity.haapidemo.uicomponents
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Color
-import android.graphics.drawable.ColorDrawable
-import android.graphics.drawable.Drawable
-import android.graphics.drawable.GradientDrawable
-import android.graphics.drawable.ShapeDrawable
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.widget.ImageView
 import android.widget.TextView
-import androidx.annotation.ColorInt
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.constraintlayout.widget.ConstraintLayout
 import io.curity.haapidemo.R
+import io.curity.haapidemo.utils.setBackgroundColor
 
 class MessageView @JvmOverloads constructor(
     context: Context,
@@ -142,13 +138,3 @@ sealed class MessageStyle {
         override val textAppearance: Int = R.style.TextAppearance_Caption
     ) : MessageStyle()
 }
-
-//region Private extension
-private fun Drawable?.setBackgroundColor(@ColorInt colorInt: Int) {
-    when (this) {
-        is ShapeDrawable -> paint.color = colorInt
-        is GradientDrawable -> setColor(colorInt)
-        is ColorDrawable -> color = colorInt
-    }
-}
-//endregion

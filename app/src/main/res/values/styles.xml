@@ -58,6 +58,7 @@
         <item name="textAppearanceButton">@style/TextAppearance.ProgressButton.Primary</item>
         <item name="tintColor">#FFFFFF</item>
         <item name="android:foreground">?attr/selectableItemBackground</item>
+        <item name="strokeColor">@color/primary</item>
     </style>
 
     <style name="SecondaryProgressButton">
@@ -65,6 +66,7 @@
         <item name="textAppearanceButton">@style/TextAppearance.ProgressButton.Secondary</item>
         <item name="tintColor">#333333</item>
         <item name="android:foreground">@drawable/ripple_effect</item>
+        <item name="strokeColor">@color/grey</item>
     </style>
 <!--    end-->
 
