@@ -34,7 +34,7 @@ import kotlinx.coroutines.launch
 class SettingsListFragment : Fragment() {
 
     private lateinit var settingsListViewModel: SettingsListViewModel
-    private val adapter by lazy { SettingsListAdapter(clickHandler = { config -> select(config)})}
+    private val adapter = SettingsListAdapter(clickHandler = { config -> select(config)})
 
     private lateinit var recyclerView: RecyclerView
     private lateinit var addButton: FloatingActionButton

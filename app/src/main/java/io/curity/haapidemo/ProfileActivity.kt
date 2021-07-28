@@ -43,14 +43,12 @@ class ProfileActivity : AppCompatActivity() {
     private lateinit var viewModel: ProfileViewModel
     private lateinit var recyclerView: RecyclerView
 
-    private val adapter by lazy {
-        ProfileAdapter(
-            clickHandler = { content, position -> selectItem(content, position) },
-            toggleHandler = { position -> toggleItem(position) }
-        )
-    }
+    private val adapter = ProfileAdapter(
+        clickHandler = { content, position -> selectItem(content, position) },
+        toggleHandler = { position -> toggleItem(position) }
+    )
 
-    private val scopesAdapter by lazy { ScopesAdapter(checkHandler = { index -> viewModel.toggleScope(index) }) }
+    private val scopesAdapter = ScopesAdapter(checkHandler = { index -> viewModel.toggleScope(index) })
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
