@@ -24,7 +24,7 @@
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/nav_view"
         android:layout_width="match_parent"
-        android:layout_height="56dp"
+        android:layout_height="@dimen/tabBarHeight"
         android:layout_marginStart="0dp"
         android:layout_marginEnd="0dp"
         android:background="@color/primary_medium"
@@ -46,24 +46,5 @@
         app:layout_constraintRight_toRightOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:navGraph="@navigation/mobile_navigation" />
-
-    <io.curity.haapidemo.uicomponents.ProgressButton
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:id="@+id/progress_button"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/main_login"
-        />
-
-    <io.curity.haapidemo.uicomponents.ProgressButton
-        android:id="@+id/progress_button_secondary"
-        style="@style/SecondaryProgressButton"
-        android:layout_width="match_parent"
-        android:layout_height="50dp"
-        android:layout_marginTop="8dp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/progress_button" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -14,51 +14,53 @@
       See the License for the specific language governing permissions and
       limitations under the License.
     -->
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.settings.SettingsListFragment">
+    tools:context=".ProfileActivity">
 
     <TextView
         android:id="@+id/title"
         style="@style/TextAppearance.Title"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginStart="38dp"
+        android:layout_marginStart="@dimen/spacing"
         android:layout_marginTop="13dp"
-        android:layout_marginEnd="38dp"
-        android:text="@string/title_settings"
-        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginEnd="@dimen/spacing"
+        android:text="@string/profile_configuration"
+        app:layout_constraintEnd_toStartOf="@+id/button"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <Button
+        android:id="@+id/button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/profile_configuration_make_active"
+        android:textColor="@android:color/holo_blue_dark"
+        android:background="@android:color/transparent"
+        android:foreground="?attr/selectableItemBackground"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@id/title"
+        app:layout_constraintBottom_toBottomOf="@id/title"
+        android:gravity="center_vertical"
+        android:padding="@dimen/padding"
+        android:layout_marginEnd="@dimen/spacing"
+        />
 
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/recyclerView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-        android:layout_marginBottom="@dimen/tabBarHeight"
-        android:paddingTop="@dimen/paddingTopBottom"
-        android:paddingBottom="@dimen/paddingTopBottom"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/title"
-        app:layout_constraintBottom_toBottomOf="parent"/>
-
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/floatingActionButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="@dimen/spacing"
-        android:layout_marginBottom="72dp"
-        android:clickable="true"
-        android:src="@android:drawable/ic_input_add"
-        android:tint="@android:color/white"
-        android:backgroundTint="@color/spot_green"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
-
+        android:paddingTop="@dimen/paddingTopBottom"
+        android:paddingBottom="@dimen/paddingTopBottom"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

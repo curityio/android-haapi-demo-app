@@ -16,6 +16,7 @@
 
 package io.curity.haapidemo.flow
 
+import kotlinx.serialization.Serializable
 import java.net.URI
 
 /**
@@ -33,9 +34,10 @@ import java.net.URI
  * @property [metaDataBaseURLString] A String that represents a metadata endpoint
  * @property [redirectURI] A String that represents a redirect URI. Please check with your curity identity server
  * configuration
- * @property [followRedirect] A Boolean that represents if `HaapiFlowManager` will automatically or not handle the redirect flow.
  * @property [keyStoreAlias] A String that represents the name of the key store entry. `haapi-demo-app` is the default
  * value. It is important this value is unique. Otherwise, `HaapiFlowManager` will not be able to start.
+ * @property [followRedirect] A Boolean that represents if `HaapiFlowManager` will automatically or not handle the redirect flow.
+ * @property [isAutoPollingEnabled] A Boolean that represents if HaapiFlowManager` will automatically or not handle the polling process.
  * @property [isAutoAuthorizationChallengedEnabled] A Boolean that represents if `HaapiFlowManager` will automatically
  * or not handle the authorization flow to retrieve the access token. `true` is the default value.
  * @property [isSSLTrustVerificationEnabled] A Boolean that represents if `HaapiFlowManager` will trust or not the SSL
@@ -43,22 +45,48 @@ import java.net.URI
  * used when performing test against localhost or debugging.
  * @property [selectedScopes] A list of String that represents the selected scopes. By default, there is no scopes.
  */
+
+@Serializable
 data class HaapiFlowConfiguration(
-    val name: String,
-    val clientId: String,
-    val baseURLString: String,
-    val tokenEndpointURI: String,
-    val authorizationEndpointURI: String,
-    val metaDataBaseURLString: String,
-    val redirectURI: String,
-    val followRedirect: Boolean,
+    var name: String,
+    var clientId: String,
+    var baseURLString: String,
+    var tokenEndpointURI: String,
+    var authorizationEndpointURI: String,
+    var metaDataBaseURLString: String,
+    var redirectURI: String,
     val keyStoreAlias: String = "haapi-demo-app",
-    val isAutoAuthorizationChallengedEnabled: Boolean = true,
-    val isSSLTrustVerificationEnabled: Boolean = true,
-    val selectedScopes: List<String> = emptyList()
+    var followRedirect: Boolean = true,
+    var isAutoPollingEnabled: Boolean = true,
+    var isAutoAuthorizationChallengedEnabled: Boolean = true,
+    var isSSLTrustVerificationEnabled: Boolean = true,
+    var selectedScopes: List<String> = emptyList(),
+
+    var supportedScopes: List<String> = emptyList()
 ) {
 
     val uri: URI
         get() = URI(tokenEndpointURI)
 
+
+    companion object {
+        fun newInstance(name: String = "haapi-android-client"): HaapiFlowConfiguration {
+            return HaapiFlowConfiguration(
+                name = name,
+                clientId = "haapi-android-client",
+                baseURLString = "https://10.0.2.2:8443",
+                tokenEndpointURI = "https://10.0.2.2:8443/dev/oauth/token",
+                authorizationEndpointURI = "https://10.0.2.2:8443/dev/oauth/authorize",
+                metaDataBaseURLString = "https://10.0.2.2:8443/dev/oauth/anonymous",
+                redirectURI = "haapi:start",
+                followRedirect = true,
+                isSSLTrustVerificationEnabled = false,
+                selectedScopes = emptyList()
+            )
+        }
+
+        fun newInstance(number: Int): HaapiFlowConfiguration {
+            return newInstance("New Profile ($number)")
+        }
+    }
 }

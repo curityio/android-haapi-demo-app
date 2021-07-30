@@ -15,14 +15,82 @@
  */
 package io.curity.haapidemo.ui.settings
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.*
+import io.curity.haapidemo.flow.HaapiFlowConfiguration
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.launch
 
-class SettingsListViewModel : ViewModel() {
+class SettingsListViewModel(
+    private val repository: HaapiFlowConfigurationRepository
+) : ViewModel() {
 
-    private val _text = MutableLiveData<String>().apply {
-        value = "This is a Fragment"
+    //region Private references
+    private var activeConfiguration: HaapiFlowConfiguration? = null
+    private var configurations: List<HaapiFlowConfiguration> = emptyList()
+
+    private val flowModels: Flow<List<SettingsItem>> = combine(
+        repository.activeConfigurationFlow,
+        repository.configurationsFlow)
+    { activeConfiguration: HaapiFlowConfiguration, list: List<HaapiFlowConfiguration> ->
+
+        this.activeConfiguration = activeConfiguration
+        configurations = list
+
+        val newList: MutableList<SettingsItem> = mutableListOf()
+
+        newList.add(SettingsItem.Header(title = "Active Profile"))
+        newList.add(SettingsItem.Configuration(configuration = activeConfiguration))
+        this.activeConfiguration = activeConfiguration
+
+        newList.add(SettingsItem.Header(title = "Profiles"))
+        newList.addAll(list.map { SettingsItem.Configuration(configuration = it) })
+
+        return@combine newList
     }
-    val text: LiveData<String> = _text
+    //endregion
+
+    val models = flowModels.asLiveData(Dispatchers.IO)
+
+    suspend fun addNewConfiguration(): HaapiFlowConfiguration {
+        val result = HaapiFlowConfiguration.newInstance(configurations.size + 1)
+        repository.appendNewConfiguration(result)
+        return result
+    }
+
+    fun removeConfigurationAt(index: Int) {
+        val item = models.value!![index] as SettingsItem.Configuration
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.removeConfiguration(item.configuration)
+
+        }
+    }
+
+    fun settingsItemCanBeSwippedAt(index: Int): Boolean {
+        return when (val model = models.value!![index]) {
+            is SettingsItem.Header -> { false }
+            is SettingsItem.Configuration -> {
+                model.configuration != activeConfiguration
+            }
+        }
+    }
+
+    fun isActiveConfiguration(config: HaapiFlowConfiguration): Boolean {
+        return activeConfiguration == config
+    }
+}
+
+class SettingsListViewModelFactory(
+    private val repository: HaapiFlowConfigurationRepository
+): ViewModelProvider.Factory {
+
+    override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(SettingsListViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return SettingsListViewModel(repository) as T
+        }
+
+        throw IllegalArgumentException("Unknown ViewModel class SettingsListViewModel")
+    }
 }

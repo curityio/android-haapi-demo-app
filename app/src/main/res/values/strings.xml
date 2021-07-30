@@ -29,4 +29,7 @@
 
     <string name="tab_settings">Settings</string>
     <string name="title_settings">Settings Page</string>
+
+    <string name="profile_configuration">Edit profile</string>
+    <string name="profile_configuration_make_active">Make active</string>
 </resources>
