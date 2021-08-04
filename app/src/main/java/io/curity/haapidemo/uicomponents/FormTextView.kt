@@ -84,8 +84,8 @@ class FormTextView @JvmOverloads constructor(
         context.obtainStyledAttributes(
             attrs,
             R.styleable.FormTextView,
-            defStyleAttr,
-            0
+            0,
+            defStyleAttr
         ).apply {
             try {
                 getResourceId(R.styleable.FormTextView_labelStyle, R.style.TextAppearance_Body).let {

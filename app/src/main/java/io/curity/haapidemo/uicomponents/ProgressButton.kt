@@ -64,8 +64,8 @@ class ProgressButton @JvmOverloads constructor(
         context.obtainStyledAttributes(
             attrs,
             R.styleable.ProgressButton,
-            defStyleAttr,
-            0
+            0,
+            defStyleAttr
         )
             .apply {
                 try {

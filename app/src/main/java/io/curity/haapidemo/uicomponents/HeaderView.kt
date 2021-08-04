@@ -51,8 +51,8 @@ class HeaderView @JvmOverloads constructor(
         context.obtainStyledAttributes(
             attrs,
             R.styleable.HeaderView,
-            defStyleAttr,
-            0
+            0,
+            defStyleAttr
         ).apply {
             try {
 

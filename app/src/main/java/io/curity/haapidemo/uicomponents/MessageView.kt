@@ -51,8 +51,8 @@ class MessageView @JvmOverloads constructor(
         context.obtainStyledAttributes(
             attrs,
             R.styleable.MessageView,
-            defStyleAttr,
-            0
+            0,
+            defStyleAttr
         ).apply {
             try {
                 val bgDrawable = getDrawable(R.styleable.MessageView_background) ?: AppCompatResources.getDrawable(

@@ -47,8 +47,8 @@ class LabelTextView @JvmOverloads constructor(
         context.obtainStyledAttributes(
             attrs,
             R.styleable.LabelTextView,
-            defStyleAttr,
-            0
+            0,
+            defStyleAttr
         ).apply {
             try {
                 getResourceId(R.styleable.LabelTextView_labelStyle, R.style.TextAppearance_Code14).let {
