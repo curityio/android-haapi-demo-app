@@ -32,6 +32,9 @@ import io.curity.haapidemo.R
 import io.curity.haapidemo.models.AuthenticatorOption
 import io.curity.haapidemo.models.AuthenticatorSelector
 import io.curity.haapidemo.models.haapi.actions.ActionModel
+import io.curity.haapidemo.uicomponents.SelectorViewHolder
+import io.curity.haapidemo.uicomponents.ViewStopLoadable
+import io.curity.haapidemo.utils.getImageResources
 import java.lang.ref.WeakReference
 
 class AuthenticatorSelectorFragment: Fragment() {
@@ -149,7 +152,7 @@ private class AuthenticatorSelectorAdapter(private val clickHandler: (ActionMode
 
     override fun onBindViewHolder(holder: SelectorViewHolder, position: Int) {
         val item = getItem(position)
-        holder.bind(item.label.message ?: "") {
+        holder.bind(item.label.message ?: "", imageResourceId = holder.itemView.getImageResources(item.haapiImageName())) {
             clickHandler(item.action.model, it)
         }
     }
@@ -165,4 +168,8 @@ private class AuthenticatorSelectorAdapter(private val clickHandler: (ActionMode
             }
         }
     }
+}
+
+private fun AuthenticatorOption.haapiImageName(): String {
+    return "ic_icon_$type"
 }

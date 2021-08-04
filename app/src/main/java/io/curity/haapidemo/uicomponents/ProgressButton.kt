@@ -23,8 +23,11 @@ import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
+import android.widget.ImageView
 import android.widget.ProgressBar
+import android.widget.Space
 import android.widget.TextView
+import androidx.annotation.DrawableRes
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.constraintlayout.widget.ConstraintLayout
 import io.curity.haapidemo.R
@@ -45,6 +48,8 @@ class ProgressButton @JvmOverloads constructor(
 
     private val progressBar: ProgressBar
     private val textView: TextView
+    private val imageView: ImageView
+    private val space: Space
 
     var isLoading: Boolean = false
         private set
@@ -53,6 +58,8 @@ class ProgressButton @JvmOverloads constructor(
         val root = LayoutInflater.from(context).inflate(R.layout.progress_btn_layout, this, true)
         progressBar = root.findViewById(R.id.progressBar)
         textView = root.findViewById(R.id.text_view)
+        imageView = root.findViewById(R.id.image_view)
+        space = root.findViewById(R.id.spacer)
 
         loadAttrs(attrs, defStyleAttr)
 
@@ -116,6 +123,15 @@ class ProgressButton @JvmOverloads constructor(
     @Suppress("Unused")
     fun getText(): String {
         return textView.text.toString()
+    }
+
+    /**
+     * Sets an image with a @DrawableRes [image]
+     */
+    fun setImage(@DrawableRes image: Int) {
+        imageView.setImageResource(image)
+        imageView.visibility = VISIBLE
+        space.visibility = VISIBLE
     }
 
     /**

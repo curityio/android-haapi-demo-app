@@ -14,17 +14,17 @@
  *  limitations under the License.
  */
 
-package io.curity.haapidemo.ui.haapiflow
+package io.curity.haapidemo.uicomponents
 
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
+import androidx.annotation.DrawableRes
 import androidx.recyclerview.widget.RecyclerView
 import io.curity.haapidemo.Constant
 import io.curity.haapidemo.R
-import io.curity.haapidemo.uicomponents.ProgressButton
 import java.lang.ref.WeakReference
 
 open class LinearVerticalLayoutViewHolder(itemView: View): RecyclerView.ViewHolder(itemView) {
@@ -45,8 +45,11 @@ class SelectorViewHolder(itemView: View): LinearVerticalLayoutViewHolder(itemVie
         super.linearLayout.addView(progressButton)
     }
 
-    fun bind(label: String, clickHandler: (WeakReference<ViewStopLoadable>) -> Unit) {
+    fun bind(label: String, imageResourceId: Int = 0, clickHandler: (WeakReference<ViewStopLoadable>) -> Unit) {
         progressButton.setText(label)
+        if (imageResourceId != 0) {
+            progressButton.setImage(imageResourceId)
+        }
         progressButton.setOnClickListener {
             Log.i(Constant.TAG, "Progress Button clicked")
             progressButton.setLoading(true)
