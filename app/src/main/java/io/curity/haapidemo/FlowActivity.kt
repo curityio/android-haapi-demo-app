@@ -89,6 +89,8 @@ class FlowActivity : AppCompatActivity() {
             title = systemErrorStep.title
             setMessage(systemErrorStep.description)
         }
+
+        alertDialog.setCancelable(false)
         alertDialog.setPositiveButton(R.string.ok) { dialog, which ->
             dialog.dismiss()
             finish()
