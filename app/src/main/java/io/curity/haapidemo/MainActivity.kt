@@ -16,32 +16,67 @@
 package io.curity.haapidemo
 
 import android.content.Context
+import android.content.pm.PackageManager
 import android.os.Bundle
+import android.util.Base64
+import android.util.Log
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.findNavController
 import androidx.navigation.ui.setupWithNavController
+import io.curity.haapidemo.ui.home.ActiveHaapiConfigViewModel
+import io.curity.haapidemo.ui.home.ActiveHaapiConfigViewModelFactory
 import io.curity.haapidemo.ui.settings.HaapiFlowConfigurationRepository
 import io.curity.haapidemo.ui.settings.SettingsListViewModel
 import io.curity.haapidemo.ui.settings.SettingsListViewModelFactory
+import java.security.MessageDigest
 
 val Context.configurationDataStore by preferencesDataStore("io.curity.haapidemo.datastore.configuration")
 
 class MainActivity : AppCompatActivity() {
 
+    private fun logAppInfo()  {
+        // You can use this to get the signature that should be registered at the Curity Identity Server
+        val signatures = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+            val packageInfo =
+                packageManager.getPackageInfo(packageName, PackageManager.GET_SIGNING_CERTIFICATES)
+            packageInfo.signingInfo.apkContentsSigners.map { SHA256(it.toByteArray()) }.toString()
+        } else {
+            "Your Android is below API 28. Please check the README.md"
+        }
+        Log.d("PackageName", packageName)
+        Log.d("AppInfo", "APK signatures $signatures")
+    }
+
+    private fun SHA256(bytes: ByteArray): String =
+        Base64.encodeToString(MessageDigest.getInstance("SHA-256").digest(bytes), Base64.DEFAULT)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-        val navView: BottomNavigationView = findViewById(R.id.nav_view)
 
-        val navController = findNavController(R.id.nav_host_fragment)
-        navView.setupWithNavController(navController)
+        logAppInfo()
 
         // Register ViewModel
         ViewModelProvider(this,
             SettingsListViewModelFactory(HaapiFlowConfigurationRepository(dataStore = configurationDataStore))
         ).get(SettingsListViewModel::class.java)
+
+        ViewModelProvider(this,
+            ActiveHaapiConfigViewModelFactory(HaapiFlowConfigurationRepository(dataStore = configurationDataStore))
+        ).get(ActiveHaapiConfigViewModel::class.java)
+
+        setContentView(R.layout.activity_main)
+        val navView: BottomNavigationView = findViewById(R.id.nav_view)
+
+        val navController = findNavController(R.id.nav_host_fragment)
+        navView.setupWithNavController(navController)
+    }
+}
+
+class Constant {
+    companion object {
+        const val TAG = "DEBUG_HAAPI"
     }
 }

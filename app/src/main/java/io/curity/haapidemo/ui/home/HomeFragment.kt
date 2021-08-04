@@ -15,21 +15,25 @@
  */
 package io.curity.haapidemo.ui.home
 
-import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
 import android.widget.ImageView
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.ViewModelProvider
 import io.curity.haapidemo.FlowActivity
 import io.curity.haapidemo.R
 import io.curity.haapidemo.ShowcaseActivity
+import io.curity.haapidemo.flow.HaapiFlowConfiguration
+import io.curity.haapidemo.uicomponents.ProgressButton
 
 class HomeFragment : Fragment() {
 
-    private lateinit var button: Button
+    private lateinit var activeHaapiConfigViewModel: ActiveHaapiConfigViewModel
+    private var haapiFlowConfiguration: HaapiFlowConfiguration? = null
+
+    private lateinit var button: ProgressButton
     private lateinit var imageView: ImageView
 
     override fun onCreateView(
@@ -40,15 +44,23 @@ class HomeFragment : Fragment() {
         val root = inflater.inflate(R.layout.fragment_home, container, false)
         button = root.findViewById(R.id.button)
         imageView = root.findViewById(R.id.image_view)
+        activeHaapiConfigViewModel = ViewModelProvider(requireActivity()).get(ActiveHaapiConfigViewModel::class.java)
         return root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
+        activeHaapiConfigViewModel.haapiFlowConfiguration.observe(viewLifecycleOwner) { config ->
+            haapiFlowConfiguration = config
+        }
+
         button.setOnClickListener {
-            val intent = Intent(activity, FlowActivity::class.java)
-            startActivity(intent)
+            val config = haapiFlowConfiguration
+            if (config != null) {
+                val intent = FlowActivity.newIntent(requireContext(), config)
+                startActivity(intent)
+            }
         }
 
         imageView.setOnLongClickListener {

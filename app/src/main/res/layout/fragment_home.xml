@@ -59,10 +59,10 @@
         app:layout_constraintBottom_toBottomOf="parent"
         tools:layout_editor_absoluteY="214dp" />
 
-    <Button
+    <io.curity.haapidemo.uicomponents.ProgressButton
         android:id="@+id/button"
         android:layout_width="match_parent"
-        android:layout_height="50dp"
+        android:layout_height="wrap_content"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/image_view"
@@ -70,5 +70,6 @@
         android:layout_marginStart="13dp"
         android:layout_marginEnd="13dp"
         android:text="@string/button_home"
+        style="@style/PrimaryProgressButton"
         />
 </androidx.constraintlayout.widget.ConstraintLayout>
