@@ -123,10 +123,6 @@ class HaapiFlowManager (
     }
 
     override suspend fun submitForm(form: ActionModel.Form, parameters: Map<String, String>): HaapiStep {
-        if (_liveStep.value == null) {
-            return SystemErrorStep(HaapiErrorTitle.INVALID_ACTION.title, "Cannot submitForm because the HaapiFlow did not start or a " +
-                    "systemError happened.. Please use start() or reset().")
-        }
         val urlBuilder = form.href.toHaapiURL(haapiFlowConfiguration.baseURLString).toHttpUrl().newBuilder()
 
         val httpURL = urlBuilder.build()
