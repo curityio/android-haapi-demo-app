@@ -59,6 +59,10 @@ class DisclosureView @JvmOverloads constructor(
                 collapseLinearLayout.visibility = View.GONE
             }
         }
+
+        root.setOnClickListener {
+            toggleButton.isChecked = !toggleButton.isChecked
+        }
     }
 
     @SuppressLint("Recycle")
