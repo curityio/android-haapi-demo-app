@@ -143,12 +143,14 @@ class ProgressButton @JvmOverloads constructor(
     fun setLoading(loading: Boolean) {
         isLoading = loading
         if (isLoading) {
-            progressBar.visibility = View.VISIBLE
-            textView.visibility = View.GONE
+            progressBar.visibility = VISIBLE
+            textView.visibility = GONE
+            imageView.visibility = GONE
             isClickable = false
         } else {
-            progressBar.visibility = View.GONE
-            textView.visibility = View.VISIBLE
+            progressBar.visibility = GONE
+            textView.visibility = VISIBLE
+            imageView.visibility = VISIBLE
             isClickable = true
         }
     }
