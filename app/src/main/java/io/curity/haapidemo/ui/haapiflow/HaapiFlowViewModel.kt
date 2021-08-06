@@ -20,10 +20,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.*
 import io.curity.haapidemo.flow.HaapiFlowConfiguration
 import io.curity.haapidemo.flow.HaapiFlowManager
-import io.curity.haapidemo.models.AuthenticatorSelector
-import io.curity.haapidemo.models.HaapiStep
-import io.curity.haapidemo.models.Redirect
-import io.curity.haapidemo.models.SystemErrorStep
+import io.curity.haapidemo.models.*
 import io.curity.haapidemo.models.haapi.actions.ActionModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -82,7 +79,18 @@ class HaapiFlowViewModel(haapiFlowConfiguration: HaapiFlowConfiguration): ViewMo
             is AuthenticatorSelector -> {
                 _haapiUIBundleLiveData.postValue(HaapiUIBundle(title = haapiStep.title.message, fragment = AuthenticatorSelectorFragment.newInstance()))
             }
+            is InteractiveForm -> {
+                _haapiUIBundleLiveData.postValue(
+                    HaapiUIBundle(
+                        title = haapiStep.action.title?.message ?: "InteractiveForm",
+                        fragment = InteractiveFormFragment.newInstance()
+                    )
+                )
+            }
             is SystemErrorStep -> {
+                // NOP
+            }
+            is ProblemStep -> {
                 // NOP
             }
             else -> {
