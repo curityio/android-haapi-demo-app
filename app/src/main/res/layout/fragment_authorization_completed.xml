@@ -15,25 +15,40 @@
       limitations under the License.
     -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <io.curity.haapidemo.uicomponents.DisclosureView
-        android:id="@+id/access_disclosure_view"
+    <TextView
+        android:id="@+id/header_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:titleText="@string/access_token"/>
+        android:textAlignment="center"
+        android:text="@string/authorization_code" />
 
     <Space
         android:layout_width="match_parent"
-        android:layout_height="@dimen/padding" />
+        android:layout_height="@dimen/spacing" />
 
-    <io.curity.haapidemo.uicomponents.DisclosureView
-        android:id="@+id/refresh_disclosure_view"
+    <TextView
+        android:id="@+id/content_text"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        app:titleText="@string/refresh_token"/>
+        android:textAlignment="center"
+        style="@style/TextAppearance.BodyMedium"
+        android:textIsSelectable="true"
+        tools:text="@string/lorem_ipsum" />
 
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/spacing" />
+
+    <io.curity.haapidemo.uicomponents.ProgressButton
+        android:id="@+id/progress_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/get_access_token"
+        style="@style/PrimaryProgressButton"
+        />
 </LinearLayout>

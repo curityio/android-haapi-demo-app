@@ -17,39 +17,35 @@
 package io.curity.haapidemo.ui.haapiflow
 
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import androidx.fragment.app.Fragment
 import io.curity.haapidemo.R
 import io.curity.haapidemo.models.OAuthTokenResponse
 import io.curity.haapidemo.uicomponents.DisclosureContent
 import io.curity.haapidemo.uicomponents.DisclosureView
 
-class TokensFragment private constructor(): Fragment() {
+class TokensFragment private constructor(): Fragment(R.layout.fragment_tokens) {
 
     private lateinit var accessDisclosureView: DisclosureView
     private lateinit var refreshDisclosureView: DisclosureView
 
     private lateinit var oAuthTokenResponse: OAuthTokenResponse
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        val root = inflater.inflate(R.layout.fragment_tokens, container, false)
-
-        accessDisclosureView = root.findViewById(R.id.access_disclosure_view)
-        refreshDisclosureView = root.findViewById(R.id.refresh_disclosure_view)
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
 
         if (arguments != null) {
             oAuthTokenResponse = requireArguments().getSerializable(EXTRA_OAUTH_TOKEN_RESPONSE) as OAuthTokenResponse
         } else {
             throw IllegalArgumentException("TokensFragment was not instantiated with newInstance()")
         }
-
-        return root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        accessDisclosureView = view.findViewById(R.id.access_disclosure_view)
+        refreshDisclosureView = view.findViewById(R.id.refresh_disclosure_view)
 
         accessDisclosureView.setContentText(oAuthTokenResponse.accessToken)
 

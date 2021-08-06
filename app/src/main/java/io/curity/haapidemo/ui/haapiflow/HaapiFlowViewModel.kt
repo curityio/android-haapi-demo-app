@@ -21,6 +21,7 @@ import androidx.lifecycle.*
 import io.curity.haapidemo.flow.HaapiFlowConfiguration
 import io.curity.haapidemo.flow.HaapiFlowManager
 import io.curity.haapidemo.models.*
+import io.curity.haapidemo.models.haapi.Link
 import io.curity.haapidemo.models.haapi.actions.ActionModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -71,6 +72,29 @@ class HaapiFlowViewModel(haapiFlowConfiguration: HaapiFlowConfiguration): ViewMo
         }
     }
 
+    fun fetchAccessToken(authorizationCode: String) {
+        _isLoading.postValue(true)
+        viewModelScope.launch {
+            val step = withContext(Dispatchers.IO) {
+                haapiFlowManager.fetchAccessToken(authorizationCode)
+            }
+            _isLoading.postValue(false)
+            processStep(step)
+        }
+
+    }
+
+    fun followLink(link: Link) {
+        _isLoading.postValue(true)
+        viewModelScope.launch {
+            val step = withContext(Dispatchers.IO) {
+                haapiFlowManager.followLink(link)
+            }
+            _isLoading.postValue(false)
+            processStep(step)
+        }
+    }
+
     private fun processStep(haapiStep: HaapiStep) {
         when (haapiStep) {
             is Redirect -> {
@@ -92,6 +116,14 @@ class HaapiFlowViewModel(haapiFlowConfiguration: HaapiFlowConfiguration): ViewMo
                     HaapiUIBundle(
                         title = "Success",
                         fragment = TokensFragment.newInstance(haapiStep.oAuthTokenResponse)
+                    )
+                )
+            }
+            is AuthorizationCompleted -> {
+                _haapiUIBundleLiveData.postValue(
+                    HaapiUIBundle(
+                        title = haapiStep.type.discriminator.capitalize(),
+                        fragment = AuthorizationCompletedFragment.newInstance()
                     )
                 )
             }

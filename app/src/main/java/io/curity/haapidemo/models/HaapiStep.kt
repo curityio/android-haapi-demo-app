@@ -77,6 +77,8 @@ data class PollingStep(
 ) : HaapiStep()
 
 data class AuthorizationCompleted(
+    val type: RepresentationType,
+    val links: List<Link>,
     val responseParameters: Properties.AuthorizationResponse,
 ) : HaapiStep()
 

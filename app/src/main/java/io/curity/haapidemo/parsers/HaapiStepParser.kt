@@ -201,7 +201,9 @@ private fun handleAuthorizationStep(representation: HaapiRepresentation): HaapiS
         return InvalidStep(representation)
     }
     return AuthorizationCompleted(
-        properties
+        type = representation.type,
+        links = representation.links,
+        responseParameters = properties
     )
 }
 
