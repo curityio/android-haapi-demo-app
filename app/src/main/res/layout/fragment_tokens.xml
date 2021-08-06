@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <io.curity.haapidemo.uicomponents.DisclosureView
+        android:id="@+id/access_disclosure_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:titleText="@string/access_token"/>
+
+    <Space
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/padding" />
+
+    <io.curity.haapidemo.uicomponents.DisclosureView
+        android:id="@+id/refresh_disclosure_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:titleText="@string/refresh_token"/>
+
+</LinearLayout>

@@ -275,7 +275,9 @@ class HaapiFlowManager (
                         }
                         "application/json" -> {
                             val oAuthTokenResponse = representationParser.parseAccessToken(jsonObject)
-                            TokensStep(oAuthTokenResponse = oAuthTokenResponse)
+                            TokensStep(
+                                oAuthTokenResponse = oAuthTokenResponse
+                            )
                         }
                         else -> {
                             SystemErrorStep(

@@ -74,6 +74,10 @@
                 android:layout_height="wrap_content"
                 android:id="@+id/header" />
 
+            <Space
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/padding"/>
+
             <androidx.fragment.app.FragmentContainerView
                 android:id="@+id/fragment_container"
                 android:layout_width="match_parent"

@@ -40,7 +40,7 @@ import io.curity.haapidemo.models.haapi.Link
 import io.curity.haapidemo.uicomponents.*
 import io.curity.haapidemo.utils.dismissKeyboard
 
-class InteractiveFormFragment: Fragment() {
+class InteractiveFormFragment private constructor(): Fragment() {
 
     private lateinit var spacerProblem: Space
     private lateinit var problemView: ProblemView

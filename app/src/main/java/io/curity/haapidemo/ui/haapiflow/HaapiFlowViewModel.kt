@@ -87,6 +87,14 @@ class HaapiFlowViewModel(haapiFlowConfiguration: HaapiFlowConfiguration): ViewMo
                     )
                 )
             }
+            is TokensStep -> {
+                _haapiUIBundleLiveData.postValue(
+                    HaapiUIBundle(
+                        title = "Success",
+                        fragment = TokensFragment.newInstance(haapiStep.oAuthTokenResponse)
+                    )
+                )
+            }
             is SystemErrorStep -> {
                 // NOP
             }

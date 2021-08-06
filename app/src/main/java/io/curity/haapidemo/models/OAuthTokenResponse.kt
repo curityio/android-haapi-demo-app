@@ -16,7 +16,9 @@
 
 package io.curity.haapidemo.models
 
+import java.io.Serializable
 import java.time.Duration
+import kotlin.collections.HashMap
 
 /**
  * OAuthTokenResponse represents a successful Access Token response
@@ -27,5 +29,6 @@ data class OAuthTokenResponse(
     val scope: String?,
     val expiresIn: Duration?,
     val refreshToken: String?,
-    val idToken: String?
-)
+    val idToken: String?,
+    val properties: HashMap<String, String>
+) : Serializable
