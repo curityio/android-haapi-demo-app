@@ -38,6 +38,7 @@ import io.curity.haapidemo.models.ProblemStep
 import io.curity.haapidemo.models.haapi.Field
 import io.curity.haapidemo.models.haapi.Link
 import io.curity.haapidemo.uicomponents.*
+import io.curity.haapidemo.utils.dismissKeyboard
 
 class InteractiveFormFragment: Fragment() {
 
@@ -76,6 +77,7 @@ class InteractiveFormFragment: Fragment() {
 
         progressButton.setText(interactiveFormViewModel.buttonTitle)
         progressButton.setOnClickListener {
+            dismissKeyboard()
             interactiveFormViewModel.submit()
         }
 
