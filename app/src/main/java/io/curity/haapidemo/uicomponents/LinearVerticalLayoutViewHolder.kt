@@ -16,12 +16,13 @@
 
 package io.curity.haapidemo.uicomponents
 
+import android.text.InputType
+import android.text.TextWatcher
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
-import androidx.annotation.DrawableRes
 import androidx.recyclerview.widget.RecyclerView
 import io.curity.haapidemo.Constant
 import io.curity.haapidemo.R
@@ -71,6 +72,54 @@ class SelectorViewHolder(itemView: View): LinearVerticalLayoutViewHolder(itemVie
             val layoutInflater = LayoutInflater.from(parentView.context)
             val view = inflatedView(layoutInflater, parentView)
             return SelectorViewHolder(view)
+        }
+    }
+}
+
+open class FormTextViewHolder(itemView: View): LinearVerticalLayoutViewHolder(itemView) {
+
+    val formTextView: FormTextView by lazy { FormTextView(itemView.context, null, 0) }
+
+    init {
+        super.linearLayout.addView(formTextView)
+    }
+
+    fun bind(
+        label: String,
+        hint: String,
+        value: String,
+        inputType: Int = InputType.TYPE_CLASS_TEXT,
+        textWatcher: TextWatcher)
+    {
+        formTextView.setLabelText(label)
+        formTextView.setHint(hint)
+        formTextView.inputText = value
+        formTextView.setInputType(inputType)
+        formTextView.addTextChangedListener(textWatcher)
+    }
+
+    companion object {
+        fun from(parentView: ViewGroup): FormTextViewHolder {
+            val layoutInflater = LayoutInflater.from(parentView.context)
+            val view = inflatedView(layoutInflater, parentView)
+            return FormTextViewHolder(view)
+        }
+    }
+}
+
+class PasswordTextViewHolder(itemView: View): FormTextViewHolder(itemView) {
+
+    fun bind(label: String, hint: String, value: String, textWatcher: TextWatcher) {
+        super.bind(label, hint, value, inputType = InputType.TYPE_CLASS_TEXT, textWatcher)
+
+        formTextView.setPasswordToggleEnabled(true)
+    }
+
+    companion object {
+        fun from(parentView: ViewGroup): PasswordTextViewHolder {
+            val layoutInflater = LayoutInflater.from(parentView.context)
+            val view = inflatedView(layoutInflater, parentView)
+            return PasswordTextViewHolder(view)
         }
     }
 }

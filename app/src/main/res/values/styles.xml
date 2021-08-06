@@ -117,6 +117,10 @@
         <item name="android:textColor">@android:color/black</item>
     </style>
 
+    <style name="TextAppearance.Body.Error" parent="TextAppearance.Body">
+        <item name="android:textColor">@color/error</item>
+    </style>
+
     <style name="TextAppearance.Caption" parent="@style/TextAppearance.MaterialComponents.Caption">
     </style>
 
