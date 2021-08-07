@@ -39,6 +39,7 @@ import io.curity.haapidemo.models.haapi.Field
 import io.curity.haapidemo.models.haapi.Link
 import io.curity.haapidemo.uicomponents.*
 import io.curity.haapidemo.utils.dismissKeyboard
+import java.lang.ref.WeakReference
 
 class InteractiveFormFragment private constructor(): Fragment() {
 
@@ -49,6 +50,9 @@ class InteractiveFormFragment private constructor(): Fragment() {
     private lateinit var linksLayout: LinearLayout
 
     private lateinit var interactiveFormViewModel: InteractiveFormViewModel
+
+    private var weakButton: WeakReference<ProgressButton>? = null
+    private var buttonList: MutableList<ProgressButton> = mutableListOf()
 
     private val adapter = InteractiveFormAdapter(itemChangeHandler = { position, item -> interactiveFormViewModel.updateItem(item, position) })
 
@@ -80,9 +84,13 @@ class InteractiveFormFragment private constructor(): Fragment() {
             dismissKeyboard()
             interactiveFormViewModel.submit()
         }
+        buttonList.add(progressButton)
 
         interactiveFormViewModel.isLoading.observe(viewLifecycleOwner, Observer { isLoading ->
-            progressButton.setLoading(isLoading)
+            weakButton?.get()?.setLoading(isLoading)
+            buttonList.forEach {
+                it.isClickable = !isLoading
+            }
         })
 
         interactiveFormViewModel.problemsLiveData.observe(viewLifecycleOwner, Observer {  problemContent ->
@@ -95,6 +103,21 @@ class InteractiveFormFragment private constructor(): Fragment() {
                 problemView.setProblemBundles(problemContent.problemBundles)
             }
         })
+
+        val links = interactiveFormViewModel.links
+//        val contextThemeWrapper = ContextThemeWrapper(requireContext(), R.style.Links)
+        linksLayout.removeAllViews()
+        links.forEach { link ->
+            val button = ProgressButton(requireContext(), null, R.style.LinkProgressButton).apply {
+                this.setText(link.title?.message ?: "")
+                this.setOnClickListener {
+                    weakButton = WeakReference(this)
+                    interactiveFormViewModel.followLink(link)
+                }
+            }
+            buttonList.add(button)
+            linksLayout.addView(button)
+        }
     }
 
     companion object {
@@ -219,6 +242,10 @@ class InteractiveFormViewModel(private val haapiFlowViewModel: HaapiFlowViewMode
             interactiveFormStep.action.model,
             parameters = parameters
         )
+    }
+
+    fun followLink(link: Link) {
+        haapiFlowViewModel.followLink(link)
     }
 }
 

@@ -50,6 +50,11 @@
         <item name="android:textColor">@color/text_headings</item>
     </style>
 
+    <style name="TextAppearance.Links" parent="TextAppearance.ProgressButton.Primary">
+        <item name="android:textColor">@android:color/holo_blue_dark</item>
+        <item name="android:textAlignment">center</item>
+    </style>
+
 <!--    end-->
 
 <!--    ProgressButton style that conform to stylable ProgressButton-->
@@ -67,6 +72,13 @@
         <item name="tintColor">#333333</item>
         <item name="android:foreground">@drawable/ripple_effect</item>
         <item name="strokeColor">@color/grey</item>
+    </style>
+
+    <style name="LinkProgressButton" parent="">
+        <item name="background">@android:color/transparent</item>
+        <item name="textAppearanceButton">@style/TextAppearance.Links</item>
+        <item name="android:foreground">?attr/selectableItemBackground</item>
+        <item name="tintColor">@android:color/holo_blue_dark</item>
     </style>
 <!--    end-->
 
