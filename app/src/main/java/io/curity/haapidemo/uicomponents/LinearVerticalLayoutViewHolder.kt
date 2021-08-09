@@ -88,12 +88,14 @@ open class FormTextViewHolder(itemView: View): LinearVerticalLayoutViewHolder(it
         label: String,
         hint: String,
         value: String,
+        hasError: Boolean,
         inputType: Int = InputType.TYPE_CLASS_TEXT,
         textWatcher: TextWatcher)
     {
         formTextView.setLabelText(label)
         formTextView.setHint(hint)
         formTextView.inputText = value
+        formTextView.enableError(hasError)
         formTextView.setInputType(inputType)
         formTextView.addTextChangedListener(textWatcher)
     }
@@ -109,8 +111,8 @@ open class FormTextViewHolder(itemView: View): LinearVerticalLayoutViewHolder(it
 
 class PasswordTextViewHolder(itemView: View): FormTextViewHolder(itemView) {
 
-    fun bind(label: String, hint: String, value: String, textWatcher: TextWatcher) {
-        super.bind(label, hint, value, inputType = InputType.TYPE_CLASS_TEXT, textWatcher)
+    fun bind(label: String, hint: String, value: String, hasError: Boolean, textWatcher: TextWatcher) {
+        super.bind(label, hint, value, hasError = hasError, inputType = InputType.TYPE_CLASS_TEXT, textWatcher)
 
         formTextView.setPasswordToggleEnabled(true)
     }

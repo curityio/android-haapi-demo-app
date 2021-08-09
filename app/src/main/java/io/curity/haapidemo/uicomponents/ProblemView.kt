@@ -22,7 +22,9 @@ import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.core.view.marginTop
 import io.curity.haapidemo.R
+import io.curity.haapidemo.utils.toDpi
 
 class ProblemView  @JvmOverloads constructor(
     context: Context,
@@ -73,6 +75,9 @@ class ProblemView  @JvmOverloads constructor(
 
         problems.forEach {
             val messageView = MessageView(context)
+            val newLayoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
+            newLayoutParams.setMargins(0, resources.getDimension(R.dimen.padding).toInt(), 0, 0)
+            messageView.layoutParams = newLayoutParams
             messageView.setText(it.text)
             messageView.applyStyle(it.messageStyle)
 

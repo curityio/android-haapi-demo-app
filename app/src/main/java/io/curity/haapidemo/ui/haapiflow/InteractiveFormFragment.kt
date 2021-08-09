@@ -28,6 +28,7 @@ import android.widget.LinearLayout
 import android.widget.Space
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.*
+import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
@@ -37,9 +38,13 @@ import io.curity.haapidemo.models.InteractiveForm
 import io.curity.haapidemo.models.ProblemStep
 import io.curity.haapidemo.models.haapi.Field
 import io.curity.haapidemo.models.haapi.Link
+import io.curity.haapidemo.models.haapi.UserMessage
+import io.curity.haapidemo.models.haapi.problems.*
 import io.curity.haapidemo.uicomponents.*
 import io.curity.haapidemo.utils.dismissKeyboard
 import java.lang.ref.WeakReference
+import java.util.*
+import kotlin.collections.HashMap
 
 class InteractiveFormFragment: Fragment() {
 
@@ -127,6 +132,8 @@ class InteractiveFormFragment: Fragment() {
                 problemView.setTitle(problemContent.title)
                 problemView.setProblemBundles(problemContent.problemBundles)
             }
+
+            adapter.notifyDataSetChanged()
         })
 
         val links = interactiveFormViewModel.links
@@ -239,7 +246,7 @@ class InteractiveFormViewModel(private val haapiFlowViewModel: HaapiFlowViewMode
                             inputType = InputType.TYPE_CLASS_TEXT,
                             label = field.label?.message ?: "",
                             hint = field.label?.message ?: "",
-                            value = ""
+                            value = field.value ?: ""
                         )
                     )
                 }
@@ -250,7 +257,7 @@ class InteractiveFormViewModel(private val haapiFlowViewModel: HaapiFlowViewMode
                             key = field.name,
                             label = field.label?.message ?: "",
                             hint = field.label?.message ?: "",
-                            value = ""
+                            value = field.value ?: ""
                         )
                     )
                 }
@@ -265,16 +272,21 @@ class InteractiveFormViewModel(private val haapiFlowViewModel: HaapiFlowViewMode
     val problemsLiveData: LiveData<ProblemContent?> = haapiFlowViewModel.liveStep.map { step ->
         if (step is ProblemStep) {
             Log.d(Constant.TAG, "Got a ProblemStep")
-            val title = step.problem.title
-            val problemBundles: MutableList<ProblemView.ProblemBundle> = mutableListOf()
-            step.problem.messages?.forEach { userMessage ->
-                val text = userMessage.text.message
-                if (text != null) {
-                    problemBundles.add(ProblemView.ProblemBundle(text = text, MessageStyle.Error()))
+            if (step.problem is InvalidInputProblem) {
+                Log.d(Constant.TAG, "Before {$_interactiveFormItems}")
+                _interactiveFormItems.forEach { it.hasError = false }
+                // Refresh interactiveFormItems
+                step.problem.invalidFields.forEach { invalidField ->
+                    _interactiveFormItems.first { it.key == invalidField.name }.hasError = true
                 }
+                Log.d(Constant.TAG, "After {$_interactiveFormItems}")
             }
-            ProblemContent(title = title, problemBundles = problemBundles)
+            ProblemContent(
+                title = step.problem.title,
+                problemBundles = step.problem.problemBundle()
+            )
         } else {
+            _interactiveFormItems.forEach { it.hasError = false }
             null
         }
     }
@@ -316,9 +328,9 @@ class InteractiveFormViewModel(private val haapiFlowViewModel: HaapiFlowViewMode
     fun followLink(link: Link) {
         haapiFlowViewModel.followLink(link)
     }
-}
 
-data class ProblemContent(val title: String, val problemBundles: List<ProblemView.ProblemBundle>)
+    data class ProblemContent(val title: String, val problemBundles: List<ProblemView.ProblemBundle>)
+}
 
 class InteractiveFormViewModelFactory(private val haapiFlowViewModel: HaapiFlowViewModel): ViewModelProvider.Factory {
 
@@ -334,12 +346,30 @@ class InteractiveFormViewModelFactory(private val haapiFlowViewModel: HaapiFlowV
 
 sealed class InteractiveFormItem {
     abstract val id: Long
+    abstract val key: String
+    abstract val label: String
+    abstract var hasError: Boolean
 
-    data class EditText(val key: String, val inputType: Int,  val label: String, val hint: String, var value: String): InteractiveFormItem() {
+    data class EditText(
+        override val key: String,
+        val inputType: Int,
+        override val label: String,
+        val hint: String,
+        var value: String,
+        override var hasError: Boolean = false
+    ): InteractiveFormItem()
+    {
         override val id: Long = key.hashCode().toLong()
     }
 
-    data class Password(val key: String, val label: String, val hint: String, var value: String): InteractiveFormItem() {
+    data class Password(
+        override val key: String,
+        override val label: String,
+        val hint: String,
+        var value: String,
+        override var hasError: Boolean = false
+    ): InteractiveFormItem()
+    {
         override val id: Long = key.hashCode().toLong()
     }
 }
@@ -360,6 +390,7 @@ private class InteractiveFormAdapter(val itemChangeHandler: (Int, InteractiveFor
                 holder.bind(
                     label = item.label,
                     hint = item.hint,
+                    hasError = item.hasError,
                     value = item.value,
                     textWatcher = object: TextWatcher {
                         override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
@@ -379,7 +410,7 @@ private class InteractiveFormAdapter(val itemChangeHandler: (Int, InteractiveFor
             }
             is FormTextViewHolder -> {
                 val item = getItem(position) as InteractiveFormItem.EditText
-                holder.bind(label = item.label, hint = item.hint, value = item.value, textWatcher = object: TextWatcher {
+                holder.bind(label = item.label, hint = item.hint, hasError = item.hasError, value = item.value, textWatcher = object: TextWatcher {
                     override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {
                         // NOP
                     }
@@ -420,4 +451,61 @@ private class InteractiveFormAdapter(val itemChangeHandler: (Int, InteractiveFor
             }
         }
     }
+}
+
+private fun UserMessage.messageStyle(): MessageStyle {
+    val lowerCaseClassList = classList.map { it.toLowerCase(Locale.getDefault()) }
+    return when {
+        lowerCaseClassList.contains("error") -> {
+            MessageStyle.Error()
+        }
+        lowerCaseClassList.contains("warning") -> {
+            MessageStyle.Warning()
+        }
+        else -> {
+            MessageStyle.Info()
+        }
+    }
+}
+
+private fun HaapiProblem.problemBundle(): List<ProblemView.ProblemBundle> {
+    val problemBundles: MutableList<ProblemView.ProblemBundle> = mutableListOf()
+    when (this) {
+        is InvalidInputProblem -> {
+            invalidFields.forEach { invalidField ->
+                val detail = invalidField.detail
+                if (detail != null) {
+                    problemBundles.add(
+                        ProblemView.ProblemBundle(
+                            text = detail,
+                            messageStyle = MessageStyle.Error()
+                        )
+                    )
+                }
+            }
+        }
+        is AuthorizationProblem -> { // Should not happen here but let's do it in the worst case
+            problemBundles.add(
+                ProblemView.ProblemBundle(
+                    text = errorDescription,
+                    messageStyle = MessageStyle.Error()
+                )
+            )
+        }
+        else -> {
+            messages?.forEach { userMessage ->
+                val text = userMessage.text.message
+                if (text != null) {
+                    problemBundles.add(
+                        ProblemView.ProblemBundle(
+                            text = text,
+                            messageStyle = userMessage.messageStyle()
+                        )
+                    )
+                }
+            }
+        }
+    }
+
+    return problemBundles.toList()
 }
