@@ -26,13 +26,15 @@ import io.curity.haapidemo.models.haapi.actions.ActionModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.lang.StringBuilder
 
 class HaapiFlowViewModel(haapiFlowConfiguration: HaapiFlowConfiguration): ViewModel() {
 
     val haapiFlowManager = HaapiFlowManager(haapiFlowConfiguration = haapiFlowConfiguration)
 
+    private var _liveStep = MutableLiveData<HaapiStep?>(null)
     val liveStep: LiveData<HaapiStep?>
-        get() = haapiFlowManager.liveStep
+        get() = _liveStep
 
     private val _haapiUIBundleLiveData = MutableLiveData<HaapiUIBundle>(HaapiUIBundle(title = "", fragment = EmptyFragment()))
     val haapiUIBundleLiveData: LiveData<HaapiUIBundle>
@@ -96,17 +98,37 @@ class HaapiFlowViewModel(haapiFlowConfiguration: HaapiFlowConfiguration): ViewMo
     }
 
     private fun processStep(haapiStep: HaapiStep) {
-        when (haapiStep) {
+        // Any ProblemStep that comes when the step is:
+        // Redirect -> SystemError
+        val processingStep: HaapiStep = if (haapiStep is ProblemStep && liveStep.value is Redirect) {
+            val description = StringBuilder()
+            haapiStep.problem.messages?.forEach { userMessage ->
+                userMessage.text.message.let {
+                    description.append(it)
+                }
+            }
+
+            SystemErrorStep(
+                haapiStep.problem.title,
+                description.toString()
+            )
+        } else {
+            haapiStep
+        }
+
+        _liveStep.postValue(processingStep)
+
+        when (processingStep) {
             is Redirect -> {
-                _haapiUIBundleLiveData.postValue(HaapiUIBundle(title = haapiStep.action.kind, fragment = RedirectFragment.newInstance() ))
+                _haapiUIBundleLiveData.postValue(HaapiUIBundle(title = processingStep.action.kind, fragment = RedirectFragment.newInstance() ))
             }
             is AuthenticatorSelector -> {
-                _haapiUIBundleLiveData.postValue(HaapiUIBundle(title = haapiStep.title.message, fragment = AuthenticatorSelectorFragment.newInstance()))
+                _haapiUIBundleLiveData.postValue(HaapiUIBundle(title = processingStep.title.message, fragment = AuthenticatorSelectorFragment.newInstance()))
             }
             is InteractiveForm -> {
                 _haapiUIBundleLiveData.postValue(
                     HaapiUIBundle(
-                        title = haapiStep.action.title?.message ?: "InteractiveForm",
+                        title = processingStep.action.title?.message ?: "InteractiveForm",
                         fragment = InteractiveFormFragment.newInstance()
                     )
                 )
@@ -115,14 +137,14 @@ class HaapiFlowViewModel(haapiFlowConfiguration: HaapiFlowConfiguration): ViewMo
                 _haapiUIBundleLiveData.postValue(
                     HaapiUIBundle(
                         title = "Success",
-                        fragment = TokensFragment.newInstance(haapiStep.oAuthTokenResponse)
+                        fragment = TokensFragment.newInstance(processingStep.oAuthTokenResponse)
                     )
                 )
             }
             is AuthorizationCompleted -> {
                 _haapiUIBundleLiveData.postValue(
                     HaapiUIBundle(
-                        title = haapiStep.type.discriminator.capitalize(),
+                        title = processingStep.type.discriminator.capitalize(),
                         fragment = AuthorizationCompletedFragment.newInstance()
                     )
                 )

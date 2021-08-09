@@ -41,7 +41,7 @@ import io.curity.haapidemo.uicomponents.*
 import io.curity.haapidemo.utils.dismissKeyboard
 import java.lang.ref.WeakReference
 
-class InteractiveFormFragment private constructor(): Fragment() {
+class InteractiveFormFragment: Fragment() {
 
     private lateinit var spacerProblem: Space
     private lateinit var problemView: ProblemView
@@ -56,6 +56,35 @@ class InteractiveFormFragment private constructor(): Fragment() {
 
     private val adapter = InteractiveFormAdapter(itemChangeHandler = { position, item -> interactiveFormViewModel.updateItem(item, position) })
 
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+
+        val haapiFlowViewModel = ViewModelProvider(requireActivity()).get(HaapiFlowViewModel::class.java)
+        // Cannot bind InteractiveFormViewModel with a Fragment lifecycle due to edit data and rotation.
+        // Therefore, it has to be bind with an activity and instantiate() needs to be called
+        interactiveFormViewModel = ViewModelProvider(requireActivity(), InteractiveFormViewModelFactory(haapiFlowViewModel))
+            .get(InteractiveFormViewModel::class.java)
+        interactiveFormViewModel.instantiate()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+
+        Log.d(Constant.TAG, "Saving edit data from interactiveFormViewModel")
+        outState.putSerializable(DATA_COPY, interactiveFormViewModel.mapDataCopy)
+    }
+
+    @Suppress("Unchecked_cast")
+    override fun onViewStateRestored(savedInstanceState: Bundle?) {
+        super.onViewStateRestored(savedInstanceState)
+
+        val dataSaved = savedInstanceState?.getSerializable(DATA_COPY) as? HashMap<Long, String>
+        if (dataSaved != null) {
+            Log.d(Constant.TAG, "Restoring edit data for interactiveFormViewModel")
+            interactiveFormViewModel.restore(dataSaved)
+        }
+    }
+
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
         val root = inflater.inflate(R.layout.fragment_interactive_form, container, false)
 
@@ -66,10 +95,6 @@ class InteractiveFormFragment private constructor(): Fragment() {
         linksLayout = root.findViewById(R.id.linear_layout_links)
 
         recyclerView.adapter = adapter
-
-        val haapiFlowViewModel = ViewModelProvider(requireActivity()).get(HaapiFlowViewModel::class.java)
-        interactiveFormViewModel = ViewModelProvider(this, InteractiveFormViewModelFactory(haapiFlowViewModel))
-            .get(InteractiveFormViewModel::class.java)
 
         adapter.submitList(interactiveFormViewModel.interactiveFormItems)
 
@@ -105,7 +130,6 @@ class InteractiveFormFragment private constructor(): Fragment() {
         })
 
         val links = interactiveFormViewModel.links
-//        val contextThemeWrapper = ContextThemeWrapper(requireContext(), R.style.Links)
         linksLayout.removeAllViews()
         links.forEach { link ->
             val button = ProgressButton(requireContext(), null, R.style.LinkProgressButton).apply {
@@ -120,7 +144,14 @@ class InteractiveFormFragment private constructor(): Fragment() {
         }
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.d(Constant.TAG_FRAGMENT_LIFECYCLE, "InteractiveForm is destroyed")
+    }
+
     companion object {
+        private const val DATA_COPY = "io.curity.haapidemo.interactiveFormFragment.data_copy"
+
         fun newInstance(): InteractiveFormFragment {
             return InteractiveFormFragment()
         }
@@ -133,9 +164,9 @@ class InteractiveFormViewModel(private val haapiFlowViewModel: HaapiFlowViewMode
     val interactiveFormItems: List<InteractiveFormItem>
         get() = _interactiveFormItems
 
-    private val interactiveFormStep: InteractiveForm
+    private lateinit var interactiveFormStep: InteractiveForm
 
-    init {
+    fun instantiate() {
         val step = haapiFlowViewModel.liveStep.value
         if (step is InteractiveForm) {
             interactiveFormStep = step
@@ -146,7 +177,30 @@ class InteractiveFormViewModel(private val haapiFlowViewModel: HaapiFlowViewMode
         setupInteractiveFormItems()
     }
 
+    val mapDataCopy: HashMap<Long, String>
+        get() {
+            val result = HashMap<Long, String>()
+            _interactiveFormItems.forEach {
+                when (it) {
+                    is InteractiveFormItem.EditText -> { result[it.id] = it.value }
+                    is InteractiveFormItem.Password -> { result[it.id] = it.value }
+                }
+            }
+            return result
+        }
+
+    fun restore(mapDataCopy: HashMap<Long, String>) {
+        mapDataCopy.forEach { (key, value) ->
+            when (val item = _interactiveFormItems.first { it.id == key }) {
+                is InteractiveFormItem.EditText -> { item.value = value }
+                is InteractiveFormItem.Password -> { item.value = value }
+            }
+        }
+    }
+
     private fun setupInteractiveFormItems() {
+        _interactiveFormItems.clear()
+
         for (field in interactiveFormStep.action.model.fields) {
             when (field) {
                 is Field.Text -> {
@@ -160,11 +214,22 @@ class InteractiveFormViewModel(private val haapiFlowViewModel: HaapiFlowViewMode
                         InteractiveFormItem.EditText(
                             key = field.name,
                             inputType = inputType,
-                            label = field.placeholder?.capitalize() ?: "",
+                            label = field.label?.message ?: "",
                             hint = field.placeholder ?: "",
-                            value = ""
+                            value = field.value ?: ""
                         )
                     )
+                }
+                is Field.Hidden -> {
+                    Log.d(Constant.TAG, "Field.Hidden was not handled")
+                }
+
+                is Field.Select -> {
+                    Log.d(Constant.TAG, "Field.Select was not handled")
+                }
+
+                is Field.Context -> {
+                    Log.d(Constant.TAG, "Field.Context was not handled")
                 }
 
                 is Field.Username -> {
@@ -189,13 +254,17 @@ class InteractiveFormViewModel(private val haapiFlowViewModel: HaapiFlowViewMode
                         )
                     )
                 }
+
+                else -> {
+                    Log.d(Constant.TAG, "$field was not handled")
+                }
             }
         }
     }
 
     val problemsLiveData: LiveData<ProblemContent?> = haapiFlowViewModel.liveStep.map { step ->
         if (step is ProblemStep) {
-            Log.i(Constant.TAG, "Got a ProblemStep")
+            Log.d(Constant.TAG, "Got a ProblemStep")
             val title = step.problem.title
             val problemBundles: MutableList<ProblemView.ProblemBundle> = mutableListOf()
             step.problem.messages?.forEach { userMessage ->
@@ -206,7 +275,6 @@ class InteractiveFormViewModel(private val haapiFlowViewModel: HaapiFlowViewMode
             }
             ProblemContent(title = title, problemBundles = problemBundles)
         } else {
-            Log.i(Constant.TAG, "Got a NO ProblemStep")
             null
         }
     }
@@ -223,6 +291,7 @@ class InteractiveFormViewModel(private val haapiFlowViewModel: HaapiFlowViewMode
         get() = interactiveFormStep.action.model.actionTitle?.message ?: "Submit"
 
     fun updateItem(item: InteractiveFormItem, position: Int) {
+        Log.d(Constant.TAG, "Item was updated at position: $position - $item")
         _interactiveFormItems[position] = item
     }
 

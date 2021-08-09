@@ -27,7 +27,7 @@ import io.curity.haapidemo.R
 import io.curity.haapidemo.models.AuthorizationCompleted
 import io.curity.haapidemo.uicomponents.ProgressButton
 
-class AuthorizationCompletedFragment private constructor(): Fragment(R.layout.fragment_authorization_completed) {
+class AuthorizationCompletedFragment: Fragment(R.layout.fragment_authorization_completed) {
 
     private lateinit var contentTextView: TextView
     private lateinit var progressButton: ProgressButton

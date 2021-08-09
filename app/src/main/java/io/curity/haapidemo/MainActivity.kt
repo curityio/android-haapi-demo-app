@@ -78,5 +78,6 @@ class MainActivity : AppCompatActivity() {
 class Constant {
     companion object {
         const val TAG = "DEBUG_HAAPI"
+        const val TAG_FRAGMENT_LIFECYCLE = "DEBUG_HAAPI_FRAGMENT"
     }
 }

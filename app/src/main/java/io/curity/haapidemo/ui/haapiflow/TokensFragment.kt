@@ -24,7 +24,7 @@ import io.curity.haapidemo.models.OAuthTokenResponse
 import io.curity.haapidemo.uicomponents.DisclosureContent
 import io.curity.haapidemo.uicomponents.DisclosureView
 
-class TokensFragment private constructor(): Fragment(R.layout.fragment_tokens) {
+class TokensFragment: Fragment(R.layout.fragment_tokens) {
 
     private lateinit var accessDisclosureView: DisclosureView
     private lateinit var refreshDisclosureView: DisclosureView
