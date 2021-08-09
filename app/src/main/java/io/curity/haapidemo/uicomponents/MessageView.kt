@@ -93,12 +93,12 @@ class MessageView @JvmOverloads constructor(
 
     @Suppress("Unused")
     fun applyStyle(style: MessageStyle) {
-        background.setBackgroundColor(style.backgroundColor)
+        background.setBackgroundColor(resources.getColor(style.backgroundColor, null))
 
-        textView.setTextColor(style.textColor)
-        textView.setTextAppearance(style.textAppearance)
+        textView.setTextColor(resources.getColor(style.textColor, null))
+        textView.setTextAppearance(style.textColor)
 
-        imageView.setColorFilter(style.tintColor)
+        imageView.setColorFilter(resources.getColor(style.tintColor, null))
         imageView.setImageResource(style.imageResource)
     }
 }
