@@ -44,7 +44,7 @@ class ProgressButton @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
-): ConstraintLayout(context, attrs, defStyleAttr) {
+): ConstraintLayout(context, attrs, defStyleAttr), ViewStopLoadable {
 
     private val progressBar: ProgressBar
     private val textView: TextView
@@ -153,5 +153,9 @@ class ProgressButton @JvmOverloads constructor(
             imageView.visibility = VISIBLE
             isClickable = true
         }
+    }
+
+    override fun stopLoading() {
+        setLoading(false)
     }
 }

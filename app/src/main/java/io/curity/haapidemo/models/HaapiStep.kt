@@ -44,7 +44,8 @@ data class AuthenticatorSelector(
 ) : HaapiStep()
 
 data class InteractiveForm(
-    val action: Action.Form,
+    val actions: List<Action.Form>,
+    val type: RepresentationType,
     val cancel: Action.Form?,
     val links: List<Link>
 ) : HaapiStep()

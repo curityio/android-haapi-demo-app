@@ -120,10 +120,8 @@ private fun handleAuthenticationStep(representation: HaapiRepresentation): Haapi
         }
     } else
     {
-        val action = representation.actions.findForm {
-            it.kind != "cancel" && it.kind != "continue"
-        } ?: return UnknownStep(representation)
-        InteractiveForm(action, cancel, representation.links)
+        val actions = representation.actions.findForms { it.kind != "cancel" && it.kind != "continue" }
+        InteractiveForm(actions, representation.type, cancel, representation.links)
     }
 }
 
@@ -213,3 +211,7 @@ private fun requiresInteraction(action: Action.Form) =
 private fun List<Action>.findForm(predicate: (Action.Form) -> Boolean): Action.Form? =
     this.filterIsInstance<Action.Form>()
         .find { predicate(it) }
+
+private fun List<Action>.findForms(predicate: (Action.Form) -> Boolean): List<Action.Form> =
+    filterIsInstance<Action.Form>()
+        .filter { predicate(it) }

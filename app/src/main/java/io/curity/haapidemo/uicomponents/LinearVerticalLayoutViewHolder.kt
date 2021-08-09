@@ -76,6 +76,37 @@ class SelectorViewHolder(itemView: View): LinearVerticalLayoutViewHolder(itemVie
     }
 }
 
+class ProgressButtonViewHolder(itemView: View): LinearVerticalLayoutViewHolder(itemView), ViewStopLoadable {
+    private val progressButton: ProgressButton by lazy { ProgressButton(itemView.context, null, R.style.PrimaryProgressButton) }
+
+    init {
+        super.linearLayout.addView(progressButton)
+    }
+
+    fun bind(
+        text: String,
+        onClickListener: (ProgressButtonViewHolder) -> Unit
+    ) {
+        progressButton.setText(text)
+        progressButton.setOnClickListener {
+            progressButton.setLoading(true)
+            onClickListener(this)
+        }
+    }
+
+    override fun stopLoading() {
+        progressButton.stopLoading()
+    }
+
+    companion object {
+        fun from(parentView: ViewGroup): ProgressButtonViewHolder {
+            val layoutInflater = LayoutInflater.from(parentView.context)
+            val view = inflatedView(layoutInflater, parentView)
+            return ProgressButtonViewHolder(view)
+        }
+    }
+}
+
 open class FormTextViewHolder(itemView: View): LinearVerticalLayoutViewHolder(itemView) {
 
     val formTextView: FormTextView by lazy { FormTextView(itemView.context, null, 0) }

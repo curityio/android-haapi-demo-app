@@ -27,6 +27,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.lang.StringBuilder
+import java.util.*
 
 class HaapiFlowViewModel(haapiFlowConfiguration: HaapiFlowConfiguration): ViewModel() {
 
@@ -36,7 +37,11 @@ class HaapiFlowViewModel(haapiFlowConfiguration: HaapiFlowConfiguration): ViewMo
     val liveStep: LiveData<HaapiStep?>
         get() = _liveStep
 
-    private val _haapiUIBundleLiveData = MutableLiveData<HaapiUIBundle>(HaapiUIBundle(title = "", fragment = EmptyFragment()))
+    private var _problemStepLiveData = MutableLiveData<ProblemStep?>(null)
+    val problemStepLiveData: LiveData<ProblemStep?>
+        get() = _problemStepLiveData
+
+    private val _haapiUIBundleLiveData = MutableLiveData(HaapiUIBundle(title = "", fragment = EmptyFragment()))
     val haapiUIBundleLiveData: LiveData<HaapiUIBundle>
         get() = _haapiUIBundleLiveData
 
@@ -116,6 +121,12 @@ class HaapiFlowViewModel(haapiFlowConfiguration: HaapiFlowConfiguration): ViewMo
             haapiStep
         }
 
+        if (processingStep is ProblemStep) {
+            _problemStepLiveData.postValue(processingStep)
+            return
+        } else {
+            _problemStepLiveData.postValue(null)
+        }
         _liveStep.postValue(processingStep)
 
         when (processingStep) {
@@ -128,7 +139,7 @@ class HaapiFlowViewModel(haapiFlowConfiguration: HaapiFlowConfiguration): ViewMo
             is InteractiveForm -> {
                 _haapiUIBundleLiveData.postValue(
                     HaapiUIBundle(
-                        title = processingStep.action.title?.message ?: "InteractiveForm",
+                        title = processingStep.type.discriminator,
                         fragment = InteractiveFormFragment.newInstance()
                     )
                 )
@@ -144,7 +155,7 @@ class HaapiFlowViewModel(haapiFlowConfiguration: HaapiFlowConfiguration): ViewMo
             is AuthorizationCompleted -> {
                 _haapiUIBundleLiveData.postValue(
                     HaapiUIBundle(
-                        title = processingStep.type.discriminator.capitalize(),
+                        title = processingStep.type.discriminator.capitalize(Locale.getDefault()),
                         fragment = AuthorizationCompletedFragment.newInstance()
                     )
                 )

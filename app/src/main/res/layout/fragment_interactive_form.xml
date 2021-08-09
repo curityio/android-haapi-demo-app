@@ -46,17 +46,6 @@
         android:layout_width="match_parent"
         android:layout_height="@dimen/padding" />
 
-    <io.curity.haapidemo.uicomponents.ProgressButton
-        android:id="@+id/progress_button"
-        tools:text="@string/submit"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        style="@style/PrimaryProgressButton"/>
-
-    <Space
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/padding" />
-
     <LinearLayout
         android:id="@+id/linear_layout_links"
         android:layout_width="match_parent"
