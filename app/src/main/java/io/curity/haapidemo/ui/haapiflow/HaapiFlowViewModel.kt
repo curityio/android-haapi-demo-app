@@ -31,7 +31,8 @@ import java.util.*
 
 class HaapiFlowViewModel(haapiFlowConfiguration: HaapiFlowConfiguration): ViewModel() {
 
-    val haapiFlowManager = HaapiFlowManager(haapiFlowConfiguration = haapiFlowConfiguration)
+    private val haapiFlowManager = HaapiFlowManager(haapiFlowConfiguration = haapiFlowConfiguration)
+    val isAutoPolling = haapiFlowConfiguration.isAutoPollingEnabled
 
     private var _liveStep = MutableLiveData<HaapiStep?>(null)
     val liveStep: LiveData<HaapiStep?>
@@ -105,7 +106,8 @@ class HaapiFlowViewModel(haapiFlowConfiguration: HaapiFlowConfiguration): ViewMo
     private fun processStep(haapiStep: HaapiStep) {
         // Any ProblemStep that comes when the step is:
         // Redirect -> SystemError
-        val processingStep: HaapiStep = if (haapiStep is ProblemStep && liveStep.value is Redirect) {
+        // PollingStep -> SystemError
+        val processingStep: HaapiStep = if (haapiStep is ProblemStep && (liveStep.value is Redirect || liveStep.value is PollingStep )) {
             val description = StringBuilder()
             haapiStep.problem.messages?.forEach { userMessage ->
                 userMessage.text.message.let {
@@ -124,6 +126,11 @@ class HaapiFlowViewModel(haapiFlowConfiguration: HaapiFlowConfiguration): ViewMo
         if (processingStep is ProblemStep) {
             _problemStepLiveData.postValue(processingStep)
             return
+        } else if (processingStep is PollingStep && liveStep.value is PollingStep) {
+            val currentStep = liveStep.value as PollingStep
+            if (processingStep.isContentTheSame(currentStep)) {
+                return
+            }
         } else {
             _problemStepLiveData.postValue(null)
         }
@@ -160,12 +167,21 @@ class HaapiFlowViewModel(haapiFlowConfiguration: HaapiFlowConfiguration): ViewMo
                     )
                 )
             }
+            is PollingStep -> {
+                _haapiUIBundleLiveData.postValue(
+                    HaapiUIBundle(
+                        title = processingStep.type.discriminator.capitalize(Locale.getDefault()),
+                        fragment = PollingFragment.newInstance()
+                    )
+                )
+            }
             is SystemErrorStep -> {
                 // NOP
             }
             is ProblemStep -> {
                 // NOP
             }
+
             else -> {
                 _haapiUIBundleLiveData.postValue(HaapiUIBundle(title = "Not supported", fragment = RedirectFragment.newInstance("$haapiStep")))
             }
@@ -191,3 +207,9 @@ class HaapiFlowViewModelFactory(val haapiFlowConfiguration: HaapiFlowConfigurati
 }
 
 data class HaapiUIBundle(val title: String?, val fragment: Fragment)
+
+private fun PollingStep.isContentTheSame(pollingStep: PollingStep): Boolean {
+    return this.properties.status == pollingStep.properties.status
+            && this.type.discriminator == pollingStep.type.discriminator
+            && this.main.model.href == pollingStep.main.model.href
+}

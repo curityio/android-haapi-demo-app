@@ -81,5 +81,6 @@ class Constant {
         const val TAG_FRAGMENT_LIFECYCLE = "DEBUG_HAAPI_FRAGMENT"
         const val TAG_HAAPI_REPRESENTATION = "DEBUG_HAAPI_REPRESENTATION"
         const val TAG_ERROR = "DEBUG_ERROR"
+        const val TAG_VIEW_MODEL = "DEBUG_HAAPI_VM"
     }
 }

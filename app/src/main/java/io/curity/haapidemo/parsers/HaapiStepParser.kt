@@ -153,37 +153,57 @@ private fun handlePollingStep(representation: HaapiRepresentation): HaapiStep
     {
         return UnknownStep(representation)
     }
-    val properties = representation.properties?.let { it }
-    if (properties !is Properties.Polling)
+    val properties = representation.properties
+
+    if (properties == null || properties !is Properties.Polling)
     {
         return InvalidStep(representation)
     }
 
-    val polling = representation.properties as? Properties.Polling
-    return if (polling?.status == PollingStatus.Pending)
-    {
-        val pollAction =
-            representation.actions.findForm { it.kind == "poll" } ?: return InvalidStep(
-                representation
-            )
+    return when (properties.status) {
+        is PollingStatus.Pending -> {
+            val pollAction =
+                representation.actions.findForm { it.kind == "poll" } ?: return InvalidStep(
+                    representation
+                )
 
-        val cancelAction = representation.actions.findForm { it.kind == "cancel" }
-        PollingStep(
-            properties,
-            pollAction,
-            cancelAction
-        )
-    } else
-    {
-        val continueAction =
-            representation.actions.findForm { it.kind == "continue" } ?: return InvalidStep(
+            val cancelAction = representation.actions.findForm { it.kind == "cancel" }
+            PollingStep(
+                representation.type,
+                properties,
+                pollAction,
+                cancelAction
+            )
+        }
+        is PollingStatus.Done -> {
+            val formAction =
+                representation.actions.findForm { it.kind == "form" } ?: return InvalidStep(
+                    representation
+                )
+            PollingStep(
+                representation.type,
+                properties,
+                formAction,
+                null
+            )
+        }
+        is PollingStatus.Failed -> {
+            val anyAction =
+                representation.actions.findForm { it.kind == "continue" || it.kind == "redirect"  } ?: return InvalidStep(
+                    representation
+                )
+            PollingStep(
+                representation.type,
+                properties,
+                anyAction,
+                null
+            )
+        }
+        is PollingStatus.Unknown -> {
+            return InvalidStep(
                 representation
             )
-        PollingStep(
-            properties,
-            continueAction,
-            null
-        )
+        }
     }
 }
 

@@ -72,6 +72,7 @@ data class UnknownClientOperation(
 
 
 data class PollingStep(
+    val type: RepresentationType,
     val properties: Properties.Polling,
     val main: Action.Form,
     val cancel: Action.Form?,
