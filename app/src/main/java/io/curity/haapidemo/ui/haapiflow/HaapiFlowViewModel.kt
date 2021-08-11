@@ -16,12 +16,16 @@
 
 package io.curity.haapidemo.ui.haapiflow
 
+import android.util.Log
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.*
+import io.curity.haapidemo.Constant
 import io.curity.haapidemo.flow.HaapiFlowConfiguration
 import io.curity.haapidemo.flow.HaapiFlowManager
 import io.curity.haapidemo.models.*
 import io.curity.haapidemo.models.haapi.Link
+import io.curity.haapidemo.models.haapi.RepresentationType
+import io.curity.haapidemo.models.haapi.actions.Action
 import io.curity.haapidemo.models.haapi.actions.ActionModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -103,6 +107,40 @@ class HaapiFlowViewModel(haapiFlowConfiguration: HaapiFlowConfiguration): ViewMo
         }
     }
 
+    fun applyActions(actions: List<Action.Form>) {
+        Log.d(Constant.TAG, "There are ${actions.count()} actions. We are only dealing with the first one...")
+        val firstAction = actions.firstOrNull()
+        if (firstAction != null) {
+            val newStep = when (firstAction.kind) {
+                "redirect" -> {
+                    Redirect(
+                        action = firstAction
+                    )
+                }
+                else -> {
+                    InteractiveForm(
+                    actions = actions,
+                    type = RepresentationType.AuthenticationStep,
+                    cancel = null,
+                    links = emptyList())
+                }
+            }
+
+            if (newStep is Redirect && haapiFlowManager.haapiFlowConfiguration.followRedirect) {
+                submit(firstAction.model, emptyMap())
+            } else {
+                processStep(newStep)
+            }
+        } else {
+            processStep(
+                SystemErrorStep(
+                    title = "Something went wrong",
+                    description = "No available action"
+                )
+            )
+        }
+    }
+
     private fun processStep(haapiStep: HaapiStep) {
         // Any ProblemStep that comes when the step is:
         // Redirect -> SystemError
@@ -181,7 +219,9 @@ class HaapiFlowViewModel(haapiFlowConfiguration: HaapiFlowConfiguration): ViewMo
             is ProblemStep -> {
                 // NOP
             }
-
+            is BankIdClientOperation -> {
+                // NOP
+            }
             else -> {
                 _haapiUIBundleLiveData.postValue(HaapiUIBundle(title = "Not supported", fragment = RedirectFragment.newInstance("$haapiStep")))
             }

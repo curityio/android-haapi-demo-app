@@ -17,6 +17,7 @@
 package io.curity.haapidemo
 
 import android.app.AlertDialog
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -24,11 +25,16 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View.*
 import android.widget.*
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.commit
 import androidx.lifecycle.ViewModelProvider
 import io.curity.haapidemo.flow.HaapiFlowConfiguration
+import io.curity.haapidemo.models.BankIdClientOperation
+import io.curity.haapidemo.models.ExternalBrowserClientOperation
 import io.curity.haapidemo.models.SystemErrorStep
+import io.curity.haapidemo.models.haapi.actions.Action
 import io.curity.haapidemo.ui.haapiflow.HaapiFlowViewModel
 import io.curity.haapidemo.ui.haapiflow.HaapiFlowViewModelFactory
 import io.curity.haapidemo.uicomponents.HeaderView
@@ -45,6 +51,9 @@ class FlowActivity : AppCompatActivity() {
      * [haapiBundleHash] will contain the hash of a HaapiBundle.
      */
     private var haapiBundleHash: Int = INVALID_HAAPI_BUNDLE_HASH
+
+    private lateinit var resultLauncher: ActivityResultLauncher<Intent>
+    private var expectedCallback: Int = NO_OPERATION_CALLBACK
 
     // UIs
     private val progressBar: ProgressBar by lazy { findViewById(R.id.loader) }
@@ -81,6 +90,21 @@ class FlowActivity : AppCompatActivity() {
                     val intent = Intent(Intent.ACTION_VIEW, step.completeUri())
                     startActivity(intent)
                 }
+                is BankIdClientOperation -> {
+                    Log.d(Constant.TAG_HAAPI_OPERATION, step.actionModel.arguments.href)
+                    val intent = Intent()
+                        .setAction(Intent.ACTION_VIEW)
+                        .setData(Uri.parse(step.actionModel.arguments.href))
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    try {
+                        expectedCallback = OPERATION_BANKID_CALLBACK
+                        resultLauncher.launch(intent)
+                        haapiFlowViewModel.applyActions(step.actionModel.continueActions as List<Action.Form>)
+                    } catch (exception: ActivityNotFoundException) {
+                        expectedCallback = NO_OPERATION_CALLBACK
+                        Log.d(Constant.TAG_HAAPI_OPERATION, "Could not open activity : $exception")
+                    }
+                }
                 else -> { progressBar.visibility = GONE }
             }
         }
@@ -100,6 +124,17 @@ class FlowActivity : AppCompatActivity() {
         val closeButton: ImageButton = findViewById(R.id.close_button)
         closeButton.setOnClickListener {
             finish()
+        }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        resultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (expectedCallback == OPERATION_BANKID_CALLBACK) {
+                // Always return RESULT_CANCELED... when the new activity is opened
+                Log.d(Constant.TAG_HAAPI_OPERATION, "Callback received for BANKID: $result")
+                expectedCallback = NO_OPERATION_CALLBACK
+            }
         }
     }
 
@@ -130,10 +165,21 @@ class FlowActivity : AppCompatActivity() {
         private const val HAAPI_BUNDLE_HASH = "io.curity.haapidemo.flowActivity.haapi_bundle_hash"
         private const val INVALID_HAAPI_BUNDLE_HASH = -1
 
+        private const val NO_OPERATION_CALLBACK = 0
+        private const val OPERATION_BANKID_CALLBACK = 1
         fun newIntent(context: Context, haapiFlowConfiguration: HaapiFlowConfiguration): Intent {
             val intent = Intent(context, FlowActivity::class.java)
             intent.putExtra(EXTRA_FLOW_ACTIVITY_HAAPI_CONFIG, Json.encodeToString(haapiFlowConfiguration))
             return intent
         }
     }
+}
+
+private fun ExternalBrowserClientOperation.completeUri(): Uri {
+    return Uri.parse(actionModel.arguments.href)
+        .buildUpon()
+        .appendQueryParameter("redirect_uri", "haapi:start")
+        .appendQueryParameter("device_id", "android_emulator")
+        .appendQueryParameter("device_name", "emulator")
+        .build()
 }
