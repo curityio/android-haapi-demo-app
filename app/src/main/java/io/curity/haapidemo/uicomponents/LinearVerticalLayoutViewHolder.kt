@@ -111,6 +111,8 @@ open class FormTextViewHolder(itemView: View): LinearVerticalLayoutViewHolder(it
 
     val formTextView: FormTextView by lazy { FormTextView(itemView.context, null, 0) }
 
+    private var refTextWatcher: WeakReference<TextWatcher> = WeakReference(null)
+
     init {
         super.linearLayout.addView(formTextView)
     }
@@ -123,12 +125,24 @@ open class FormTextViewHolder(itemView: View): LinearVerticalLayoutViewHolder(it
         inputType: Int = InputType.TYPE_CLASS_TEXT,
         textWatcher: TextWatcher)
     {
+        clear()
+
         formTextView.setLabelText(label)
         formTextView.setHint(hint)
         formTextView.inputText = value
         formTextView.enableError(hasError)
         formTextView.setInputType(inputType)
+
+        refTextWatcher = WeakReference(textWatcher)
         formTextView.addTextChangedListener(textWatcher)
+    }
+
+    fun clear() {
+        val textWatcher = refTextWatcher.get()
+        if (textWatcher != null) {
+            formTextView.removeTextChangedListener(textWatcher)
+            refTextWatcher = WeakReference(null)
+        }
     }
 
     companion object {

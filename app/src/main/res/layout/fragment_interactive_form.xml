@@ -23,6 +23,14 @@
     xmlns:tools="http://schemas.android.com/tools"
     >
 
+    <LinearLayout
+        android:id="@+id/linear_layout_messages"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:visibility="gone"
+        />
+
     <Space
         android:id="@+id/spacer_problem"
         android:layout_width="match_parent"

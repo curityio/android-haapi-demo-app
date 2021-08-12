@@ -183,6 +183,15 @@ class FormTextView @JvmOverloads constructor(
         textInputEditText.addTextChangedListener(textWatcher)
     }
 
+    /**
+     * Removes the specified TextWatcher from the list of those whose methods are called whenever the TextInput's text changes.
+     *
+     * @param textWatcher A TextWatcher
+     */
+    fun removeTextChangedListener(textWatcher: TextWatcher) {
+        textInputEditText.removeTextChangedListener(textWatcher)
+    }
+
     fun setInputType(inputType: Int) {
         textInputEditText.inputType = inputType
     }

@@ -47,7 +47,8 @@ data class InteractiveForm(
     val actions: List<Action.Form>,
     val type: RepresentationType,
     val cancel: Action.Form?,
-    val links: List<Link>
+    val links: List<Link>,
+    val messages: List<UserMessage>
 ) : HaapiStep()
 
 data class ExternalBrowserClientOperation(

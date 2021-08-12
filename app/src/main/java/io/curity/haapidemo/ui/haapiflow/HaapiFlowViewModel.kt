@@ -27,6 +27,7 @@ import io.curity.haapidemo.models.haapi.Link
 import io.curity.haapidemo.models.haapi.RepresentationType
 import io.curity.haapidemo.models.haapi.actions.Action
 import io.curity.haapidemo.models.haapi.actions.ActionModel
+import io.curity.haapidemo.models.haapi.problems.AuthorizationProblem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -122,7 +123,8 @@ class HaapiFlowViewModel(haapiFlowConfiguration: HaapiFlowConfiguration): ViewMo
                     actions = actions,
                     type = RepresentationType.AuthenticationStep,
                     cancel = null,
-                    links = emptyList())
+                    links = emptyList(),
+                    messages = emptyList())
                 }
             }
 
@@ -151,6 +153,9 @@ class HaapiFlowViewModel(haapiFlowConfiguration: HaapiFlowConfiguration): ViewMo
                 userMessage.text.message.let {
                     description.append(it)
                 }
+            }
+            if (haapiStep.problem is AuthorizationProblem) {
+                description.append(haapiStep.problem.errorDescription)
             }
 
             SystemErrorStep(

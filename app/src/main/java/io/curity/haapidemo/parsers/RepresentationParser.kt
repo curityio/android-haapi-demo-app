@@ -85,7 +85,7 @@ object RepresentationParser
                 )
             RepresentationType.AuthorizationResponseProblem ->
                 AuthorizationProblem(
-                    title = obj.string("title"),
+                    title = obj.stringOpt("title") ?: obj.string("error"),
                     code = obj.stringOpt("code"),
                     messages = obj.list("messages", RepresentationParser::parseUserMessage),
                     links = obj.list("links", LinkParser::parse),

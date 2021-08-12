@@ -146,7 +146,7 @@ class FlowActivity : AppCompatActivity() {
 
     private fun showAlert(systemErrorStep: SystemErrorStep) {
         val alertDialog = AlertDialog.Builder(this).apply {
-            title = systemErrorStep.title
+            setTitle(systemErrorStep.title)
             setMessage(systemErrorStep.description)
         }
 

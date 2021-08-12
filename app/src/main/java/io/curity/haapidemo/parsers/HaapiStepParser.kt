@@ -120,8 +120,13 @@ private fun handleAuthenticationStep(representation: HaapiRepresentation): Haapi
         }
     } else
     {
-        val actions = representation.actions.findForms { it.kind != "cancel" && it.kind != "continue" }
-        InteractiveForm(actions, representation.type, cancel, representation.links)
+        InteractiveForm(
+            actions = representation.actions.filterIsInstance<Action.Form>(),
+            type = representation.type,
+            cancel = cancel,
+            links = representation.links,
+            messages = representation.messages
+        )
     }
 }
 

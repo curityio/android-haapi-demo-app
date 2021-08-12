@@ -21,7 +21,6 @@ import android.text.Editable
 import android.text.InputType
 import android.text.TextWatcher
 import android.util.Log
-import android.view.LayoutInflater
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
@@ -47,8 +46,9 @@ import java.lang.ref.WeakReference
 import java.util.*
 import kotlin.collections.HashMap
 
-class InteractiveFormFragment: Fragment() {
+class InteractiveFormFragment: Fragment(R.layout.fragment_interactive_form) {
 
+    private lateinit var messagesLayout: LinearLayout
     private lateinit var spacerProblem: Space
     private lateinit var problemView: ProblemView
     private lateinit var recyclerView: RecyclerView
@@ -99,23 +99,18 @@ class InteractiveFormFragment: Fragment() {
         }
     }
 
-    override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, savedInstanceState: Bundle?): View? {
-        val root = inflater.inflate(R.layout.fragment_interactive_form, container, false)
+    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        super.onViewCreated(view, savedInstanceState)
 
-        spacerProblem = root.findViewById(R.id.spacer_problem)
-        problemView = root.findViewById(R.id.problem_view)
-        recyclerView = root.findViewById(R.id.recycler_view)
-        linksLayout = root.findViewById(R.id.linear_layout_links)
+        messagesLayout = view.findViewById(R.id.linear_layout_messages)
+        spacerProblem = view.findViewById(R.id.spacer_problem)
+        problemView = view.findViewById(R.id.problem_view)
+        recyclerView = view.findViewById(R.id.recycler_view)
+        linksLayout = view.findViewById(R.id.linear_layout_links)
 
         recyclerView.adapter = adapter
 
         adapter.submitList(interactiveFormViewModel.interactiveFormItems)
-
-        return root
-    }
-
-    override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-        super.onViewCreated(view, savedInstanceState)
 
         recyclerView.addOnItemTouchListener(object: RecyclerView.OnItemTouchListener {
             override fun onInterceptTouchEvent(rv: RecyclerView, e: MotionEvent): Boolean {
@@ -137,6 +132,21 @@ class InteractiveFormFragment: Fragment() {
                 weakButton = null
             }
         })
+
+        if (interactiveFormViewModel.userMessages.isEmpty()) {
+            messagesLayout.visibility = View.GONE
+        } else {
+            messagesLayout.visibility = View.VISIBLE
+            messagesLayout.removeAllViews()
+            interactiveFormViewModel.userMessages.forEach { userMessage ->
+                val messageView = MessageView.newInstance(
+                    context = requireContext(),
+                    text = userMessage.text.message ?: "",
+                    style = userMessage.messageStyle()
+                )
+                messagesLayout.addView(messageView)
+            }
+        }
 
         interactiveFormViewModel.problemsLiveData.observe(viewLifecycleOwner, Observer {  problemContent ->
             val visibility = if (problemContent == null) View.GONE else View.VISIBLE
@@ -197,7 +207,11 @@ class InteractiveFormViewModel(private val haapiFlowViewModel: HaapiFlowViewMode
         }
 
         setupInteractiveFormItems()
+
     }
+
+    val userMessages: List<UserMessage>
+        get() = interactiveFormStep.messages
 
     val mapDataCopy: HashMap<Long, String>
         get() {
@@ -277,9 +291,16 @@ class InteractiveFormViewModel(private val haapiFlowViewModel: HaapiFlowViewMode
                             )
                         )
                     }
-
-                    else -> {
-                        Log.d(Constant.TAG, "$field was not handled")
+                    is Field.Checkbox -> {
+                        _interactiveFormItems.add(
+                            InteractiveFormItem.Checkbox(
+                                key = field.name,
+                                label = field.label?.message ?: "",
+                                readonly = field.readonly,
+                                checked = field.checked,
+                                value = field.value ?: "on"
+                            )
+                        )
                     }
                 }
             }
@@ -332,25 +353,6 @@ class InteractiveFormViewModel(private val haapiFlowViewModel: HaapiFlowViewMode
         _interactiveFormItems[position] = item
     }
 
-    fun submit() {
-        val parameters: MutableMap<String, String> = mutableMapOf()
-        interactiveFormItems.forEach {
-            when (it) {
-                is InteractiveFormItem.EditText -> {
-                    parameters[it.key] = it.value
-                }
-                is InteractiveFormItem.Password -> {
-                    parameters[it.key] = it.value
-                }
-                else -> { /* NOP */ }
-            }
-        }
-        haapiFlowViewModel.submit(
-            interactiveFormStep.actions.first().model,
-            parameters = parameters
-        )
-    }
-
     fun submitActionModelForm(actionModelForm: ActionModel.Form) {
         val indexAction = interactiveFormItems.indexOfFirst { it.id == actionModelForm.hashCode().toLong() }
         if (indexAction != -1) {
@@ -363,6 +365,13 @@ class InteractiveFormViewModel(private val haapiFlowViewModel: HaapiFlowViewMode
                     }
                     is InteractiveFormItem.Password -> {
                         parameters[item.key] = item.value
+                    }
+                    is InteractiveFormItem.Checkbox -> {
+                        if (item.checked) {
+                            parameters[item.key] = item.value
+                        } else {
+                            parameters[item.key] = ""
+                        }
                     }
                     is InteractiveFormItem.Button -> {
                         index = -1
@@ -428,14 +437,22 @@ sealed class InteractiveFormItem {
     data class Button(override val key: String, override val label: String, override var hasError: Boolean = false, val actionModelForm: ActionModel.Form): InteractiveFormItem() {
         override val id: Long = actionModelForm.hashCode().toLong()
     }
+
+    data class Checkbox(override val key: String, override val label: String, val readonly: Boolean, var checked: Boolean, val value: String, override var hasError: Boolean = false): InteractiveFormItem() {
+        override val id: Long = key.hashCode().toLong()
+    }
 }
-private class InteractiveFormAdapter(val itemChangeHandler: (Int, InteractiveFormItem) -> Unit, val selectButtonHandler: (ActionModel.Form, ProgressButtonViewHolder) -> Unit): ListAdapter<InteractiveFormItem, RecyclerView.ViewHolder>(CONFIG_COMPARATOR) {
+private class InteractiveFormAdapter(
+    val itemChangeHandler: (Int, InteractiveFormItem) -> Unit,
+    val selectButtonHandler: (ActionModel.Form, ProgressButtonViewHolder) -> Unit
+): ListAdapter<InteractiveFormItem, RecyclerView.ViewHolder>(CONFIG_COMPARATOR) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return when(viewType) {
             InteractiveFormType.EditTextView.ordinal -> FormTextViewHolder.from(parent)
             InteractiveFormType.PasswordView.ordinal -> PasswordTextViewHolder.from(parent)
             InteractiveFormType.ButtonView.ordinal -> ProgressButtonViewHolder.from(parent)
+            InteractiveFormType.CheckboxView.ordinal -> CheckboxViewHolder.from(parent)
             else -> throw ClassCastException("No class for viewType $viewType")
         }
     }
@@ -491,6 +508,26 @@ private class InteractiveFormAdapter(val itemChangeHandler: (Int, InteractiveFor
                     }
                 )
             }
+            is CheckboxViewHolder -> {
+                val item = getItem(position) as InteractiveFormItem.Checkbox
+                holder.bind(
+                    text = item.label,
+                    isChecked = item.checked,
+                    didToggle = {
+                        item.checked = !item.checked
+                        itemChangeHandler(position, item)
+                    }
+                )
+            }
+        }
+    }
+
+    override fun onViewRecycled(holder: RecyclerView.ViewHolder) {
+        super.onViewRecycled(holder)
+        when (holder) {
+            is FormTextViewHolder -> {
+                holder.clear()
+            }
         }
     }
 
@@ -499,13 +536,15 @@ private class InteractiveFormAdapter(val itemChangeHandler: (Int, InteractiveFor
             is InteractiveFormItem.EditText -> InteractiveFormType.EditTextView.ordinal
             is InteractiveFormItem.Password -> InteractiveFormType.PasswordView.ordinal
             is InteractiveFormItem.Button -> InteractiveFormType.ButtonView.ordinal
+            is InteractiveFormItem.Checkbox -> InteractiveFormType.CheckboxView.ordinal
         }
     }
 
     private enum class InteractiveFormType {
         EditTextView,
         PasswordView,
-        ButtonView
+        ButtonView,
+        CheckboxView
     }
 
     companion object {
