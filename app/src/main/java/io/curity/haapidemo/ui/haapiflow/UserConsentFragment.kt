@@ -139,7 +139,7 @@ class UserConsentFragment: Fragment(R.layout.fragment_user_consent) {
             if (step is UserConsentStep) {
                 userConstentStep = step
             } else {
-                throw IllegalStateException("The step should be UserConsentStep when using UserConsentViewModel")
+                throw IllegalStateException("The step should be UserConsentStep when using UserConsentViewModel instead it was $step")
             }
 
             setupInteractiveFormItems()

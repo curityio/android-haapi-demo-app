@@ -114,7 +114,7 @@ class AuthenticatorSelectorViewModel(private val haapiFlowViewModel: HaapiFlowVi
             if (step is AuthenticatorSelector) {
                 return step.authenticators
             } else {
-                throw IllegalArgumentException("")
+                throw IllegalStateException("The step should be AuthenticatorSelector when using AuthenticatorSelectorViewModel instead it was $step")
             }
         }
 

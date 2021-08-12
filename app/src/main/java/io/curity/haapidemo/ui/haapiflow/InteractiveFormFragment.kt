@@ -204,7 +204,7 @@ class InteractiveFormViewModel(private val haapiFlowViewModel: HaapiFlowViewMode
         if (step is InteractiveForm) {
             interactiveFormStep = step
         } else {
-            throw IllegalStateException("The step should be InteractiveForm when using InteractiveFormViewModel")
+            throw IllegalStateException("The step should be InteractiveForm when using InteractiveFormViewModel instead it was $step")
         }
 
         setupInteractiveFormItems()

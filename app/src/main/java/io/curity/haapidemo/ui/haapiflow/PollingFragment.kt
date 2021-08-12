@@ -142,7 +142,7 @@ class PollingFragment: Fragment(R.layout.fragment_polling) {
             if (step is PollingStep) {
                 pollingStep = step
             } else {
-                throw IllegalStateException("The step should be PollingStep when using PollingViewModel")
+                throw IllegalStateException("The step should be PollingStep when using PollingViewModel instead it was $step")
             }
         }
 
