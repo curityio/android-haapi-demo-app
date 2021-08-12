@@ -22,10 +22,13 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.AdapterView
+import android.widget.ArrayAdapter
 import android.widget.LinearLayout
 import androidx.recyclerview.widget.RecyclerView
 import io.curity.haapidemo.Constant
 import io.curity.haapidemo.R
+import io.curity.haapidemo.utils.Clearable
 import java.lang.ref.WeakReference
 
 open class LinearVerticalLayoutViewHolder(itemView: View): RecyclerView.ViewHolder(itemView) {
@@ -107,7 +110,7 @@ class ProgressButtonViewHolder(itemView: View): LinearVerticalLayoutViewHolder(i
     }
 }
 
-open class FormTextViewHolder(itemView: View): LinearVerticalLayoutViewHolder(itemView) {
+open class FormTextViewHolder(itemView: View): LinearVerticalLayoutViewHolder(itemView), Clearable {
 
     val formTextView: FormTextView by lazy { FormTextView(itemView.context, null, 0) }
 
@@ -137,7 +140,7 @@ open class FormTextViewHolder(itemView: View): LinearVerticalLayoutViewHolder(it
         formTextView.addTextChangedListener(textWatcher)
     }
 
-    fun clear() {
+    override fun clear() {
         val textWatcher = refTextWatcher.get()
         if (textWatcher != null) {
             formTextView.removeTextChangedListener(textWatcher)
@@ -167,6 +170,47 @@ class PasswordTextViewHolder(itemView: View): FormTextViewHolder(itemView) {
             val layoutInflater = LayoutInflater.from(parentView.context)
             val view = inflatedView(layoutInflater, parentView)
             return PasswordTextViewHolder(view)
+        }
+    }
+}
+
+class SelectViewHolder(itemView: View): LinearVerticalLayoutViewHolder(itemView), Clearable {
+
+    private val selectView by lazy { SelectView(itemView.context, null, 0) }
+
+    init {
+        super.linearLayout.addView(selectView)
+    }
+
+    fun bind(
+        label: String,
+        values: List<String>,
+        defaultSelectPosition: Int,
+        onItemSelectedListener: AdapterView.OnItemSelectedListener
+    ) {
+        selectView.setLabelText(label)
+        val arrayAdapter = ArrayAdapter<String>(
+            itemView.context,
+            R.layout.select_view_text_view,
+            values
+        )
+        arrayAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        selectView.setAdapter(
+            arrayAdapter,
+            defaultSelectPosition
+        )
+        selectView.setOnItemSelectedListener(onItemSelectedListener)
+    }
+
+    override fun clear() {
+        selectView.removeOnItemSelectedListener()
+    }
+
+    companion object {
+        fun from(parentView: ViewGroup): SelectViewHolder {
+            val layoutInflater = LayoutInflater.from(parentView.context)
+            val view = inflatedView(layoutInflater, parentView)
+            return SelectViewHolder(view)
         }
     }
 }

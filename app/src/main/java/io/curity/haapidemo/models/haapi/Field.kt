@@ -70,8 +70,8 @@ sealed class Field(
     class Select(
         name: String,
         value: String?,
-        label: Message,
-        options: List<Option>
+        val label: Message,
+        val options: List<Option>
     ) : Field(name, value)
     {
         class Option(

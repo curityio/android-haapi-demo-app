@@ -43,39 +43,13 @@
         app:layout_constraintBottom_toBottomOf="parent"
         android:background="@drawable/rounded_rectangle_shape">
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/text_input_edit_text"
-            android:layout_width="match_parent"
+        <Spinner
+            android:id="@+id/spinner"
+            android:layout_width="0dp"
             android:layout_height="match_parent"
             tools:text="A Text"
-            android:paddingStart="@dimen/paddingEditText"
-            android:singleLine="true"
             android:background="@android:color/transparent"
-            android:inputType="text"
-            android:layout_weight="1"
-            tools:ignore="RtlSymmetry" />
-
-        <ImageView
-            android:id="@+id/image_view"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:src="@drawable/ic_warningrounded"
-            android:layout_weight="0"
-            android:visibility="visible"
-            android:contentDescription="@string/error_icon_content_description"/>
-
-        <ImageButton
-            android:id="@+id/image_button"
-            android:layout_width="wrap_content"
-            android:layout_height="match_parent"
-            android:src="@drawable/ic_outline_visibility_off_24"
-            android:background="@android:color/transparent"
-            android:layout_weight="0"
-            android:paddingStart="@dimen/paddingEditText"
-            android:paddingEnd="@dimen/paddingEditText"
-            android:scaleType="fitCenter"
-            android:foreground="?android:attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/toggle_password_visibilty_content_description"/>
+            android:layout_weight="1" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

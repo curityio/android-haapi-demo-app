@@ -402,7 +402,7 @@ private fun JSONObject.messageOpt(name: String): Message?
 
 private fun JSONObject.message(name: String): Message
 {
-    return messageOpt(name) ?: throw ModelException("Missing field '$name'")
+    return messageOpt(name) ?: messageOpt("name") ?: Message.OfLiteral("Missing label")
 }
 
 

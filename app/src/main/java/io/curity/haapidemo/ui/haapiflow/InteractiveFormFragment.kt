@@ -24,6 +24,7 @@ import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.widget.AdapterView
 import android.widget.LinearLayout
 import android.widget.Space
 import androidx.fragment.app.Fragment
@@ -43,6 +44,7 @@ import io.curity.haapidemo.models.haapi.extensions.messageStyle
 import io.curity.haapidemo.models.haapi.extensions.toInteractiveFormItemCheckbox
 import io.curity.haapidemo.models.haapi.problems.*
 import io.curity.haapidemo.uicomponents.*
+import io.curity.haapidemo.utils.Clearable
 import io.curity.haapidemo.utils.dismissKeyboard
 import java.lang.ref.WeakReference
 import java.util.*
@@ -260,6 +262,25 @@ class InteractiveFormViewModel(private val haapiFlowViewModel: HaapiFlowViewMode
                     }
 
                     is Field.Select -> {
+                        val selectOptions = field.options.mapNotNull { option ->
+                            val label = option.label.message
+                            if (label == null) {
+                                null
+                            } else {
+                                SelectOption(
+                                    label = label,
+                                    value = option.value
+                                )
+                            }
+                        }
+                        _interactiveFormItems.add(
+                            InteractiveFormItem.Select(
+                                key = field.name,
+                                label = field.label.message ?: "",
+                                selectOptions = selectOptions,
+                                selectedIndex = field.options.indexOfFirst { it.selected }
+                            )
+                        )
                         Log.d(Constant.TAG, "Field.Select was not handled")
                     }
 
@@ -365,6 +386,9 @@ class InteractiveFormViewModel(private val haapiFlowViewModel: HaapiFlowViewMode
                             parameters[item.key] = ""
                         }
                     }
+                    is InteractiveFormItem.Select -> {
+                        parameters[item.key] = item.selectOptions[item.selectedIndex].value
+                    }
                     is InteractiveFormItem.Button -> {
                         index = -1
                     }
@@ -433,7 +457,13 @@ sealed class InteractiveFormItem {
     data class Checkbox(override val key: String, override val label: String, val readonly: Boolean, var checked: Boolean, val value: String, override var hasError: Boolean = false): InteractiveFormItem() {
         override val id: Long = key.hashCode().toLong()
     }
+
+    data class Select(override val key: String, override val label: String, val selectOptions: List<SelectOption>, var selectedIndex: Int, override var hasError: Boolean = false): InteractiveFormItem() {
+        override val id: Long = key.hashCode().toLong()
+    }
 }
+
+data class SelectOption(val label: String, val value: String)
 
 class InteractiveFormAdapter(
     val itemChangeHandler: (Int, InteractiveFormItem) -> Unit,
@@ -446,6 +476,7 @@ class InteractiveFormAdapter(
             InteractiveFormType.PasswordView.ordinal -> PasswordTextViewHolder.from(parent)
             InteractiveFormType.ButtonView.ordinal -> ProgressButtonViewHolder.from(parent)
             InteractiveFormType.CheckboxView.ordinal -> CheckboxViewHolder.from(parent, leftMargin = 0)
+            InteractiveFormType.SelectView.ordinal -> SelectViewHolder.from(parent)
             else -> throw ClassCastException("No class for viewType $viewType")
         }
     }
@@ -513,16 +544,28 @@ class InteractiveFormAdapter(
                     }
                 )
             }
+            is SelectViewHolder -> {
+                val item = getItem(position) as InteractiveFormItem.Select
+                holder.bind(
+                    label = item.label,
+                    values = item.selectOptions.map { it.label },
+                    defaultSelectPosition = item.selectedIndex,
+                    onItemSelectedListener = object: AdapterView.OnItemSelectedListener {
+                        override fun onItemSelected(parent: AdapterView<*>?, view: View?, selectedIndex: Int, id: Long) {
+                            item.selectedIndex = selectedIndex
+                            itemChangeHandler(position, item)
+                        }
+
+                        override fun onNothingSelected(parent: AdapterView<*>?) { /* NOP */ }
+                    }
+                )
+            }
         }
     }
 
     override fun onViewRecycled(holder: RecyclerView.ViewHolder) {
         super.onViewRecycled(holder)
-        when (holder) {
-            is FormTextViewHolder -> {
-                holder.clear()
-            }
-        }
+        (holder as? Clearable)?.clear()
     }
 
     override fun getItemViewType(position: Int): Int {
@@ -531,6 +574,7 @@ class InteractiveFormAdapter(
             is InteractiveFormItem.Password -> InteractiveFormType.PasswordView.ordinal
             is InteractiveFormItem.Button -> InteractiveFormType.ButtonView.ordinal
             is InteractiveFormItem.Checkbox -> InteractiveFormType.CheckboxView.ordinal
+            is InteractiveFormItem.Select -> InteractiveFormType.SelectView.ordinal
         }
     }
 
@@ -538,7 +582,8 @@ class InteractiveFormAdapter(
         EditTextView,
         PasswordView,
         ButtonView,
-        CheckboxView
+        CheckboxView,
+        SelectView
     }
 
     companion object {
