@@ -31,11 +31,12 @@ class CheckboxViewHolder private constructor(itemView: View): RecyclerView.ViewH
     fun bind(
         text: CharSequence,
         isChecked: Boolean,
+        isClickable: Boolean,
         didToggle: () -> Unit)
     {
         checkboxView.text = text
         checkboxView.isChecked = isChecked
-
+        checkboxView.isClickable = isClickable
         checkboxView.setOnCheckedChangeListener { _, _ ->
             didToggle()
         }

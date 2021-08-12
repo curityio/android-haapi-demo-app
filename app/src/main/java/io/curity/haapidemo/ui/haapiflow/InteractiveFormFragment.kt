@@ -39,6 +39,8 @@ import io.curity.haapidemo.models.haapi.Field
 import io.curity.haapidemo.models.haapi.Link
 import io.curity.haapidemo.models.haapi.UserMessage
 import io.curity.haapidemo.models.haapi.actions.ActionModel
+import io.curity.haapidemo.models.haapi.extensions.messageStyle
+import io.curity.haapidemo.models.haapi.extensions.toInteractiveFormItemCheckbox
 import io.curity.haapidemo.models.haapi.problems.*
 import io.curity.haapidemo.uicomponents.*
 import io.curity.haapidemo.utils.dismissKeyboard
@@ -74,11 +76,8 @@ class InteractiveFormFragment: Fragment(R.layout.fragment_interactive_form) {
         super.onCreate(savedInstanceState)
 
         val haapiFlowViewModel = ViewModelProvider(requireActivity()).get(HaapiFlowViewModel::class.java)
-        // Cannot bind InteractiveFormViewModel with a Fragment lifecycle due to edit data and rotation.
-        // Therefore, it has to be bind with an activity and instantiate() needs to be called
-        interactiveFormViewModel = ViewModelProvider(requireActivity(), InteractiveFormViewModelFactory(haapiFlowViewModel))
+        interactiveFormViewModel = ViewModelProvider(this, InteractiveFormViewModelFactory(haapiFlowViewModel))
             .get(InteractiveFormViewModel::class.java)
-        interactiveFormViewModel.instantiate()
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -114,7 +113,7 @@ class InteractiveFormFragment: Fragment(R.layout.fragment_interactive_form) {
 
         recyclerView.addOnItemTouchListener(object: RecyclerView.OnItemTouchListener {
             override fun onInterceptTouchEvent(rv: RecyclerView, e: MotionEvent): Boolean {
-                return false
+                return isInterceptingTouch
             }
 
             override fun onRequestDisallowInterceptTouchEvent(disallowIntercept: Boolean) { /* NOP */ }
@@ -196,9 +195,9 @@ class InteractiveFormViewModel(private val haapiFlowViewModel: HaapiFlowViewMode
     val interactiveFormItems: List<InteractiveFormItem>
         get() = _interactiveFormItems
 
-    private lateinit var interactiveFormStep: InteractiveForm
+    private val interactiveFormStep: InteractiveForm
 
-    fun instantiate() {
+    init {
         val step = haapiFlowViewModel.liveStep.value
         if (step is InteractiveForm) {
             interactiveFormStep = step
@@ -207,7 +206,6 @@ class InteractiveFormViewModel(private val haapiFlowViewModel: HaapiFlowViewMode
         }
 
         setupInteractiveFormItems()
-
     }
 
     val userMessages: List<UserMessage>
@@ -258,7 +256,7 @@ class InteractiveFormViewModel(private val haapiFlowViewModel: HaapiFlowViewMode
                         )
                     }
                     is Field.Hidden -> {
-                        Log.d(Constant.TAG, "Field.Hidden was not handled")
+                        Log.d(Constant.TAG, "Field.Hidden is ignored")
                     }
 
                     is Field.Select -> {
@@ -293,13 +291,7 @@ class InteractiveFormViewModel(private val haapiFlowViewModel: HaapiFlowViewMode
                     }
                     is Field.Checkbox -> {
                         _interactiveFormItems.add(
-                            InteractiveFormItem.Checkbox(
-                                key = field.name,
-                                label = field.label?.message ?: "",
-                                readonly = field.readonly,
-                                checked = field.checked,
-                                value = field.value ?: "on"
-                            )
+                            field.toInteractiveFormItemCheckbox()
                         )
                     }
                 }
@@ -442,7 +434,8 @@ sealed class InteractiveFormItem {
         override val id: Long = key.hashCode().toLong()
     }
 }
-private class InteractiveFormAdapter(
+
+class InteractiveFormAdapter(
     val itemChangeHandler: (Int, InteractiveFormItem) -> Unit,
     val selectButtonHandler: (ActionModel.Form, ProgressButtonViewHolder) -> Unit
 ): ListAdapter<InteractiveFormItem, RecyclerView.ViewHolder>(CONFIG_COMPARATOR) {
@@ -452,7 +445,7 @@ private class InteractiveFormAdapter(
             InteractiveFormType.EditTextView.ordinal -> FormTextViewHolder.from(parent)
             InteractiveFormType.PasswordView.ordinal -> PasswordTextViewHolder.from(parent)
             InteractiveFormType.ButtonView.ordinal -> ProgressButtonViewHolder.from(parent)
-            InteractiveFormType.CheckboxView.ordinal -> CheckboxViewHolder.from(parent)
+            InteractiveFormType.CheckboxView.ordinal -> CheckboxViewHolder.from(parent, leftMargin = 0)
             else -> throw ClassCastException("No class for viewType $viewType")
         }
     }
@@ -513,6 +506,7 @@ private class InteractiveFormAdapter(
                 holder.bind(
                     text = item.label,
                     isChecked = item.checked,
+                    isClickable = !item.readonly,
                     didToggle = {
                         item.checked = !item.checked
                         itemChangeHandler(position, item)
@@ -556,21 +550,6 @@ private class InteractiveFormAdapter(
             override fun areContentsTheSame(oldItem: InteractiveFormItem, newItem: InteractiveFormItem): Boolean {
                 return oldItem.id == newItem.id
             }
-        }
-    }
-}
-
-private fun UserMessage.messageStyle(): MessageStyle {
-    val lowerCaseClassList = classList.map { it.toLowerCase(Locale.getDefault()) }
-    return when {
-        lowerCaseClassList.contains("error") -> {
-            MessageStyle.Error()
-        }
-        lowerCaseClassList.contains("warning") -> {
-            MessageStyle.Warning()
-        }
-        else -> {
-            MessageStyle.Info()
         }
     }
 }

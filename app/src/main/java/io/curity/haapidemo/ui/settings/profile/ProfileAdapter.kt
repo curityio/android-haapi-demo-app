@@ -73,6 +73,7 @@ class ProfileAdapter(
                 holder.bind(
                     text = item.text,
                     isChecked = item.isChecked,
+                    isClickable = true,
                     didToggle =  { toggleHandler(position) }
                 )
             }

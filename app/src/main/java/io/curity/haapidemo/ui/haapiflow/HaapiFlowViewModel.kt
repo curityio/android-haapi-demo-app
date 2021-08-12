@@ -147,21 +147,23 @@ class HaapiFlowViewModel(haapiFlowConfiguration: HaapiFlowConfiguration): ViewMo
         // Any ProblemStep that comes when the step is:
         // Redirect -> SystemError
         // PollingStep -> SystemError
-        val processingStep: HaapiStep = if (haapiStep is ProblemStep && (liveStep.value is Redirect || liveStep.value is PollingStep )) {
-            val description = StringBuilder()
-            haapiStep.problem.messages?.forEach { userMessage ->
-                userMessage.text.message.let {
-                    description.append(it)
+        // UserConsent -> SystemError
+        val processingStep: HaapiStep = if (haapiStep is ProblemStep
+            && (liveStep.value is Redirect || liveStep.value is PollingStep || liveStep.value is UserConsentStep)) {
+                val description = StringBuilder()
+                haapiStep.problem.messages?.forEach { userMessage ->
+                    userMessage.text.message.let {
+                        description.append(it)
+                    }
                 }
-            }
-            if (haapiStep.problem is AuthorizationProblem) {
-                description.append(haapiStep.problem.errorDescription)
-            }
+                if (haapiStep.problem is AuthorizationProblem) {
+                    description.append(haapiStep.problem.errorDescription)
+                }
 
-            SystemErrorStep(
-                haapiStep.problem.title,
-                description.toString()
-            )
+                SystemErrorStep(
+                    haapiStep.problem.title,
+                    description.toString()
+                )
         } else {
             haapiStep
         }
@@ -215,6 +217,14 @@ class HaapiFlowViewModel(haapiFlowConfiguration: HaapiFlowConfiguration): ViewMo
                     HaapiUIBundle(
                         title = processingStep.type.discriminator.capitalize(Locale.getDefault()),
                         fragment = PollingFragment.newInstance()
+                    )
+                )
+            }
+            is UserConsentStep -> {
+                _haapiUIBundleLiveData.postValue(
+                    HaapiUIBundle(
+                        title = processingStep.type.discriminator.capitalize(Locale.getDefault()),
+                        fragment = UserConsentFragment.newInstance()
                     )
                 )
             }

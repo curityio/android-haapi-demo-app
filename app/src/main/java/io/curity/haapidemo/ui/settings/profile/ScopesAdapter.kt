@@ -32,7 +32,7 @@ class ScopesAdapter(private val checkHandler: (Int) -> Unit): ListAdapter<Profil
 
     override fun onBindViewHolder(holder: CheckboxViewHolder, position: Int) {
         val item = getItem(position)
-        holder.bind(text = item.text, isChecked = item.isChecked) {
+        holder.bind(text = item.text, isChecked = item.isChecked, isClickable = true) {
             checkHandler(position)
         }
     }

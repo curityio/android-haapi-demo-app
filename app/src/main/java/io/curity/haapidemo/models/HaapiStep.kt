@@ -109,3 +109,9 @@ data class SystemErrorStep(
 data class TokensStep(
     val oAuthTokenResponse: OAuthTokenResponse
 ): HaapiStep()
+
+data class UserConsentStep(
+    val messages: List<UserMessage>,
+    val type: RepresentationType,
+    val actions: List<Action.Form>
+): HaapiStep()

@@ -37,7 +37,7 @@ fun HaapiRepresentation.toHaapiStep(): HaapiStep =
         is RepresentationType.PollingStep -> handlePollingStep(this)
         is RepresentationType.ContinueSameStep -> ContinueSameStep(this)
         is RepresentationType.ConsentorStep -> UnknownStep(this)
-        is RepresentationType.UserConsentStep -> UnknownStep(this)
+        is RepresentationType.UserConsentStep -> handleUserConsentStep(this)
         is RepresentationType.OauthAuthorizationResponse -> handleAuthorizationStep(this)
         is RepresentationType.Unknown -> UnknownStep(this)
 
@@ -227,6 +227,18 @@ private fun handleAuthorizationStep(representation: HaapiRepresentation): HaapiS
         type = representation.type,
         links = representation.links,
         responseParameters = properties
+    )
+}
+
+private fun handleUserConsentStep(representation: HaapiRepresentation): HaapiStep {
+    if (representation.type != RepresentationType.UserConsentStep) {
+        return UnknownStep(representation)
+    }
+
+    return UserConsentStep(
+        messages = representation.messages,
+        type = representation.type,
+        actions = representation.actions.filterIsInstance<Action.Form>()
     )
 }
 
