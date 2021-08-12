@@ -281,11 +281,10 @@ class InteractiveFormViewModel(private val haapiFlowViewModel: HaapiFlowViewMode
                                 selectedIndex = field.options.indexOfFirst { it.selected }
                             )
                         )
-                        Log.d(Constant.TAG, "Field.Select was not handled")
                     }
 
                     is Field.Context -> {
-                        Log.d(Constant.TAG, "Field.Context was not handled")
+                        Log.w(Constant.TAG, "Field.Context was not handled")
                     }
 
                     is Field.Username -> {
@@ -552,8 +551,10 @@ class InteractiveFormAdapter(
                     defaultSelectPosition = item.selectedIndex,
                     onItemSelectedListener = object: AdapterView.OnItemSelectedListener {
                         override fun onItemSelected(parent: AdapterView<*>?, view: View?, selectedIndex: Int, id: Long) {
-                            item.selectedIndex = selectedIndex
-                            itemChangeHandler(position, item)
+                            if (item.selectedIndex != selectedIndex) {
+                                item.selectedIndex = selectedIndex
+                                itemChangeHandler(position, item)
+                            }
                         }
 
                         override fun onNothingSelected(parent: AdapterView<*>?) { /* NOP */ }
