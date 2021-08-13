@@ -16,10 +16,12 @@
 
 package io.curity.haapidemo.ui.haapiflow
 
+import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.text.Editable
 import android.text.InputType
 import android.text.TextWatcher
+import android.util.Base64
 import android.util.Log
 import android.view.MotionEvent
 import android.view.View
@@ -165,15 +167,27 @@ class InteractiveFormFragment: Fragment(R.layout.fragment_interactive_form) {
         val links = interactiveFormViewModel.links
         linksLayout.removeAllViews()
         links.forEach { link ->
-            val button = ProgressButton(requireContext(), null, R.style.LinkProgressButton).apply {
-                this.setText(link.title?.message ?: "")
-                this.setOnClickListener {
-                    weakButton = WeakReference(this)
-                    interactiveFormViewModel.followLink(link)
+            if (link.type == "image/png") {
+                val pureBase64Encoded = link.href.substring(link.href.indexOf(",") + 1)
+                val decodedString = Base64.decode(pureBase64Encoded, Base64.DEFAULT)
+                val bitmap = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.size)
+                val headerViewLink = HeaderView(requireContext(), null, R.style.HeaderView_Link).apply {
+                    this.setImageBitmap(bitmap)
+                    this.setText(link.title?.message ?: "")
                 }
+                linksLayout.addView(headerViewLink)
+                Log.d(Constant.TAG, "image/png was not handled")
+            } else {
+                val button = ProgressButton(requireContext(), null, R.style.LinkProgressButton).apply {
+                    this.setText(link.title?.message ?: "")
+                    this.setOnClickListener {
+                        weakButton = WeakReference(this)
+                        interactiveFormViewModel.followLink(link)
+                    }
+                }
+                buttonList.add(button)
+                linksLayout.addView(button)
             }
-            buttonList.add(button)
-            linksLayout.addView(button)
         }
     }
 

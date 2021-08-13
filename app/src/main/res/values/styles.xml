@@ -175,4 +175,8 @@
         <item name="android:button">@drawable/haapi_checkbox_small</item>
         <item name="android:paddingLeft">13dp</item>
     </style>
+<!--    HeaderView-->
+    <style name="HeaderView.Link" parent="">
+        <item name="textAppearance">@style/TextAppearance.Links</item>
+    </style>
 </resources>
