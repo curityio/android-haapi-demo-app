@@ -95,77 +95,77 @@ class AuthenticatorSelectorFragment: Fragment() {
         authenticatorSelectorViewModel.submit(actionForm)
     }
 
+    private class AuthenticatorSelectorViewModel(private val haapiFlowViewModel: HaapiFlowViewModel): ViewModel() {
+
+        val isLoading: LiveData<Boolean>
+            get() = haapiFlowViewModel.isLoading
+
+        val authenticatorOptions: List<AuthenticatorOption>
+            get() {
+                val step = haapiFlowViewModel.liveStep.value
+                if (step is AuthenticatorSelector) {
+                    return step.authenticators
+                } else {
+                    throw IllegalStateException("The step should be AuthenticatorSelector when using AuthenticatorSelectorViewModel instead it was $step")
+                }
+            }
+
+        fun submit(form: ActionModel.Form) {
+            haapiFlowViewModel.submit(
+                form,
+                emptyMap()
+            )
+        }
+
+        override fun onCleared() {
+            super.onCleared()
+            Log.i(Constant.TAG, "AuthenticatorSelectorViewModel was cleared")
+        }
+    }
+
+    private class AuthenticatorSelectorViewModelFactory(private val haapiFlowViewModel: HaapiFlowViewModel): ViewModelProvider.Factory {
+
+        override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+            if (modelClass.isAssignableFrom(AuthenticatorSelectorViewModel::class.java)) {
+                @Suppress("UNCHECKED_CAST")
+                return AuthenticatorSelectorViewModel(haapiFlowViewModel) as T
+            }
+
+            throw IllegalArgumentException("Unknown ViewModel class AuthenticatorSelectorViewModel")
+        }
+    }
+
+    private class AuthenticatorSelectorAdapter(private val clickHandler: (ActionModel.Form, WeakReference<ViewStopLoadable>) -> Unit): ListAdapter<AuthenticatorOption, SelectorViewHolder>(
+        CONFIG_COMPARATOR) {
+
+        override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SelectorViewHolder {
+            return SelectorViewHolder.from(parent)
+        }
+
+        override fun onBindViewHolder(holder: SelectorViewHolder, position: Int) {
+            val item = getItem(position)
+            holder.bind(item.label.message ?: "", imageResourceId = holder.itemView.getImageResources(item.haapiImageName())) {
+                clickHandler(item.action.model, it)
+            }
+        }
+
+        companion object {
+            private val CONFIG_COMPARATOR = object: DiffUtil.ItemCallback<AuthenticatorOption>() {
+                override fun areItemsTheSame(oldItem: AuthenticatorOption, newItem: AuthenticatorOption): Boolean {
+                    return oldItem == newItem
+                }
+
+                override fun areContentsTheSame(oldItem: AuthenticatorOption, newItem: AuthenticatorOption): Boolean {
+                    return oldItem.type == newItem.type
+                }
+            }
+        }
+    }
+
     companion object {
 
         fun newInstance(): AuthenticatorSelectorFragment {
             return AuthenticatorSelectorFragment()
-        }
-    }
-}
-
-class AuthenticatorSelectorViewModel(private val haapiFlowViewModel: HaapiFlowViewModel): ViewModel() {
-
-    val isLoading: LiveData<Boolean>
-        get() = haapiFlowViewModel.isLoading
-
-    val authenticatorOptions: List<AuthenticatorOption>
-        get() {
-            val step = haapiFlowViewModel.liveStep.value
-            if (step is AuthenticatorSelector) {
-                return step.authenticators
-            } else {
-                throw IllegalStateException("The step should be AuthenticatorSelector when using AuthenticatorSelectorViewModel instead it was $step")
-            }
-        }
-
-    fun submit(form: ActionModel.Form) {
-        haapiFlowViewModel.submit(
-            form,
-            emptyMap()
-        )
-    }
-
-    override fun onCleared() {
-        super.onCleared()
-        Log.i(Constant.TAG, "AuthenticatorSelectorViewModel was cleared")
-    }
-}
-
-class AuthenticatorSelectorViewModelFactory(private val haapiFlowViewModel: HaapiFlowViewModel): ViewModelProvider.Factory {
-
-    override fun <T : ViewModel?> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(AuthenticatorSelectorViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return AuthenticatorSelectorViewModel(haapiFlowViewModel) as T
-        }
-
-        throw IllegalArgumentException("Unknown ViewModel class AuthenticatorSelectorViewModel")
-    }
-}
-
-private class AuthenticatorSelectorAdapter(private val clickHandler: (ActionModel.Form, WeakReference<ViewStopLoadable>) -> Unit): ListAdapter<AuthenticatorOption, SelectorViewHolder>(
-    CONFIG_COMPARATOR) {
-
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SelectorViewHolder {
-        return SelectorViewHolder.from(parent)
-    }
-
-    override fun onBindViewHolder(holder: SelectorViewHolder, position: Int) {
-        val item = getItem(position)
-        holder.bind(item.label.message ?: "", imageResourceId = holder.itemView.getImageResources(item.haapiImageName())) {
-            clickHandler(item.action.model, it)
-        }
-    }
-
-    companion object {
-        private val CONFIG_COMPARATOR = object: DiffUtil.ItemCallback<AuthenticatorOption>() {
-            override fun areItemsTheSame(oldItem: AuthenticatorOption, newItem: AuthenticatorOption): Boolean {
-                return oldItem == newItem
-            }
-
-            override fun areContentsTheSame(oldItem: AuthenticatorOption, newItem: AuthenticatorOption): Boolean {
-                return oldItem.type == newItem.type
-            }
         }
     }
 }
