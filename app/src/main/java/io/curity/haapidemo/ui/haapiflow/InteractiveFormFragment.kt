@@ -181,6 +181,7 @@ class InteractiveFormFragment: Fragment(R.layout.fragment_interactive_form) {
                 val button = ProgressButton(requireContext(), null, R.style.LinkProgressButton).apply {
                     this.setText(link.title?.message ?: "")
                     this.setOnClickListener {
+                        dismissKeyboard()
                         weakButton = WeakReference(this)
                         interactiveFormViewModel.followLink(link)
                     }

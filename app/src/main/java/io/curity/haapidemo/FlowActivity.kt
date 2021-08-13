@@ -115,7 +115,7 @@ class FlowActivity : AppCompatActivity() {
                     try {
                         expectedCallback = OPERATION_BANKID_CALLBACK
                         resultLauncher.launch(intent)
-                        haapiFlowViewModel.applyActions(step.actionModel.continueActions as List<Action.Form>)
+                        haapiFlowViewModel.applyActions(step.actionModel.continueActions.filterIsInstance<Action.Form>())
                     } catch (exception: ActivityNotFoundException) {
                         expectedCallback = NO_OPERATION_CALLBACK
                         if (step.cancel != null) {
@@ -201,7 +201,7 @@ class FlowActivity : AppCompatActivity() {
         }
 
         alertDialog.setCancelable(false)
-        alertDialog.setPositiveButton(R.string.ok) { dialog, which ->
+        alertDialog.setPositiveButton(R.string.ok) { dialog, _ ->
             dialog.dismiss()
             finish()
         }
