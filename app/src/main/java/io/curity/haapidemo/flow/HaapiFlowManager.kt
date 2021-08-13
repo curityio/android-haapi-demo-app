@@ -69,6 +69,7 @@ class HaapiFlowManager (
 ): HaapiFlowManageable, Closeable {
 
     private val representationParser = RepresentationParser
+    private var didStart = false
 
     private val _liveStep = MutableLiveData<HaapiStep?>(null)
     override val liveStep: LiveData<HaapiStep?>
@@ -101,6 +102,7 @@ class HaapiFlowManager (
     }
 
     override suspend fun start(): HaapiStep {
+        didStart = true
         val authorizationURLBuilder = haapiFlowConfiguration.authorizationEndpointURI.toHttpUrl()
             .newBuilder()
             .addQueryParameter("client_id", haapiFlowConfiguration.clientId)
@@ -124,6 +126,10 @@ class HaapiFlowManager (
     }
 
     override suspend fun submitForm(form: ActionModel.Form, parameters: Map<String, String>): HaapiStep {
+        if (!didStart) {
+            return SystemErrorStep(HaapiErrorTitle.INVALID_ACTION.title, "Cannot submitForm because the HaapiFlow did not start or a " +
+                    "systemError happened.. Please use start() or reset().")
+        }
         val urlBuilder = form.href.toHaapiURL(haapiFlowConfiguration.baseURLString).toHttpUrl().newBuilder()
 
         val httpURL = urlBuilder.build()
@@ -174,7 +180,7 @@ class HaapiFlowManager (
     }
 
     override suspend fun followLink(link: Link): HaapiStep {
-        if (_liveStep.value == null) {
+        if (!didStart) {
             return SystemErrorStep(HaapiErrorTitle.INVALID_ACTION.title, "Cannot followLink because the HaapiFlow did not start or a " +
                     "systemError happened. Please use start() or reset().")
         }
@@ -233,6 +239,7 @@ class HaapiFlowManager (
 
     override fun reset() {
         updateStep(null)
+        didStart = false
     }
 
     /**
@@ -241,7 +248,6 @@ class HaapiFlowManager (
      * When it is closed, it is impossible to perform any new actions. Creating a new HaapiFlowManager is the only way.
      */
     override fun close() {
-        coroutineScope.cancel()
         haapiTokenManager.clear()
         haapiTokenManager.close()
     }
