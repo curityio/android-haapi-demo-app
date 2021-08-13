@@ -97,9 +97,11 @@ class FlowActivity : AppCompatActivity() {
                         haapiFlowViewModel.applyActions(listOf(step.cancel!!))
                     } catch (exception: ActivityNotFoundException) {
                         if (step.cancel != null) {
-                            haapiFlowViewModel.applyActions(listOf(step.cancel))
+                            haapiFlowViewModel.submit(step.cancel.model)
                         } else {
-                            haapiFlowViewModel.interrupt("No action", "Cannot open an external browser")
+                            haapiFlowViewModel.interrupt(
+                                title = resources.getString(R.string.no_action),
+                                description = resources.getString(R.string.cannot_open_browswer))
                         }
                         Log.d(Constant.TAG_HAAPI_OPERATION, "Could not open activity : $exception")
                     }
@@ -116,6 +118,14 @@ class FlowActivity : AppCompatActivity() {
                         haapiFlowViewModel.applyActions(step.actionModel.continueActions as List<Action.Form>)
                     } catch (exception: ActivityNotFoundException) {
                         expectedCallback = NO_OPERATION_CALLBACK
+                        if (step.cancel != null) {
+                            haapiFlowViewModel.submit(step.cancel.model)
+                        } else {
+                            haapiFlowViewModel.interrupt(
+                                title = resources.getString(R.string.no_action),
+                                description = resources.getString(R.string.bank_id_is_not_installed)
+                            )
+                        }
                         Log.d(Constant.TAG_HAAPI_OPERATION, "Could not open activity : $exception")
                     }
                 }

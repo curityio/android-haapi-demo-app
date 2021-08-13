@@ -24,6 +24,7 @@
     tools:showIn="@layout/activity_showcase">
 
     <LinearLayout
+        android:id="@+id/linear_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"

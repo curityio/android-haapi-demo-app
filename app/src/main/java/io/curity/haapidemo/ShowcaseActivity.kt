@@ -21,11 +21,11 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.widget.Button
+import android.widget.LinearLayout
 import com.google.android.material.appbar.CollapsingToolbarLayout
 import androidx.appcompat.app.AppCompatActivity
-import io.curity.haapidemo.uicomponents.DisclosureContent
-import io.curity.haapidemo.uicomponents.DisclosureView
-import io.curity.haapidemo.uicomponents.ProgressButton
+import io.curity.haapidemo.uicomponents.*
 
 class ShowcaseActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -54,6 +54,20 @@ class ShowcaseActivity : AppCompatActivity() {
         secondaryProgressButton.setOnClickListener {
             demoLoadProgressButton(it as ProgressButton)
         }
+
+        val linearLayout: LinearLayout = findViewById(R.id.linear_layout)
+        val problemView = ProblemView(this)
+        problemView.setTitle("Test")
+        val problemBundles: MutableList<ProblemView.ProblemBundle> = mutableListOf()
+        problemBundles.add(
+            ProblemView.ProblemBundle(
+                text = "Error",
+                messageStyle = MessageStyle.Info()
+            )
+        )
+
+        problemView.setProblemBundles(problemBundles)
+        linearLayout.addView(problemView)
     }
 
     private fun demoLoadProgressButton(button: ProgressButton) {

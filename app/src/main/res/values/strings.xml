@@ -45,6 +45,9 @@
     <string name="refresh_token">Refresh token</string>
     <string name="authorization_code">Authorization code</string>
     <string name="get_access_token">Get access token</string>
+    <string name="no_action">No action</string>
+    <string name="cannot_open_browswer">Cannot open an external browser</string>
+    <string name="bank_id_is_not_installed">Bank ID is not installed</string>
 
 <!--    Content descriptions-->
     <string name="warning_content_description">A warning icon</string>
