@@ -146,7 +146,7 @@ class HaapiFlowManager (
                         urlBuilder.addQueryParameter(field.name, parameters[field.name] ?: field.value)
                     }
                 }
-                request = requestBuilder.url(urlBuilder.build()).build()
+                request = requestBuilder.url(urlBuilder.build()).get().build()
             }
             form.method.toUpperCase() == "POST" -> {
                 val requestBody = FormBody.Builder().also {
