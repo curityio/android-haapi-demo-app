@@ -36,7 +36,7 @@ fun HaapiRepresentation.toHaapiStep(): HaapiStep =
         is RepresentationType.RegistrationStep -> handleAuthenticationStep(this)
         is RepresentationType.PollingStep -> handlePollingStep(this)
         is RepresentationType.ContinueSameStep -> ContinueSameStep(this)
-        is RepresentationType.ConsentorStep -> UnknownStep(this)
+        is RepresentationType.ConsentorStep -> handleAuthenticationStep(this)
         is RepresentationType.UserConsentStep -> handleUserConsentStep(this)
         is RepresentationType.OauthAuthorizationResponse -> handleAuthorizationStep(this)
         is RepresentationType.Unknown -> UnknownStep(this)

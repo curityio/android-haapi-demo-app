@@ -78,7 +78,7 @@ data class HaapiFlowConfiguration(
                 tokenEndpointURI = "https://10.0.2.2:8443/dev/oauth/token",
                 authorizationEndpointURI = "https://10.0.2.2:8443/dev/oauth/authorize",
                 metaDataBaseURLString = "https://10.0.2.2:8443/dev/oauth/anonymous",
-                redirectURI = "haapi:start",
+                redirectURI = "app://haapi",
                 followRedirect = true,
                 isSSLTrustVerificationEnabled = false,
                 selectedScopes = emptyList()

@@ -23,7 +23,7 @@
                                 <id>haapi-android-client</id>
                                 <client-name>Haapi Android Client</client-name>
                                 <no-authentication>true</no-authentication>
-                                <redirect-uris tags=" aHR0cHM6Ly8je0xPQ0FMSE9TVCB8IGxvY2FsaG9zdH06Nzc3Ny9jbGllbnQtY2FsbGJhY2s= ">haapi:start</redirect-uris>
+                                <redirect-uris>app://haapi</redirect-uris>
                                 <audience>haapi-client</audience>
                                 <scope>address</scope>
                                 <scope>email</scope>
@@ -43,8 +43,6 @@
                                 <attestation>
                                     <android>
                                         <package-name>io.curity.haapidemo</package-name>
-<!--                                        <package-name>io.curity.androidcat</package-name>-->
-<!--                                        <package-name>se.curity.identityserver.haapi.android.sdk.test</package-name>-->
                                         <signature-digest>rIplnew74f38oCiH+qvg4KUEvhV6LAXLhkf+m+V71B8=</signature-digest>
                                         <android-policy>emulator-policy</android-policy>
                                     </android>

@@ -26,7 +26,18 @@
         android:theme="@style/AppTheme">
         <activity android:name=".ShowcaseActivity" android:label="@string/title_activity_showcase"/>
         <activity android:name=".ProfileActivity"></activity>
-        <activity android:name=".FlowActivity"></activity>
+        <activity android:name=".FlowActivity"
+            android:launchMode="singleTop">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="app"
+                    android:host="haapi"
+                    />
+            </intent-filter>
+        </activity>
         <activity android:name=".MainActivity"
             android:screenOrientation="portrait">
             <intent-filter>
@@ -36,5 +47,6 @@
             </intent-filter>
         </activity>
     </application>
-
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 </manifest>

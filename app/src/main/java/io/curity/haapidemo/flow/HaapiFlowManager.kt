@@ -19,6 +19,7 @@ package io.curity.haapidemo.flow
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import io.curity.haapidemo.Constant
 import io.curity.haapidemo.models.*
 import io.curity.haapidemo.models.haapi.Link
 import io.curity.haapidemo.models.haapi.actions.ActionModel
@@ -104,7 +105,7 @@ class HaapiFlowManager (
             .newBuilder()
             .addQueryParameter("client_id", haapiFlowConfiguration.clientId)
             .addQueryParameter("response_type", "code")
-            .addQueryParameter("redirect_uri", "haapi:start")
+            .addQueryParameter("redirect_uri", haapiFlowConfiguration.redirectURI)
 
         if (haapiFlowConfiguration.selectedScopes.isNotEmpty()) {
             val scopeParameter = haapiFlowConfiguration.selectedScopes.joinToString(" ")
@@ -134,11 +135,12 @@ class HaapiFlowManager (
                 for (field in form.fields) {
                     if (field.value == null) {
                         Log.d("Missing", "$field has no values")
+                        urlBuilder.addQueryParameter(field.name, parameters[field.name])
                     } else {
                         urlBuilder.addQueryParameter(field.name, parameters[field.name] ?: field.value)
                     }
                 }
-                request = requestBuilder.get().build()
+                request = requestBuilder.url(urlBuilder.build()).build()
             }
             form.method.toUpperCase() == "POST" -> {
                 val requestBody = FormBody.Builder().also {
@@ -155,6 +157,7 @@ class HaapiFlowManager (
             }
         }
 
+        Log.d(Constant.TAG_HAAPI_REPRESENTATION, "Sending request: ${request.url} with parameters: $parameters")
         val step = requestHaapi(request)
         updateStep(step)
         if (haapiFlowConfiguration.followRedirect && step is Redirect) {
@@ -238,6 +241,7 @@ class HaapiFlowManager (
      * When it is closed, it is impossible to perform any new actions. Creating a new HaapiFlowManager is the only way.
      */
     override fun close() {
+        coroutineScope.cancel()
         haapiTokenManager.clear()
         haapiTokenManager.close()
     }
@@ -268,6 +272,7 @@ class HaapiFlowManager (
                 val jsonObject = JSONObject(responseBody!!.string())
                 val contentType = response.header("content-type")
 
+                Log.d(Constant.TAG_HAAPI_REPRESENTATION, jsonObject.toString())
                 if (response.isSuccessful) {
                     when (contentType) {
                         "application/vnd.auth+json" -> {

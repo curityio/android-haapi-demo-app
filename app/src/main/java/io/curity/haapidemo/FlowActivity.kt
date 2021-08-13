@@ -35,6 +35,7 @@ import io.curity.haapidemo.models.BankIdClientOperation
 import io.curity.haapidemo.models.ExternalBrowserClientOperation
 import io.curity.haapidemo.models.SystemErrorStep
 import io.curity.haapidemo.models.haapi.actions.Action
+import io.curity.haapidemo.models.haapi.actions.ActionModel
 import io.curity.haapidemo.ui.haapiflow.HaapiFlowViewModel
 import io.curity.haapidemo.ui.haapiflow.HaapiFlowViewModelFactory
 import io.curity.haapidemo.uicomponents.HeaderView
@@ -54,6 +55,7 @@ class FlowActivity : AppCompatActivity() {
 
     private lateinit var resultLauncher: ActivityResultLauncher<Intent>
     private var expectedCallback: Int = NO_OPERATION_CALLBACK
+    private var pendingContinueAction: ActionModel.Form? = null
 
     // UIs
     private val progressBar: ProgressBar by lazy { findViewById(R.id.loader) }
@@ -86,9 +88,21 @@ class FlowActivity : AppCompatActivity() {
                     progressBar.visibility = GONE
                 }
                 is ExternalBrowserClientOperation -> {
-                    Log.i(Constant.TAG, step.completeUri().toString())
-                    val intent = Intent(Intent.ACTION_VIEW, step.completeUri())
-                    startActivity(intent)
+                    val uri = step.completeUri(haapiFlowViewModel.redirectURI)
+                    Log.d(Constant.TAG_HAAPI_OPERATION, uri.toString())
+                    try {
+                        val intent = Intent(Intent.ACTION_VIEW, uri)
+                        startActivity(intent)
+                        pendingContinueAction = step.actionModel.continueActions.filterIsInstance<Action.Form>().find { it.kind == "continue" }?.model
+                        haapiFlowViewModel.applyActions(listOf(step.cancel!!))
+                    } catch (exception: ActivityNotFoundException) {
+                        if (step.cancel != null) {
+                            haapiFlowViewModel.applyActions(listOf(step.cancel))
+                        } else {
+                            haapiFlowViewModel.interrupt("No action", "Cannot open an external browser")
+                        }
+                        Log.d(Constant.TAG_HAAPI_OPERATION, "Could not open activity : $exception")
+                    }
                 }
                 is BankIdClientOperation -> {
                     Log.d(Constant.TAG_HAAPI_OPERATION, step.actionModel.arguments.href)
@@ -138,6 +152,32 @@ class FlowActivity : AppCompatActivity() {
         }
     }
 
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        val continueAction = pendingContinueAction
+        if (continueAction != null) {
+            pendingContinueAction = null
+            Log.d(Constant.TAG_HAAPI_OPERATION, "Received an intent for deepLink: $intent")
+            val parameters: MutableMap<String, String> = mutableMapOf()
+            continueAction.fields.forEach { field ->
+                val value = intent?.data?.getQueryParameter(field.name)
+                if (value != null) {
+                    parameters[field.name] = value
+                } else {
+                    Log.w(Constant.TAG_HAAPI_OPERATION, "Cannot find field with name: ${field.name}")
+                }
+            }
+            haapiFlowViewModel.submit(continueAction, parameters)
+        } else {
+            Log.w(Constant.TAG_HAAPI_OPERATION, "Received an intent for deepLink but it is IGNORED: $intent")
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.d(Constant.TAG_HAAPI_OPERATION, "FlowActivity was destroyed...")
+    }
+
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         // On rotation
@@ -175,11 +215,9 @@ class FlowActivity : AppCompatActivity() {
     }
 }
 
-private fun ExternalBrowserClientOperation.completeUri(): Uri {
+private fun ExternalBrowserClientOperation.completeUri(redirectUri: String): Uri {
     return Uri.parse(actionModel.arguments.href)
         .buildUpon()
-        .appendQueryParameter("redirect_uri", "haapi:start")
-        .appendQueryParameter("device_id", "android_emulator")
-        .appendQueryParameter("device_name", "emulator")
+        .appendQueryParameter("redirect_uri", redirectUri)
         .build()
 }

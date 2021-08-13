@@ -63,6 +63,8 @@ class HaapiFlowViewModel(haapiFlowConfiguration: HaapiFlowConfiguration): ViewMo
             }
         }
 
+    val redirectURI = haapiFlowConfiguration.redirectURI
+
     fun start() {
         viewModelScope.launch {
             val step =
@@ -109,7 +111,7 @@ class HaapiFlowViewModel(haapiFlowConfiguration: HaapiFlowConfiguration): ViewMo
     }
 
     fun applyActions(actions: List<Action.Form>) {
-        Log.d(Constant.TAG, "There are ${actions.count()} actions. We are only dealing with the first one...")
+        Log.d(Constant.TAG, "There is/are ${actions.count()} actions. We are only dealing with the first one...")
         val firstAction = actions.firstOrNull()
         if (firstAction != null) {
             val newStep = when (firstAction.kind) {
@@ -237,10 +239,22 @@ class HaapiFlowViewModel(haapiFlowConfiguration: HaapiFlowConfiguration): ViewMo
             is BankIdClientOperation -> {
                 // NOP
             }
+            is ExternalBrowserClientOperation -> {
+                // NOP
+            }
             else -> {
                 _haapiUIBundleLiveData.postValue(HaapiUIBundle(title = "Not supported", fragment = RedirectFragment.newInstance("$haapiStep")))
             }
         }
+    }
+
+    fun interrupt(title: String, description: String) {
+        processStep(
+            SystemErrorStep(
+                title,
+                description
+            )
+        )
     }
 
     override fun onCleared() {
