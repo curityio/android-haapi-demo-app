@@ -67,7 +67,13 @@ class FlowActivity : AppCompatActivity() {
 
         val configString = intent.getStringExtra(EXTRA_FLOW_ACTIVITY_HAAPI_CONFIG)
         if (configString == null) {
-            throw IllegalArgumentException("You need to use FlowActivity.newIntent(...)")
+            if (intent.data != null && pendingContinueAction == null) {
+                Log.w(Constant.TAG_HAAPI_OPERATION, "A deep link was triggered but FlowActivity did not exist. This Activity is discarded !")
+                finish()
+                return
+            } else {
+                throw IllegalArgumentException("You need to use FlowActivity.newIntent(...)")
+            }
         }
 
         haapiBundleHash = savedInstanceState?.getInt(HAAPI_BUNDLE_HASH) ?: INVALID_HAAPI_BUNDLE_HASH
