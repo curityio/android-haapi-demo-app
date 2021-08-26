@@ -11,11 +11,42 @@ You will need the Curity Identity Server at least in version 5.4. to work with t
 
 ## Getting started
 
+### Android Studio
+
+Android Studio version >= 4.1.2.
+
+### Setting up the identity server
+
+Install and run Curity Identity Server: https://curity.io/resources/getting-started/ 
+
 ### Configure the identity server
 
-Navigate to your identity server admin page and upload *curity-android-config.xml* and commit the changes.
+The demo is configured to run with `curity-android-config.xml`. 
 
-### How to get the API Signature ?
+- curity-android-config.xml can be uploaded to your identity server and its client id is `haapi-android-client` (the default configuration in the demo matches  `curity-android-config.xml`)
+- The demo can be used against your own configuration. To do it, when running the demo application, change the configuration in the Settings part by creating a new Profile or updating an existant ones.
+
+## Testing the demo app against your identity server
+
+__Prerequisite__: "Setting up the identity server" and "Configure the identity server" are required
+
+### Emulator
+
+1. The identity server is running
+2. Start the demo application on an emulator that has API level bigger than 26.
+3. Tap the button `Start Authentication`
+
+### Physical device (API level >= 26)
+
+1. The identity server is running
+2. In the identity server, update the identity server URL to be reachable from your physical device.
+3. Start the demo application on your physical device
+4. Tap Settings in the tab navigation bar of the app.
+5. Edit a configuration to target your identity server. If you are using `curity-android-config.xml`, you need to replace https://10.0.2.2:8443 with the identity server URL.
+6. Tap `Home` in the tab navigation
+7. Tap the button `Start Authentication`
+
+## How to get the API Signature ?
 
 #### Running a device with an API version >= API 28 (Android 9.0, Pie)
 
@@ -26,12 +57,6 @@ When starting the demo application, in Logcat, you should the APK Signature prin
 #### Running a device with an API version < API 28 (Android 9.0, Pie)
 
 Follow the instructions in this page: https://curity.io/docs/idsvr/latest/developer-guide/haapi/index.html#android-client-attestation-configuration
-
-## Running the example
-
-Before running the app, e.g. from Android Studio set properties which apply to your instance of the
-Curity Identity Server. These properties can be found in the `Configuration.kt` file in the
-`app/src/main/java/com/example/haapidemo` directory.
 
 ## Resources
 
