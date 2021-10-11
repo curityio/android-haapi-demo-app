@@ -46,7 +46,7 @@
         app:layout_constraintTop_toTopOf="parent"
         app:srcCompat="@drawable/ic_close"
         android:foreground="?android:attr/selectableItemBackgroundBorderless"
-        android:contentDescription="Button to close the flow activity" />
+        android:contentDescription="@string/close_haapi_flow_content_description" />
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"

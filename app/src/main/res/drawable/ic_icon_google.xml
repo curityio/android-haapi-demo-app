@@ -2,7 +2,8 @@
     android:width="26dp"
     android:height="26dp"
     android:viewportWidth="256"
-    android:viewportHeight="256">
+    android:viewportHeight="256"
+    xmlns:tools="http://schemas.android.com/tools" tools:ignore="UnusedResources">
   <path
       android:pathData="M226.44,130.23a86,86 0,0 0,-2.12 -20.53H130V147h55.36c-1.12,9.27 -7.14,23.22 -20.54,32.6l-0.19,1.24 29.82,23.1 2.07,0.21c19,-17.52 29.91,-43.31 29.91,-73.89"
       android:fillColor="#517bbd"/>

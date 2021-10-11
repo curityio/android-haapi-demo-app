@@ -1,5 +1,6 @@
 <vector android:height="26dp" android:viewportHeight="256"
-    android:viewportWidth="256" android:width="26dp" xmlns:android="http://schemas.android.com/apk/res/android">
+    android:viewportWidth="256" android:width="26dp" xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools" tools:ignore="UnusedResources">
     <path android:fillColor="#646e85" android:pathData="M88.56,85.81a2.75,2.75 0,0 1,-2.75 2.75H65.08a2.75,2.75 0,0 1,-2.75 -2.75V65.08a2.75,2.75 0,0 1,2.75 -2.75H85.81a2.75,2.75 0,0 1,2.75 2.75Z"/>
     <path android:fillColor="#646e85" android:pathData="M141.12,85.81a2.75,2.75 0,0 1,-2.75 2.75H117.63a2.75,2.75 0,0 1,-2.75 -2.75V65.08a2.75,2.75 0,0 1,2.75 -2.75h20.74a2.75,2.75 0,0 1,2.75 2.75Z"/>
     <path android:fillColor="#646e85" android:pathData="M193.67,85.81a2.75,2.75 0,0 1,-2.75 2.75H170.19a2.75,2.75 0,0 1,-2.75 -2.75V65.08a2.75,2.75 0,0 1,2.75 -2.75h20.73a2.75,2.75 0,0 1,2.75 2.75Z"/>

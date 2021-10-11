@@ -15,15 +15,10 @@
     -->
 <resources>
     <string name="app_name">Hypermedia Authentication API demo</string>
-    <string name="login_button">Start Login</string>
-    <string name="code_response">Obtained authorization code:</string>
-    <string name="restart">Restart flow</string>
-    <string name="submit_button">Submit</string>
-    <string name="show_json">JSON</string>
-    <string name="json_placeholder">Here raw JSON API responses will be shown.</string>
 <!--    Generics-->
-    <string name="ok">Ok</string>
+    <string name="ok">OK</string>
     <string name="submit">Submit</string>
+    <string name="press_me">Press me</string>
 <!--    Home-->
     <string name="tab_home">Home</string>
     <string name="title_home">Curity Demo App</string>
@@ -54,4 +49,8 @@
     <string name="logo_content_description">A header logo</string>
     <string name="toggle_password_visibilty_content_description">Toggle password visibility</string>
     <string name="error_icon_content_description">An error icon</string>
+    <string name="start_auth_content_description">A Curity illustration for starting the authentication</string>
+    <string name="add_content_description">An add logo</string>
+    <string name="progress_btn_content_description">An image that illustrates the progress button</string>
+    <string name="close_haapi_flow_content_description">Button to close the flow activity</string>
 </resources>

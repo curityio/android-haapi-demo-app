@@ -15,7 +15,9 @@
       limitations under the License.
     -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="io.curity.haapidemo">
+    package="io.curity.haapidemo"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="LockedOrientationActivity">
 
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />

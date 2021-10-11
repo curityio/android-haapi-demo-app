@@ -13,7 +13,7 @@
       See the License for the specific language governing permissions and
       limitations under the License.
     -->
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
         <!-- Customize your theme here. -->
@@ -21,11 +21,11 @@
         <item name="android:windowAnimationStyle">@style/Theme.BottomUpAnimation</item>
     </style>
 
-    <style name="LabelTextViewStyle" parent="android:Widget.TextView">
+    <style name="LabelTextViewStyle" parent="android:Widget.TextView" tools:ignore="UnusedResources">
         <item name="android:textSize">14sp</item>
     </style>
 
-    <style name="ErrorTextViewStyle" parent="android:Widget.TextView">
+    <style name="ErrorTextViewStyle" parent="android:Widget.TextView" tools:ignore="UnusedResources">
         <item name="android:textSize">14sp</item>
         <item name="android:textColor">@color/error</item>
     </style>
