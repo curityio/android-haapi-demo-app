@@ -24,7 +24,7 @@ import com.google.android.material.bottomnavigation.BottomNavigationView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.datastore.preferences.preferencesDataStore
 import androidx.lifecycle.ViewModelProvider
-import androidx.navigation.findNavController
+import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import io.curity.haapidemo.ui.home.ActiveHaapiConfigViewModel
 import io.curity.haapidemo.ui.home.ActiveHaapiConfigViewModelFactory
@@ -70,8 +70,8 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
         val navView: BottomNavigationView = findViewById(R.id.nav_view)
 
-        val navController = findNavController(R.id.nav_host_fragment)
-        navView.setupWithNavController(navController)
+        val navController = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+        navView.setupWithNavController(navController.navController)
     }
 }
 
