@@ -47,12 +47,6 @@ object RepresentationParser
     }
 
     fun parseAccessToken(obj: JSONObject) = parsing("AccessToken") {
-        val hashMap = HashMap<String, String>()
-        hashMap["expires_in"] = obj.longFromNumberOrStringOpt("expires_in").toString()
-        hashMap["token_type"] = obj.stringOpt("token_type") ?: ""
-        hashMap["scope"] = obj.stringOpt("scope") ?: ""
-        hashMap["id_token"] = obj.stringOpt("id_token") ?: ""
-
         OAuthTokenResponse(
             accessToken = obj.string("access_token"),
             tokenType = obj.stringOpt("token_type"),
@@ -60,7 +54,7 @@ object RepresentationParser
             expiresIn = obj.longFromNumberOrStringOpt("expires_in")?.let { Duration.ofSeconds(it) },
             refreshToken = obj.stringOpt("refresh_token"),
             idToken = obj.stringOpt("id_token"),
-            properties = hashMap
+            properties = obj
         )
     }
 

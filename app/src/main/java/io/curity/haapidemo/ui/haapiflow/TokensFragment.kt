@@ -49,8 +49,9 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
 
         accessDisclosureView.setContentText(oAuthTokenResponse.accessToken)
 
-        val disclosureContents = oAuthTokenResponse.properties.map {
-            DisclosureContent(it.key, it.value)
+        val disclosureContents: MutableList<DisclosureContent> = mutableListOf()
+        oAuthTokenResponse.properties.keys().forEach {
+            disclosureContents.add(DisclosureContent(it, oAuthTokenResponse.properties.get(it).toString()))
         }
         accessDisclosureView.setDisclosureContents(disclosureContents)
 
