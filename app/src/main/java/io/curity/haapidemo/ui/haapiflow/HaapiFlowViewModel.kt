@@ -66,22 +66,19 @@ class HaapiFlowViewModel(haapiFlowConfiguration: HaapiFlowConfiguration): ViewMo
     val redirectURI = haapiFlowConfiguration.redirectURI
 
     fun start() {
-        viewModelScope.launch {
-            val step =
-                withContext(Dispatchers.IO) { haapiFlowManager.start() }
+        viewModelScope.launch(Dispatchers.IO) {
+            val step = haapiFlowManager.start()
             processStep(step)
         }
     }
 
     fun submit(form: ActionModel.Form, parameters: Map<String, String> = emptyMap()) {
         _isLoading.postValue(true)
-        viewModelScope.launch {
-            val step = withContext(Dispatchers.IO) {
-                haapiFlowManager.submitForm(
-                    form = form,
-                    parameters = parameters
-                )
-            }
+        viewModelScope.launch(Dispatchers.IO) {
+            val step = haapiFlowManager.submitForm(
+                form = form,
+                parameters = parameters
+            )
             _isLoading.postValue(false)
             processStep(step)
         }
@@ -89,10 +86,8 @@ class HaapiFlowViewModel(haapiFlowConfiguration: HaapiFlowConfiguration): ViewMo
 
     fun fetchAccessToken(authorizationCode: String) {
         _isLoading.postValue(true)
-        viewModelScope.launch {
-            val step = withContext(Dispatchers.IO) {
-                haapiFlowManager.fetchAccessToken(authorizationCode)
-            }
+        viewModelScope.launch(Dispatchers.IO) {
+            val step = haapiFlowManager.fetchAccessToken(authorizationCode)
             _isLoading.postValue(false)
             processStep(step)
         }
@@ -101,10 +96,8 @@ class HaapiFlowViewModel(haapiFlowConfiguration: HaapiFlowConfiguration): ViewMo
 
     fun followLink(link: Link) {
         _isLoading.postValue(true)
-        viewModelScope.launch {
-            val step = withContext(Dispatchers.IO) {
-                haapiFlowManager.followLink(link)
-            }
+        viewModelScope.launch(Dispatchers.IO) {
+            val step = haapiFlowManager.followLink(link)
             _isLoading.postValue(false)
             processStep(step)
         }

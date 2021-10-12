@@ -41,7 +41,7 @@ class HaapiFlowManagerTest {
         tokenEndpointURI = "https://$EMULATOR_HOST_IP$PORT/dev/oauth/token",
         authorizationEndpointURI = "https://$EMULATOR_HOST_IP$PORT/dev/oauth/authorize",
         metaDataBaseURLString = "",
-        redirectURI = "haapi:start",
+        redirectURI = "app://haapi",
         followRedirect = true,
         isSSLTrustVerificationEnabled = false,
         selectedScopes = listOf("open", "profile")
