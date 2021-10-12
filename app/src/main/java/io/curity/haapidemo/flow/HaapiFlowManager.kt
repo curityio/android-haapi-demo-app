@@ -24,6 +24,8 @@ import io.curity.haapidemo.Constant
 import io.curity.haapidemo.models.*
 import io.curity.haapidemo.models.haapi.Link
 import io.curity.haapidemo.models.haapi.actions.ActionModel
+import io.curity.haapidemo.models.haapi.problems.AuthorizationProblem
+import io.curity.haapidemo.models.haapi.problems.HaapiProblem
 import io.curity.haapidemo.parsers.RepresentationParser
 import io.curity.haapidemo.parsers.toHaapiStep
 import kotlinx.coroutines.*
@@ -301,7 +303,8 @@ class HaapiFlowManager (
                 } else {
                     if (contentType == "application/problem+json") {
                         val problem = representationParser.parseProblem(jsonObject)
-                        ProblemStep(problem)
+                        val systemErrorStep = problem.systemError()
+                        systemErrorStep ?: ProblemStep(problem)
                     } else {
                         SystemErrorStep(
                             HaapiErrorTitle.UNEXPECTED.title, "Response was unsuccessful with " +
@@ -423,5 +426,26 @@ private fun URLConnection.disableSslTrustVerification(): URLConnection
 
 private val UNCHECKED_CONNECTION_PROVIDER: HttpURLConnectionProvider = {
     it.openConnection().disableSslTrustVerification() as HttpURLConnection
+}
+
+private fun HaapiProblem.systemError(): SystemErrorStep? {
+    return when (code) {
+        "invalid_redirect_uri", "authorization_failed", "access_denied" -> {
+            val errorTitle: String
+            val description: String
+            if (this is AuthorizationProblem) {
+                errorTitle = error
+                description = errorDescription
+            } else {
+                errorTitle = title
+                description = messages?.joinToString { it.text.message ?: it.text.key ?: "" } ?: ""
+            }
+            SystemErrorStep(
+                title = errorTitle,
+                description = description
+            )
+        }
+        else -> null
+    }
 }
 //endregion
