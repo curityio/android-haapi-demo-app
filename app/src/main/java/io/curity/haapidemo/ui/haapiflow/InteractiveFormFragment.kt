@@ -26,6 +26,7 @@ import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
+import android.webkit.URLUtil
 import android.widget.AdapterView
 import android.widget.LinearLayout
 import android.widget.Space
@@ -168,15 +169,18 @@ class InteractiveFormFragment: Fragment(R.layout.fragment_interactive_form) {
         linksLayout.removeAllViews()
         links.forEach { link ->
             if (link.type == "image/png") {
-                val pureBase64Encoded = link.href.substring(link.href.indexOf(",") + 1)
-                val decodedString = Base64.decode(pureBase64Encoded, Base64.DEFAULT)
-                val bitmap = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.size)
-                val headerViewLink = HeaderView(requireContext(), null, R.style.HeaderView_Link).apply {
-                    this.setImageBitmap(bitmap)
-                    this.setText(link.title?.message ?: "")
+                if (URLUtil.isValidUrl(link.href)) {
+                    Log.d(Constant.TAG, "image/png was not handled - you need to load the image")
+                } else {
+                    val pureBase64Encoded = link.href.substring(link.href.indexOf(",") + 1)
+                    val decodedString = Base64.decode(pureBase64Encoded, Base64.DEFAULT)
+                    val bitmap = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.size)
+                    val headerViewLink = HeaderView(requireContext(), null, R.style.HeaderView_Link).apply {
+                        this.setImageBitmap(bitmap)
+                        this.setText(link.title?.message ?: "")
+                    }
+                    linksLayout.addView(headerViewLink)
                 }
-                linksLayout.addView(headerViewLink)
-                Log.d(Constant.TAG, "image/png was not handled")
             } else {
                 val button = ProgressButton(requireContext(), null, R.style.LinkProgressButton).apply {
                     this.setText(link.title?.message ?: "")
