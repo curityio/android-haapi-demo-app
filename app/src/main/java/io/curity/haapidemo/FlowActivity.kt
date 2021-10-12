@@ -28,21 +28,20 @@ import android.widget.*
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
 import androidx.lifecycle.ViewModelProvider
 import io.curity.haapidemo.flow.HaapiFlowConfiguration
-import io.curity.haapidemo.models.BankIdClientOperation
-import io.curity.haapidemo.models.ExternalBrowserClientOperation
-import io.curity.haapidemo.models.SystemErrorStep
+import io.curity.haapidemo.models.*
 import io.curity.haapidemo.models.haapi.actions.Action
 import io.curity.haapidemo.models.haapi.actions.ActionModel
-import io.curity.haapidemo.ui.haapiflow.HaapiFlowViewModel
-import io.curity.haapidemo.ui.haapiflow.HaapiFlowViewModelFactory
+import io.curity.haapidemo.ui.haapiflow.*
 import io.curity.haapidemo.uicomponents.HeaderView
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.lang.IllegalArgumentException
+import java.util.*
 
 class FlowActivity : AppCompatActivity() {
     private lateinit var haapiFlowViewModel: HaapiFlowViewModel
@@ -89,6 +88,34 @@ class FlowActivity : AppCompatActivity() {
             Log.i(Constant.TAG, "Observed triggered in FlowActivity: ${step.toString()}")
             when (step) {
                 null -> { haapiFlowViewModel.start() }
+                is Redirect -> {
+                    headerView.setText(step.action.kind)
+                    commitNewFragment(RedirectFragment.newInstance(), step)
+                }
+                is AuthenticatorSelector -> {
+                    headerView.setText(step.title.message ?: "")
+                    commitNewFragment(AuthenticatorSelectorFragment.newInstance(), step)
+                }
+                is InteractiveForm -> {
+                    headerView.setText(step.type.discriminator)
+                    commitNewFragment(InteractiveFormFragment.newInstance(), step)
+                }
+                is TokensStep -> {
+                    headerView.setText("Success")
+                    commitNewFragment(TokensFragment.newInstance(step.oAuthTokenResponse), step)
+                }
+                is AuthorizationCompleted -> {
+                    headerView.setText(step.type.discriminator.toUpperCase())
+                    commitNewFragment(AuthorizationCompletedFragment.newInstance(), step)
+                }
+                is PollingStep -> {
+                    headerView.setText(step.type.discriminator.toUpperCase())
+                    commitNewFragment(PollingFragment.newInstance(), step)
+                }
+                is UserConsentStep -> {
+                    headerView.setText(step.type.discriminator.toUpperCase())
+                    commitNewFragment(UserConsentFragment.newInstance(), step)
+                }
                 is SystemErrorStep -> {
                     showAlert(step)
                     progressBar.visibility = GONE
@@ -139,18 +166,6 @@ class FlowActivity : AppCompatActivity() {
             }
         }
 
-        haapiFlowViewModel.haapiUIBundleLiveData.observe(this) { haapiBundle ->
-            headerView.setText(haapiBundle.title ?: "")
-            if (haapiBundleHash != haapiBundle.hashCode()) {
-                haapiBundleHash = haapiBundle.hashCode()
-                supportFragmentManager.commit {
-                    replace(R.id.fragment_container, haapiBundle.fragment)
-                }
-            } else {
-                Log.d(Constant.TAG, "Avoid to commit the same fragment : ${haapiBundle.fragment}")
-            }
-        }
-
         val closeButton: ImageButton = findViewById(R.id.close_button)
         closeButton.setOnClickListener {
             finish()
@@ -198,6 +213,18 @@ class FlowActivity : AppCompatActivity() {
         super.onSaveInstanceState(outState)
         // On rotation
         outState.putInt(HAAPI_BUNDLE_HASH, haapiBundleHash)
+    }
+
+    private fun commitNewFragment(fragment: Fragment, haapiStep: HaapiStep) {
+        if (haapiBundleHash != haapiStep.hashCode()) {
+            haapiBundleHash = haapiStep.hashCode()
+            supportFragmentManager.commit {
+                replace(R.id.fragment_container, fragment)
+            }
+        } else {
+            Log.d(Constant.TAG, "Avoid to commit the same fragment for this step : $haapiStep")
+        }
+        progressBar.visibility = GONE
     }
 
     private fun showAlert(systemErrorStep: SystemErrorStep) {

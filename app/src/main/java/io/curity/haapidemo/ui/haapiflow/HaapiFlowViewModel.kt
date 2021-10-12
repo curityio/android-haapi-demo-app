@@ -47,10 +47,6 @@ class HaapiFlowViewModel(haapiFlowConfiguration: HaapiFlowConfiguration): ViewMo
     val problemStepLiveData: LiveData<ProblemStep?>
         get() = _problemStepLiveData
 
-    private val _haapiUIBundleLiveData = MutableLiveData(HaapiUIBundle(title = "", fragment = EmptyFragment()))
-    val haapiUIBundleLiveData: LiveData<HaapiUIBundle>
-        get() = _haapiUIBundleLiveData
-
     private val _isLoading = MutableLiveData(false)
     val isLoading: LiveData<Boolean>
         get() = _isLoading
@@ -175,70 +171,6 @@ class HaapiFlowViewModel(haapiFlowConfiguration: HaapiFlowConfiguration): ViewMo
             _problemStepLiveData.postValue(null)
         }
         _liveStep.postValue(processingStep)
-
-        when (processingStep) {
-            is Redirect -> {
-                _haapiUIBundleLiveData.postValue(HaapiUIBundle(title = processingStep.action.kind, fragment = RedirectFragment.newInstance() ))
-            }
-            is AuthenticatorSelector -> {
-                _haapiUIBundleLiveData.postValue(HaapiUIBundle(title = processingStep.title.message, fragment = AuthenticatorSelectorFragment.newInstance()))
-            }
-            is InteractiveForm -> {
-                _haapiUIBundleLiveData.postValue(
-                    HaapiUIBundle(
-                        title = processingStep.type.discriminator,
-                        fragment = InteractiveFormFragment.newInstance()
-                    )
-                )
-            }
-            is TokensStep -> {
-                _haapiUIBundleLiveData.postValue(
-                    HaapiUIBundle(
-                        title = "Success",
-                        fragment = TokensFragment.newInstance(processingStep.oAuthTokenResponse)
-                    )
-                )
-            }
-            is AuthorizationCompleted -> {
-                _haapiUIBundleLiveData.postValue(
-                    HaapiUIBundle(
-                        title = processingStep.type.discriminator.capitalize(Locale.getDefault()),
-                        fragment = AuthorizationCompletedFragment.newInstance()
-                    )
-                )
-            }
-            is PollingStep -> {
-                _haapiUIBundleLiveData.postValue(
-                    HaapiUIBundle(
-                        title = processingStep.type.discriminator.capitalize(Locale.getDefault()),
-                        fragment = PollingFragment.newInstance()
-                    )
-                )
-            }
-            is UserConsentStep -> {
-                _haapiUIBundleLiveData.postValue(
-                    HaapiUIBundle(
-                        title = processingStep.type.discriminator.capitalize(Locale.getDefault()),
-                        fragment = UserConsentFragment.newInstance()
-                    )
-                )
-            }
-            is SystemErrorStep -> {
-                // NOP
-            }
-            is ProblemStep -> {
-                // NOP
-            }
-            is BankIdClientOperation -> {
-                // NOP
-            }
-            is ExternalBrowserClientOperation -> {
-                // NOP
-            }
-            else -> {
-                _haapiUIBundleLiveData.postValue(HaapiUIBundle(title = "Not supported", fragment = RedirectFragment.newInstance("$haapiStep")))
-            }
-        }
     }
 
     fun interrupt(title: String, description: String) {
@@ -267,8 +199,6 @@ class HaapiFlowViewModelFactory(val haapiFlowConfiguration: HaapiFlowConfigurati
         throw IllegalArgumentException("Unknown ViewModel class HaapiFlowViewModel")
     }
 }
-
-data class HaapiUIBundle(val title: String?, val fragment: Fragment)
 
 private fun PollingStep.isContentTheSame(pollingStep: PollingStep): Boolean {
     return this.properties.status == pollingStep.properties.status
