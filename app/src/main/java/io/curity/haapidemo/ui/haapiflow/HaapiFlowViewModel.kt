@@ -61,41 +61,37 @@ class HaapiFlowViewModel(haapiFlowConfiguration: HaapiFlowConfiguration): ViewMo
 
     val redirectURI = haapiFlowConfiguration.redirectURI
 
-    fun start() {
+    private fun executeHaapi(haapiStepCommand: suspend () -> HaapiStep) {
+        _isLoading.postValue(true)
         viewModelScope.launch(Dispatchers.IO) {
-            val step = haapiFlowManager.start()
+            val step = haapiStepCommand()
+            _isLoading.postValue(false)
             processStep(step)
         }
     }
 
+    fun start() {
+        executeHaapi { haapiFlowManager.start() }
+    }
+
     fun submit(form: ActionModel.Form, parameters: Map<String, String> = emptyMap()) {
-        _isLoading.postValue(true)
-        viewModelScope.launch(Dispatchers.IO) {
-            val step = haapiFlowManager.submitForm(
+        executeHaapi {
+            haapiFlowManager.submitForm(
                 form = form,
                 parameters = parameters
             )
-            _isLoading.postValue(false)
-            processStep(step)
         }
     }
 
     fun fetchAccessToken(authorizationCode: String) {
-        _isLoading.postValue(true)
-        viewModelScope.launch(Dispatchers.IO) {
-            val step = haapiFlowManager.fetchAccessToken(authorizationCode)
-            _isLoading.postValue(false)
-            processStep(step)
+        executeHaapi {
+            haapiFlowManager.fetchAccessToken(authorizationCode)
         }
-
     }
 
     fun followLink(link: Link) {
-        _isLoading.postValue(true)
-        viewModelScope.launch(Dispatchers.IO) {
-            val step = haapiFlowManager.followLink(link)
-            _isLoading.postValue(false)
-            processStep(step)
+        executeHaapi {
+            haapiFlowManager.followLink(link)
         }
     }
 
