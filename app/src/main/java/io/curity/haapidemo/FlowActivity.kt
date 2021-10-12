@@ -129,13 +129,9 @@ class FlowActivity : AppCompatActivity() {
                         pendingContinueAction = step.actionModel.continueActions.filterIsInstance<Action.Form>().find { it.kind == "continue" }?.model
                         haapiFlowViewModel.applyActions(listOf(step.cancel!!))
                     } catch (exception: ActivityNotFoundException) {
-                        if (step.cancel != null) {
-                            haapiFlowViewModel.submit(step.cancel.model)
-                        } else {
-                            haapiFlowViewModel.interrupt(
-                                title = resources.getString(R.string.no_action),
-                                description = resources.getString(R.string.cannot_open_browswer))
-                        }
+                        haapiFlowViewModel.interrupt(
+                            title = resources.getString(R.string.no_action),
+                            description = resources.getString(R.string.cannot_open_browswer))
                         Log.d(Constant.TAG_HAAPI_OPERATION, "Could not open activity : $exception")
                     }
                 }
@@ -151,14 +147,10 @@ class FlowActivity : AppCompatActivity() {
                         haapiFlowViewModel.applyActions(step.actionModel.continueActions.filterIsInstance<Action.Form>())
                     } catch (exception: ActivityNotFoundException) {
                         expectedCallback = NO_OPERATION_CALLBACK
-                        if (step.cancel != null) {
-                            haapiFlowViewModel.submit(step.cancel.model)
-                        } else {
-                            haapiFlowViewModel.interrupt(
-                                title = resources.getString(R.string.no_action),
-                                description = resources.getString(R.string.bank_id_is_not_installed)
-                            )
-                        }
+                        haapiFlowViewModel.interrupt(
+                            title = resources.getString(R.string.no_action),
+                            description = resources.getString(R.string.bank_id_is_not_installed)
+                        )
                         Log.d(Constant.TAG_HAAPI_OPERATION, "Could not open activity : $exception")
                     }
                 }
