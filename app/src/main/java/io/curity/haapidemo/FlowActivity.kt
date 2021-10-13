@@ -97,7 +97,13 @@ class FlowActivity : AppCompatActivity() {
                     commitNewFragment(AuthenticatorSelectorFragment.newInstance(), step)
                 }
                 is InteractiveForm -> {
-                    headerView.setText(step.type.discriminator)
+                    // If we have only one action then we use it for the title otherwise, we use the `type`
+                    val title = if (step.actions.size == 1) {
+                        step.actions.first().title?.value() ?: step.type.discriminator
+                    } else {
+                        step.type.discriminator
+                    }
+                    headerView.setText(title)
                     commitNewFragment(InteractiveFormFragment.newInstance(), step)
                 }
                 is TokensStep -> {

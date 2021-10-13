@@ -257,11 +257,14 @@ class InteractiveFormViewModel(private val haapiFlowViewModel: HaapiFlowViewMode
     private fun setupInteractiveFormItems() {
         _interactiveFormItems.clear()
         for (action in interactiveFormStep.actions) {
-            action.title?.let {
-                val label = it.message ?: it.key ?: ""
-                _interactiveFormItems.add(
-                    InteractiveFormItem.SectionTitle(label)
-                )
+            // We display the section title only if we have multiple actions
+            if (interactiveFormStep.actions.size > 1) {
+                action.title?.let {
+                    val label = it.message ?: it.key ?: ""
+                    _interactiveFormItems.add(
+                        InteractiveFormItem.SectionTitle(label)
+                    )
+                }
             }
             for (field in action.model.fields) {
                 when (field) {

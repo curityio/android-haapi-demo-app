@@ -16,6 +16,8 @@
 
 package io.curity.haapidemo.models.haapi
 
+import kotlin.reflect.KProperty1
+
 sealed class Message
 {
     abstract val key: String?
@@ -39,4 +41,16 @@ sealed class Message
         override val message: String,
         override val key: String,
     ) : Message()
+
+    fun value(kproperty: KProperty1<Message, String?> = Message::message): String {
+        return if (key != null && message != null) {
+            kproperty.get(this) as String
+        } else if (key != null) {
+            key  as String
+        } else if (message != null) {
+            message  as String
+        } else {
+            throw IllegalStateException("A Message cannot have no value for `key` or `message`")
+        }
+    }
 }
