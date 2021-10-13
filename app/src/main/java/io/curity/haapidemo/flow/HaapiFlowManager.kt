@@ -34,6 +34,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.json.JSONObject
 import se.curity.identityserver.haapi.android.sdk.HaapiTokenManager
 import se.curity.identityserver.haapi.android.sdk.HttpURLConnectionProvider
+import se.curity.identityserver.haapi.android.sdk.UnexpectedTokenAccessException
 import se.curity.identityserver.haapi.android.sdk.okhttp.OkHttpUtils.addHaapiInterceptor
 import java.io.Closeable
 import java.io.IOException
@@ -316,6 +317,10 @@ class HaapiFlowManager (
                 when (e) {
                     is IOException, is IllegalStateException -> SystemErrorStep(
                         HaapiErrorTitle.HAAPI.title,
+                        e.message ?: ""
+                    )
+                    is UnexpectedTokenAccessException -> SystemErrorStep(
+                        HaapiErrorTitle.HAAPI_DRIVER.title,
                         e.message ?: ""
                     )
                     else -> SystemErrorStep(HaapiErrorTitle.NETWORK.title, e.message ?: "")
