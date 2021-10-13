@@ -23,8 +23,10 @@ Install and run Curity Identity Server: https://curity.io/resources/getting-star
 
 The demo is configured to run with `curity-android-config.xml`. 
 
-- curity-android-config.xml can be uploaded to your identity server and its client id is `haapi-android-client` (the default configuration in the demo matches  `curity-android-config.xml`)
-- The demo can be used against your own configuration. To do it, when running the demo application, change the configuration in the Settings part by creating a new Profile or updating an existant ones.
+❗️When applying this configuration to your identity server, you will be able to run directly the demo application on the emulator. 
+
+1. Login to your identity server to access the configuration page
+2. Upload `curity-android-config.xml` to your identity server and commit the changes
 
 ## Testing the demo app against your identity server
 
