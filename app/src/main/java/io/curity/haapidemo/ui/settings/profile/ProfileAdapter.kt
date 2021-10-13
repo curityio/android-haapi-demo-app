@@ -30,7 +30,7 @@ class ProfileAdapter(
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return when(viewType) {
-            ProfileItem.Type.Header.ordinal -> SectionViewHolder.from(parent)
+            ProfileItem.Type.Header.ordinal -> SettingsSectionViewHolder.from(parent)
             ProfileItem.Type.Content.ordinal -> TextViewHolder.from(parent)
             ProfileItem.Type.Toggle.ordinal -> ToggleViewHolder.from(parent)
             ProfileItem.Type.LoadingAction.ordinal -> LoadingActionViewHolder.from(parent)
@@ -42,7 +42,7 @@ class ProfileAdapter(
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (holder) {
-            is SectionViewHolder -> {
+            is SettingsSectionViewHolder -> {
                 val headerItem = getItem(position) as ProfileItem.Header
                 holder.bind(headerItem.title)
             }

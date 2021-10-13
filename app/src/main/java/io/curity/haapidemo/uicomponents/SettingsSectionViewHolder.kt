@@ -22,7 +22,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import io.curity.haapidemo.R
 
-class SectionViewHolder private constructor(itemView: View): RecyclerView.ViewHolder(itemView) {
+class SettingsSectionViewHolder private constructor(itemView: View): RecyclerView.ViewHolder(itemView) {
 
     private val titleTextView: TextView = itemView.findViewById(R.id.title)
 
@@ -31,11 +31,11 @@ class SectionViewHolder private constructor(itemView: View): RecyclerView.ViewHo
     }
 
     companion object {
-        fun from(parentView: ViewGroup): SectionViewHolder {
+        fun from(parentView: ViewGroup): SettingsSectionViewHolder {
             val layoutInflater = LayoutInflater.from(parentView.context)
-            val view = layoutInflater.inflate(R.layout.section_view_item, parentView, false)
+            val view = layoutInflater.inflate(R.layout.settings_section_view_item, parentView, false)
 
-            return SectionViewHolder(view)
+            return SettingsSectionViewHolder(view)
         }
     }
 }

@@ -257,6 +257,12 @@ class InteractiveFormViewModel(private val haapiFlowViewModel: HaapiFlowViewMode
     private fun setupInteractiveFormItems() {
         _interactiveFormItems.clear()
         for (action in interactiveFormStep.actions) {
+            action.title?.let {
+                val label = it.message ?: it.key ?: ""
+                _interactiveFormItems.add(
+                    InteractiveFormItem.SectionTitle(label)
+                )
+            }
             for (field in action.model.fields) {
                 when (field) {
                     is Field.Text -> {
@@ -342,6 +348,9 @@ class InteractiveFormViewModel(private val haapiFlowViewModel: HaapiFlowViewMode
                     actionModelForm = action.model
                 )
             )
+            _interactiveFormItems.add(
+                InteractiveFormItem.Space()
+            )
         }
     }
 
@@ -407,7 +416,7 @@ class InteractiveFormViewModel(private val haapiFlowViewModel: HaapiFlowViewMode
                     is InteractiveFormItem.Select -> {
                         parameters[item.key] = item.selectOptions[item.selectedIndex].value
                     }
-                    is InteractiveFormItem.Button -> {
+                    is InteractiveFormItem.Button, is InteractiveFormItem.SectionTitle -> {
                         index = -1
                     }
                 }
@@ -479,6 +488,18 @@ sealed class InteractiveFormItem {
     data class Select(override val key: String, override val label: String, val selectOptions: List<SelectOption>, var selectedIndex: Int, override var hasError: Boolean = false): InteractiveFormItem() {
         override val id: Long = key.hashCode().toLong()
     }
+
+    data class SectionTitle(override val label: String): InteractiveFormItem() {
+        override val key: String = label
+        override val id: Long = key.hashCode().toLong()
+        override var hasError: Boolean = false
+    }
+
+    data class Space(override val id: Long = 0): InteractiveFormItem() {
+        override val key: String = ""
+        override val label: String = ""
+        override var hasError: Boolean = false
+    }
 }
 
 data class SelectOption(val label: String, val value: String)
@@ -495,6 +516,14 @@ class InteractiveFormAdapter(
             InteractiveFormType.ButtonView.ordinal -> ProgressButtonViewHolder.from(parent)
             InteractiveFormType.CheckboxView.ordinal -> CheckboxViewHolder.from(parent, leftMargin = 0)
             InteractiveFormType.SelectView.ordinal -> SelectViewHolder.from(parent)
+            InteractiveFormType.SectionTitleView.ordinal -> SectionViewHolder.from(
+                parent,
+                R.style.TextAppearance_TitleHeader
+            )
+            InteractiveFormType.SpaceView.ordinal -> SpaceViewHolder.from(
+                parent,
+                parent.resources.getDimension(R.dimen.spacing).toInt()
+            )
             else -> throw ClassCastException("No class for viewType $viewType")
         }
     }
@@ -580,6 +609,12 @@ class InteractiveFormAdapter(
                     }
                 )
             }
+            is SectionViewHolder -> {
+                val item = getItem(position) as InteractiveFormItem.SectionTitle
+                holder.bind(
+                    text = item.label
+                )
+            }
         }
     }
 
@@ -595,6 +630,8 @@ class InteractiveFormAdapter(
             is InteractiveFormItem.Button -> InteractiveFormType.ButtonView.ordinal
             is InteractiveFormItem.Checkbox -> InteractiveFormType.CheckboxView.ordinal
             is InteractiveFormItem.Select -> InteractiveFormType.SelectView.ordinal
+            is InteractiveFormItem.SectionTitle -> InteractiveFormType.SectionTitleView.ordinal
+            is InteractiveFormItem.Space -> InteractiveFormType.SpaceView.ordinal
         }
     }
 
@@ -603,7 +640,9 @@ class InteractiveFormAdapter(
         PasswordView,
         ButtonView,
         CheckboxView,
-        SelectView
+        SelectView,
+        SectionTitleView,
+        SpaceView
     }
 
     companion object {

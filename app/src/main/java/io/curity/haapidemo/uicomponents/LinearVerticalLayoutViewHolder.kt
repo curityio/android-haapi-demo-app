@@ -25,13 +25,14 @@ import android.view.ViewGroup
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import io.curity.haapidemo.Constant
 import io.curity.haapidemo.R
 import io.curity.haapidemo.utils.Clearable
 import java.lang.ref.WeakReference
 
-open class LinearVerticalLayoutViewHolder(itemView: View): RecyclerView.ViewHolder(itemView) {
+open class LinearVerticalLayoutViewHolder internal constructor(itemView: View): RecyclerView.ViewHolder(itemView) {
     val linearLayout: LinearLayout = itemView.findViewById(R.id.linear_layout)
 
     companion object {
@@ -41,9 +42,24 @@ open class LinearVerticalLayoutViewHolder(itemView: View): RecyclerView.ViewHold
     }
 }
 
-class SelectorViewHolder(itemView: View): LinearVerticalLayoutViewHolder(itemView), ViewStopLoadable {
+class SpaceViewHolder private constructor(itemView: View): LinearVerticalLayoutViewHolder(itemView) {
+    companion object {
+        fun from(parentView: ViewGroup, height: Int): SpaceViewHolder {
+            val layoutInflater = LayoutInflater.from(parentView.context)
+            val view = inflatedView(layoutInflater, parentView)
+            val viewHolder = SpaceViewHolder(view)
+            val params = viewHolder.linearLayout.layoutParams
+            params.height = height
+            viewHolder.linearLayout.layoutParams = params
 
-    private val progressButton: ProgressButton by lazy { ProgressButton(itemView.context, null, R.style.SecondaryProgressButton) }
+            return viewHolder
+        }
+    }
+}
+
+class SelectorViewHolder private constructor(itemView: View): LinearVerticalLayoutViewHolder(itemView), ViewStopLoadable {
+
+    private val progressButton = ProgressButton(itemView.context, null, R.style.SecondaryProgressButton)
 
     init {
         super.linearLayout.addView(progressButton)
@@ -79,8 +95,8 @@ class SelectorViewHolder(itemView: View): LinearVerticalLayoutViewHolder(itemVie
     }
 }
 
-class ProgressButtonViewHolder(itemView: View): LinearVerticalLayoutViewHolder(itemView), ViewStopLoadable {
-    private val progressButton: ProgressButton by lazy { ProgressButton(itemView.context, null, R.style.PrimaryProgressButton) }
+class ProgressButtonViewHolder private constructor(itemView: View): LinearVerticalLayoutViewHolder(itemView), ViewStopLoadable {
+    private val progressButton = ProgressButton(itemView.context, null, R.style.PrimaryProgressButton)
 
     init {
         super.linearLayout.addView(progressButton)
@@ -110,9 +126,9 @@ class ProgressButtonViewHolder(itemView: View): LinearVerticalLayoutViewHolder(i
     }
 }
 
-open class FormTextViewHolder(itemView: View): LinearVerticalLayoutViewHolder(itemView), Clearable {
+open class FormTextViewHolder internal constructor(itemView: View): LinearVerticalLayoutViewHolder(itemView), Clearable {
 
-    val formTextView: FormTextView by lazy { FormTextView(itemView.context, null, 0) }
+    val formTextView = FormTextView(itemView.context, null, 0)
 
     private var refTextWatcher: WeakReference<TextWatcher> = WeakReference(null)
 
@@ -157,7 +173,7 @@ open class FormTextViewHolder(itemView: View): LinearVerticalLayoutViewHolder(it
     }
 }
 
-class PasswordTextViewHolder(itemView: View): FormTextViewHolder(itemView) {
+class PasswordTextViewHolder private constructor(itemView: View): FormTextViewHolder(itemView) {
 
     fun bind(label: String, hint: String, value: String, hasError: Boolean, textWatcher: TextWatcher) {
         super.bind(label, hint, value, hasError = hasError, inputType = InputType.TYPE_CLASS_TEXT, textWatcher)
@@ -174,9 +190,31 @@ class PasswordTextViewHolder(itemView: View): FormTextViewHolder(itemView) {
     }
 }
 
-class SelectViewHolder(itemView: View): LinearVerticalLayoutViewHolder(itemView), Clearable {
+class SectionViewHolder private constructor(itemView: View, defStyleRes: Int = 0): LinearVerticalLayoutViewHolder(itemView) {
+    private val textView = TextView(itemView.context, null, 0, defStyleRes)
 
-    private val selectView by lazy { SelectView(itemView.context, null, 0) }
+    init {
+        super.linearLayout.addView(textView)
+    }
+
+    fun bind(
+        text: String
+    ) {
+        textView.text = text
+    }
+
+    companion object {
+        fun from(parentView: ViewGroup, defStyleAttr: Int): SectionViewHolder {
+            val layoutInflater = LayoutInflater.from(parentView.context)
+            val view = inflatedView(layoutInflater, parentView)
+            return SectionViewHolder(view, defStyleAttr)
+        }
+    }
+}
+
+class SelectViewHolder private constructor(itemView: View): LinearVerticalLayoutViewHolder(itemView), Clearable {
+
+    private val selectView = SelectView(itemView.context, null, 0)
 
     init {
         super.linearLayout.addView(selectView)
