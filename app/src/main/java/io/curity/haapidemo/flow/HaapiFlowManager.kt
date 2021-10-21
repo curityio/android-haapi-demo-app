@@ -23,6 +23,8 @@ import androidx.lifecycle.MutableLiveData
 import io.curity.haapidemo.Constant
 import io.curity.haapidemo.models.*
 import io.curity.haapidemo.models.haapi.Link
+import io.curity.haapidemo.models.haapi.RepresentationType
+import io.curity.haapidemo.models.haapi.actions.Action
 import io.curity.haapidemo.models.haapi.actions.ActionModel
 import io.curity.haapidemo.models.haapi.problems.AuthorizationProblem
 import io.curity.haapidemo.models.haapi.problems.HaapiProblem
@@ -203,6 +205,28 @@ class HaapiFlowManager (
         updateStep(newStep)
 
         return newStep
+    }
+
+    override suspend fun applyActionForm(actionForm: Action.Form): HaapiStep {
+        return if (actionForm.kind == "redirect") {
+            if (haapiFlowConfiguration.followRedirect) {
+                submitForm(actionForm.model, emptyMap())
+            } else {
+                val redirectStep = Redirect(action = actionForm)
+                updateStep(redirectStep)
+                redirectStep
+            }
+        } else {
+            val newStep = InteractiveForm(
+                actions = listOf(actionForm),
+                type = RepresentationType.AuthenticationStep,
+                cancel = null,
+                links = emptyList(),
+                messages = emptyList()
+            )
+            updateStep(newStep)
+            newStep
+        }
     }
 
     override suspend fun fetchAccessToken(authorizationCode: String): HaapiStep {

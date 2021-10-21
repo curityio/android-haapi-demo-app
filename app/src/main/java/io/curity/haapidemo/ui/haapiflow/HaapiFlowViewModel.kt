@@ -86,38 +86,9 @@ class HaapiFlowViewModel(haapiFlowConfiguration: HaapiFlowConfiguration): ViewMo
         }
     }
 
-    fun applyActions(actions: List<Action.Form>) {
-        Log.d(Constant.TAG, "There is/are ${actions.count()} actions. We are only dealing with the first one...")
-        val firstAction = actions.firstOrNull()
-        if (firstAction != null) {
-            val newStep = when (firstAction.kind) {
-                "redirect" -> {
-                    Redirect(
-                        action = firstAction
-                    )
-                }
-                else -> {
-                    InteractiveForm(
-                    actions = actions,
-                    type = RepresentationType.AuthenticationStep,
-                    cancel = null,
-                    links = emptyList(),
-                    messages = emptyList())
-                }
-            }
-
-            if (newStep is Redirect && haapiFlowManager.haapiFlowConfiguration.followRedirect) {
-                submit(firstAction.model, emptyMap())
-            } else {
-                processStep(newStep)
-            }
-        } else {
-            processStep(
-                SystemErrorStep(
-                    title = "Something went wrong",
-                    description = "No available action"
-                )
-            )
+    fun applyActionForm(actionForm: Action.Form) {
+        executeHaapi {
+            haapiFlowManager.applyActionForm(actionForm = actionForm)
         }
     }
 

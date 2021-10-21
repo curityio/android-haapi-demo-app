@@ -151,8 +151,9 @@ class FlowActivity : AppCompatActivity() {
                     try {
                         val intent = Intent(Intent.ACTION_VIEW, uri)
                         startActivity(intent)
-                        pendingContinueAction = step.actionModel.continueActions.filterIsInstance<Action.Form>().find { it.kind == "continue" }?.model
-                        haapiFlowViewModel.applyActions(listOf(step.cancel!!))
+                        pendingContinueAction = step.actionModel.continueActions.filterIsInstance<Action.Form>().first().model
+                        // If the browser can be opend then we apply the cancel step to the UI
+                        haapiFlowViewModel.applyActionForm(step.cancel!!)
                     } catch (exception: ActivityNotFoundException) {
                         haapiFlowViewModel.interrupt(
                             title = resources.getString(R.string.no_action),
@@ -169,7 +170,8 @@ class FlowActivity : AppCompatActivity() {
                     try {
                         expectedCallback = OPERATION_BANKID_CALLBACK
                         resultLauncher.launch(intent)
-                        haapiFlowViewModel.applyActions(step.actionModel.continueActions.filterIsInstance<Action.Form>())
+                        // If the BankID can be opened then we apply the first action to the UI
+                        haapiFlowViewModel.applyActionForm(step.actionModel.continueActions.filterIsInstance<Action.Form>().first())
                     } catch (exception: ActivityNotFoundException) {
                         expectedCallback = NO_OPERATION_CALLBACK
                         haapiFlowViewModel.interrupt(

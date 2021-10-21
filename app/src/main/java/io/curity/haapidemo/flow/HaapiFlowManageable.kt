@@ -19,6 +19,7 @@ package io.curity.haapidemo.flow
 import androidx.lifecycle.LiveData
 import io.curity.haapidemo.models.HaapiStep
 import io.curity.haapidemo.models.haapi.Link
+import io.curity.haapidemo.models.haapi.actions.Action
 import io.curity.haapidemo.models.haapi.actions.ActionModel
 
 interface HaapiFlowManageable: HaapiFlowable, HaapiSubmitable
@@ -79,5 +80,7 @@ interface HaapiSubmitable {
      */
     suspend fun followLink(link: Link): HaapiStep
 
+
+    suspend fun applyActionForm(actionForm: Action.Form): HaapiStep
 }
 
