@@ -35,13 +35,18 @@ import io.curity.haapidemo.flow.HaapiFlowConfiguration
 import io.curity.haapidemo.models.*
 import io.curity.haapidemo.models.haapi.actions.Action
 import io.curity.haapidemo.models.haapi.actions.ActionModel
+import io.curity.haapidemo.models.haapi.problems.AuthorizationProblem
+import io.curity.haapidemo.models.haapi.problems.HaapiProblem
 import io.curity.haapidemo.ui.haapiflow.*
 import io.curity.haapidemo.uicomponents.HeaderView
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.lang.IllegalArgumentException
-import java.util.*
+
+interface ProblemHandable {
+    fun handleProblem(problem: HaapiProblem)
+}
 
 class FlowActivity : AppCompatActivity() {
     private lateinit var haapiFlowViewModel: HaapiFlowViewModel
@@ -51,6 +56,7 @@ class FlowActivity : AppCompatActivity() {
      * [haapiBundleHash] will contain the hash of a HaapiBundle.
      */
     private var haapiBundleHash: Int = INVALID_HAAPI_BUNDLE_HASH
+    private var title: String? = null
 
     private lateinit var resultLauncher: ActivityResultLauncher<Intent>
     private var expectedCallback: Int = NO_OPERATION_CALLBACK
@@ -76,6 +82,7 @@ class FlowActivity : AppCompatActivity() {
         }
 
         haapiBundleHash = savedInstanceState?.getInt(HAAPI_BUNDLE_HASH) ?: INVALID_HAAPI_BUNDLE_HASH
+        title = savedInstanceState?.getString(TITLE)
 
         val configuration: HaapiFlowConfiguration = Json.decodeFromString(configString)
 
@@ -86,45 +93,57 @@ class FlowActivity : AppCompatActivity() {
 
         haapiFlowViewModel.liveStep.observe(this) { step ->
             Log.i(Constant.TAG, "Observed triggered in FlowActivity: ${step.toString()}")
+            progressBar.visibility = GONE
             when (step) {
                 null -> { haapiFlowViewModel.start() }
                 is Redirect -> {
+                    title = step.action.kind
                     headerView.setText(step.action.kind)
                     commitNewFragment(RedirectFragment.newInstance(), step)
                 }
                 is AuthenticatorSelector -> {
-                    headerView.setText(step.title.message ?: "")
+                    val headerTitle = step.title.message ?: ""
+                    title = headerTitle
+                    headerView.setText(headerTitle)
                     commitNewFragment(AuthenticatorSelectorFragment.newInstance(), step)
                 }
                 is InteractiveForm -> {
                     // If we have only one action then we use it for the title otherwise, we use the `type`
-                    val title = if (step.actions.size == 1) {
+                    val headerTitle = if (step.actions.size == 1) {
                         step.actions.first().title?.value() ?: step.type.discriminator
                     } else {
                         step.type.discriminator
                     }
-                    headerView.setText(title)
+                    title = headerTitle
+                    headerView.setText(headerTitle)
                     commitNewFragment(InteractiveFormFragment.newInstance(), step)
                 }
                 is TokensStep -> {
-                    headerView.setText("Success")
+                    val headerTitle = "Success"
+                    title = headerTitle
+                    headerView.setText(headerTitle)
                     commitNewFragment(TokensFragment.newInstance(step.oAuthTokenResponse), step)
                 }
                 is AuthorizationCompleted -> {
-                    headerView.setText(step.type.discriminator.toUpperCase())
+                    val headerTitle = step.type.discriminator.uppercase()
+                    title = headerTitle
+                    headerView.setText(headerTitle)
                     commitNewFragment(AuthorizationCompletedFragment.newInstance(), step)
                 }
                 is PollingStep -> {
-                    headerView.setText(step.type.discriminator.toUpperCase())
+                    val headerTitle = step.type.discriminator.uppercase()
+                    title = headerTitle
+                    headerView.setText(headerTitle)
                     commitNewFragment(PollingFragment.newInstance(), step)
                 }
                 is UserConsentStep -> {
-                    headerView.setText(step.type.discriminator.toUpperCase())
+                    val headerTitle = step.type.discriminator.uppercase()
+                    title = headerTitle
+                    headerView.setText(headerTitle)
                     commitNewFragment(UserConsentFragment.newInstance(), step)
                 }
                 is SystemErrorStep -> {
                     showAlert(step)
-                    progressBar.visibility = GONE
                 }
                 is ExternalBrowserClientOperation -> {
                     val uri = step.completeUri(haapiFlowViewModel.redirectURI)
@@ -160,7 +179,23 @@ class FlowActivity : AppCompatActivity() {
                         Log.d(Constant.TAG_HAAPI_OPERATION, "Could not open activity : $exception")
                     }
                 }
-                else -> { progressBar.visibility = GONE }
+                is ProblemStep -> {
+                    val currentFragment = supportFragmentManager.findFragmentByTag(FRAGMENT_TAG) as? ProblemHandable
+                    if (currentFragment != null) {
+                        currentFragment.handleProblem(step.problem)
+                    } else {
+                        // No fragment as ProblemHandable cannot handle it -> Display the problem as an alert and stop the flow
+                        showAlert(step.problem.toSystemError())
+                    }
+                    // Restore the headerView title when there was a rotation
+                    val headerTitle = title
+                    if (headerTitle != null) {
+                        headerView.setText(headerTitle)
+                    }
+                }
+                else -> {
+                    Log.d(Constant.TAG_HAAPI_OPERATION, "This step was not handled: $step")
+                }
             }
         }
 
@@ -211,13 +246,14 @@ class FlowActivity : AppCompatActivity() {
         super.onSaveInstanceState(outState)
         // On rotation
         outState.putInt(HAAPI_BUNDLE_HASH, haapiBundleHash)
+        outState.putString(TITLE, title)
     }
 
     private fun commitNewFragment(fragment: Fragment, haapiStep: HaapiStep) {
         if (haapiBundleHash != haapiStep.hashCode()) {
             haapiBundleHash = haapiStep.hashCode()
             supportFragmentManager.commit {
-                replace(R.id.fragment_container, fragment)
+                replace(R.id.fragment_container, fragment, FRAGMENT_TAG)
             }
         } else {
             Log.d(Constant.TAG, "Avoid to commit the same fragment for this step : $haapiStep")
@@ -244,7 +280,9 @@ class FlowActivity : AppCompatActivity() {
         private const val EXTRA_FLOW_ACTIVITY_HAAPI_CONFIG = "io.curity.haapidemo.flowActivity.extra_config"
 
         private const val HAAPI_BUNDLE_HASH = "io.curity.haapidemo.flowActivity.haapi_bundle_hash"
+        private const val TITLE = "io.curity.haapidemo.flowActivity.title"
         private const val INVALID_HAAPI_BUNDLE_HASH = -1
+        private const val FRAGMENT_TAG = "io.curity.haapidemo.flowActivity.current_fragment"
 
         private const val NO_OPERATION_CALLBACK = 0
         private const val OPERATION_BANKID_CALLBACK = 1
@@ -254,6 +292,18 @@ class FlowActivity : AppCompatActivity() {
             return intent
         }
     }
+}
+
+private fun HaapiProblem.toSystemError() : SystemErrorStep {
+    val description = if (this is AuthorizationProblem) {
+        errorDescription
+    } else {
+        messages?.joinToString { it.text.message ?: it.text.key ?: "" } ?: ""
+    }
+    return SystemErrorStep(
+        title = title,
+        description = description
+    )
 }
 
 private fun ExternalBrowserClientOperation.completeUri(redirectUri: String): Uri {

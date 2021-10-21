@@ -17,7 +17,6 @@
 package io.curity.haapidemo.ui.haapiflow
 
 import android.util.Log
-import androidx.fragment.app.Fragment
 import androidx.lifecycle.*
 import io.curity.haapidemo.Constant
 import io.curity.haapidemo.flow.HaapiFlowConfiguration
@@ -27,12 +26,8 @@ import io.curity.haapidemo.models.haapi.Link
 import io.curity.haapidemo.models.haapi.RepresentationType
 import io.curity.haapidemo.models.haapi.actions.Action
 import io.curity.haapidemo.models.haapi.actions.ActionModel
-import io.curity.haapidemo.models.haapi.problems.AuthorizationProblem
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import java.lang.StringBuilder
-import java.util.*
 
 class HaapiFlowViewModel(haapiFlowConfiguration: HaapiFlowConfiguration): ViewModel() {
 
@@ -42,10 +37,6 @@ class HaapiFlowViewModel(haapiFlowConfiguration: HaapiFlowConfiguration): ViewMo
     private var _liveStep = MutableLiveData<HaapiStep?>(null)
     val liveStep: LiveData<HaapiStep?>
         get() = _liveStep
-
-    private var _problemStepLiveData = MutableLiveData<ProblemStep?>(null)
-    val problemStepLiveData: LiveData<ProblemStep?>
-        get() = _problemStepLiveData
 
     private val _isLoading = MutableLiveData(false)
     val isLoading: LiveData<Boolean>
@@ -131,42 +122,12 @@ class HaapiFlowViewModel(haapiFlowConfiguration: HaapiFlowConfiguration): ViewMo
     }
 
     private fun processStep(haapiStep: HaapiStep) {
-        // Any ProblemStep that comes when the step is:
-        // Redirect -> SystemError
-        // PollingStep -> SystemError
-        // UserConsent -> SystemError
-        val processingStep: HaapiStep = if (haapiStep is ProblemStep
-            && (liveStep.value is Redirect || liveStep.value is PollingStep || liveStep.value is UserConsentStep)) {
-                val description = StringBuilder()
-                haapiStep.problem.messages?.forEach { userMessage ->
-                    userMessage.text.message.let {
-                        description.append(it)
-                    }
-                }
-                if (haapiStep.problem is AuthorizationProblem) {
-                    description.append(haapiStep.problem.errorDescription)
-                }
-
-                SystemErrorStep(
-                    haapiStep.problem.title,
-                    description.toString()
-                )
-        } else {
-            haapiStep
-        }
-
-        if (processingStep is ProblemStep) {
-            _problemStepLiveData.postValue(processingStep)
+        val currentStep = liveStep.value
+        if (haapiStep is PollingStep && currentStep is PollingStep && currentStep.isContentTheSame(haapiStep)) {
+            // We do not post a new value as the pollingStep is the same. Avoiding to have a flickering for the progressBar
             return
-        } else if (processingStep is PollingStep && liveStep.value is PollingStep) {
-            val currentStep = liveStep.value as PollingStep
-            if (processingStep.isContentTheSame(currentStep)) {
-                return
-            }
-        } else {
-            _problemStepLiveData.postValue(null)
         }
-        _liveStep.postValue(processingStep)
+        _liveStep.postValue(haapiStep)
     }
 
     fun interrupt(title: String, description: String) {

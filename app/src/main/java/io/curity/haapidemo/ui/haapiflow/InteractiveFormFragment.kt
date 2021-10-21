@@ -37,6 +37,7 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import io.curity.haapidemo.Constant
+import io.curity.haapidemo.ProblemHandable
 import io.curity.haapidemo.R
 import io.curity.haapidemo.models.InteractiveForm
 import io.curity.haapidemo.models.haapi.Field
@@ -53,7 +54,7 @@ import java.lang.ref.WeakReference
 import java.util.*
 import kotlin.collections.HashMap
 
-class InteractiveFormFragment: Fragment(R.layout.fragment_interactive_form) {
+class InteractiveFormFragment: Fragment(R.layout.fragment_interactive_form), ProblemHandable {
 
     private lateinit var messagesLayout: LinearLayout
     private lateinit var spacerProblem: Space
@@ -152,7 +153,7 @@ class InteractiveFormFragment: Fragment(R.layout.fragment_interactive_form) {
             }
         }
 
-        interactiveFormViewModel.problemsLiveData.observe(viewLifecycleOwner, Observer {  problemContent ->
+        interactiveFormViewModel.problemContentLiveData.observe(viewLifecycleOwner, Observer { problemContent ->
             val visibility = if (problemContent == null) View.GONE else View.VISIBLE
             problemView.visibility = visibility
             spacerProblem.visibility = visibility
@@ -201,6 +202,10 @@ class InteractiveFormFragment: Fragment(R.layout.fragment_interactive_form) {
         Log.d(Constant.TAG_FRAGMENT_LIFECYCLE, "InteractiveForm is destroyed")
     }
 
+    override fun handleProblem(problem: HaapiProblem) {
+        interactiveFormViewModel.handleProblem(problem)
+    }
+
     companion object {
         private const val DATA_COPY = "io.curity.haapidemo.interactiveFormFragment.data_copy"
 
@@ -210,7 +215,7 @@ class InteractiveFormFragment: Fragment(R.layout.fragment_interactive_form) {
     }
 }
 
-class InteractiveFormViewModel(private val haapiFlowViewModel: HaapiFlowViewModel): ViewModel() {
+class InteractiveFormViewModel(private val haapiFlowViewModel: HaapiFlowViewModel): ViewModel(), ProblemHandable {
 
     private var _interactiveFormItems: MutableList<InteractiveFormItem> = mutableListOf()
     val interactiveFormItems: List<InteractiveFormItem>
@@ -357,31 +362,9 @@ class InteractiveFormViewModel(private val haapiFlowViewModel: HaapiFlowViewMode
         }
     }
 
-    val problemsLiveData: LiveData<ProblemContent?> = haapiFlowViewModel.problemStepLiveData.map { step ->
-        if (step != null) {
-            Log.d(Constant.TAG, "Got a ProblemStep")
-            if (step.problem is InvalidInputProblem) {
-                Log.d(Constant.TAG, "Before {$_interactiveFormItems}")
-                _interactiveFormItems.forEach { it.hasError = false }
-                // Refresh interactiveFormItems
-                step.problem.invalidFields.forEach { invalidField ->
-                    try {
-                        _interactiveFormItems.first { it.key == invalidField.name }.hasError = true
-                    } catch (exception: NoSuchElementException ) {
-                        Log.e(Constant.TAG_ERROR, "Cannot find {${invalidField.name}}: $exception")
-                    }
-                }
-                Log.d(Constant.TAG, "After {$_interactiveFormItems}")
-            }
-            ProblemContent(
-                title = step.problem.title,
-                problemBundles = step.problem.problemBundle()
-            )
-        } else {
-            _interactiveFormItems.forEach { it.hasError = false }
-            null
-        }
-    }
+    private val _problemContentLiveData = MutableLiveData<ProblemContent?>(null)
+    val problemContentLiveData: LiveData<ProblemContent?>
+        get() = _problemContentLiveData
 
     val isLoading: LiveData<Boolean>
         get() = haapiFlowViewModel.isLoading
@@ -434,6 +417,27 @@ class InteractiveFormViewModel(private val haapiFlowViewModel: HaapiFlowViewMode
 
     fun followLink(link: Link) {
         haapiFlowViewModel.followLink(link)
+    }
+
+    override fun handleProblem(problem: HaapiProblem) {
+        if (problem is InvalidInputProblem) {
+            Log.d(Constant.TAG, "Before {$_interactiveFormItems}")
+            _interactiveFormItems.forEach { it.hasError = false }
+            // Refresh interactiveFormItems
+            problem.invalidFields.forEach { invalidField ->
+                try {
+                    _interactiveFormItems.first { it.key == invalidField.name }.hasError = true
+                } catch (exception: NoSuchElementException ) {
+                    Log.e(Constant.TAG_ERROR, "Cannot find {${invalidField.name}}: $exception")
+                }
+            }
+            Log.d(Constant.TAG, "After {$_interactiveFormItems}")
+        }
+        val problemContent = ProblemContent(
+            title = problem.title,
+            problemBundles = problem.problemBundle()
+        )
+        _problemContentLiveData.postValue(problemContent)
     }
 
     data class ProblemContent(val title: String, val problemBundles: List<ProblemView.ProblemBundle>)
