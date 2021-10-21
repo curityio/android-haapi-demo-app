@@ -182,7 +182,7 @@ private fun handlePollingStep(representation: HaapiRepresentation): HaapiStep
         }
         is PollingStatus.Done -> {
             val formAction =
-                representation.actions.findForm { it.kind == "form" } ?: return InvalidStep(
+                representation.actions.findForm { it.kind == "form" || it.kind == "redirect" } ?: return InvalidStep(
                     representation
                 )
             PollingStep(
