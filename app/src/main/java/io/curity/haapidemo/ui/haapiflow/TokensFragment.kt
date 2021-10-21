@@ -18,6 +18,7 @@ package io.curity.haapidemo.ui.haapiflow
 
 import android.os.Bundle
 import android.view.View
+import android.widget.LinearLayout
 import androidx.fragment.app.Fragment
 import io.curity.haapidemo.R
 import io.curity.haapidemo.models.OAuthTokenResponse
@@ -27,7 +28,9 @@ import io.curity.haapidemo.uicomponents.DisclosureView
 class TokensFragment: Fragment(R.layout.fragment_tokens) {
 
     private lateinit var accessDisclosureView: DisclosureView
+    private lateinit var idTokenDisclosureView: DisclosureView
     private lateinit var refreshDisclosureView: DisclosureView
+    private lateinit var linearLayoutIDToken: LinearLayout
 
     private lateinit var oAuthTokenResponse: OAuthTokenResponse
 
@@ -45,12 +48,22 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
         super.onViewCreated(view, savedInstanceState)
 
         accessDisclosureView = view.findViewById(R.id.access_disclosure_view)
+        idTokenDisclosureView = view.findViewById(R.id.id_token_view)
         refreshDisclosureView = view.findViewById(R.id.refresh_disclosure_view)
+        linearLayoutIDToken = view.findViewById(R.id.linear_layout_id_token)
 
         accessDisclosureView.setContentText(oAuthTokenResponse.accessToken)
+        val idToken = oAuthTokenResponse.idToken
+        if (idToken != null) {
+            idTokenDisclosureView.setContentText(idToken)
+            linearLayoutIDToken.visibility = View.VISIBLE
+        } else {
+            linearLayoutIDToken.visibility = View.GONE
+        }
 
         val disclosureContents: MutableList<DisclosureContent> = mutableListOf()
         oAuthTokenResponse.properties.keys().forEach {
+            if (it == "id_token" || it == "access_token" || it == "refresh_token") { return@forEach }
             disclosureContents.add(DisclosureContent(it, oAuthTokenResponse.properties.get(it).toString()))
         }
         accessDisclosureView.setDisclosureContents(disclosureContents)

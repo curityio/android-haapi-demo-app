@@ -30,6 +30,25 @@
         android:layout_width="match_parent"
         android:layout_height="@dimen/padding" />
 
+    <LinearLayout
+        android:id="@+id/linear_layout_id_token"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:visibility="gone">
+
+        <io.curity.haapidemo.uicomponents.DisclosureView
+            android:id="@+id/id_token_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:titleText="@string/id_token"/>
+
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/padding" />
+    </LinearLayout>
+
+
     <io.curity.haapidemo.uicomponents.DisclosureView
         android:id="@+id/refresh_disclosure_view"
         android:layout_width="match_parent"
