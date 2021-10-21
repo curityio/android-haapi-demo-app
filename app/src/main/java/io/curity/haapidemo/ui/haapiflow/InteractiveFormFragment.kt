@@ -81,8 +81,9 @@ class InteractiveFormFragment: Fragment(R.layout.fragment_interactive_form), Pro
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        val step = requireArguments().getParcelable<InteractiveForm>(EXTRA_STEP) ?: throw IllegalStateException("Expecting an InteractiveForm")
         val haapiFlowViewModel = ViewModelProvider(requireActivity()).get(HaapiFlowViewModel::class.java)
-        interactiveFormViewModel = ViewModelProvider(this, InteractiveFormViewModelFactory(haapiFlowViewModel))
+        interactiveFormViewModel = ViewModelProvider(this, InteractiveFormViewModelFactory(step, haapiFlowViewModel))
             .get(InteractiveFormViewModel::class.java)
     }
 
@@ -208,29 +209,25 @@ class InteractiveFormFragment: Fragment(R.layout.fragment_interactive_form), Pro
 
     companion object {
         private const val DATA_COPY = "io.curity.haapidemo.interactiveFormFragment.data_copy"
+        private const val EXTRA_STEP = "io.curity.haapidemo.interactiveFormFragment.extra_step"
 
-        fun newInstance(): InteractiveFormFragment {
-            return InteractiveFormFragment()
+        fun newInstance(step: InteractiveForm): InteractiveFormFragment {
+            val fragment = InteractiveFormFragment()
+            fragment.arguments = Bundle().apply {
+                putParcelable(EXTRA_STEP, step)
+            }
+            return fragment
         }
     }
 }
 
-class InteractiveFormViewModel(private val haapiFlowViewModel: HaapiFlowViewModel): ViewModel(), ProblemHandable {
+class InteractiveFormViewModel(private val interactiveFormStep: InteractiveForm, private val haapiFlowViewModel: HaapiFlowViewModel): ViewModel(), ProblemHandable {
 
     private var _interactiveFormItems: MutableList<InteractiveFormItem> = mutableListOf()
     val interactiveFormItems: List<InteractiveFormItem>
         get() = _interactiveFormItems
 
-    private val interactiveFormStep: InteractiveForm
-
     init {
-        val step = haapiFlowViewModel.liveStep.value
-        if (step is InteractiveForm) {
-            interactiveFormStep = step
-        } else {
-            throw IllegalStateException("The step should be InteractiveForm when using InteractiveFormViewModel instead it was $step")
-        }
-
         setupInteractiveFormItems()
     }
 
@@ -443,12 +440,12 @@ class InteractiveFormViewModel(private val haapiFlowViewModel: HaapiFlowViewMode
     data class ProblemContent(val title: String, val problemBundles: List<ProblemView.ProblemBundle>)
 }
 
-class InteractiveFormViewModelFactory(private val haapiFlowViewModel: HaapiFlowViewModel): ViewModelProvider.Factory {
+class InteractiveFormViewModelFactory(private val step: InteractiveForm, private val haapiFlowViewModel: HaapiFlowViewModel): ViewModelProvider.Factory {
 
     override fun <T : ViewModel?> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(InteractiveFormViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return InteractiveFormViewModel(haapiFlowViewModel) as T
+            return InteractiveFormViewModel(step, haapiFlowViewModel) as T
         }
 
         throw IllegalArgumentException("Unknown ViewModel class InteractiveFormViewModel")

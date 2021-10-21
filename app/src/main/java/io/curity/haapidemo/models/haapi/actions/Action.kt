@@ -16,13 +16,17 @@
 
 package io.curity.haapidemo.models.haapi.actions
 
+import android.os.Parcelable
 import io.curity.haapidemo.models.haapi.Message
+import kotlinx.android.parcel.Parcelize
+import kotlinx.android.parcel.RawValue
 import org.json.JSONObject
 
-sealed class Action
+sealed class Action: Parcelable
 {
     abstract val template: ActionTemplate
 
+    @Parcelize
     data class Form(
         override val template: ActionTemplate,
         val kind: String,
@@ -32,12 +36,14 @@ sealed class Action
     ) : Action()
     {
 
+        @Parcelize
         data class Properties(
-            val json: JSONObject,
+            val jsonString: String,
             val authenticatorType: String?,
-        )
+        ) : Parcelable
     }
 
+    @Parcelize
     data class Selector(
         override val template: ActionTemplate,
         val kind: String,
@@ -47,11 +53,13 @@ sealed class Action
     ) : Action()
     {
 
+        @Parcelize
         class Properties(
-            val json: JSONObject,
-        )
+            val jsonString: String
+        ) : Parcelable
     }
 
+    @Parcelize
     data class ClientOperation(
         override val template: ActionTemplate,
         val model: ActionModel.ClientOperation

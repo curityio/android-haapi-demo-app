@@ -16,9 +16,13 @@
 
 package io.curity.haapidemo.models.haapi
 
+import android.os.Parcelable
+import kotlinx.android.parcel.Parcelize
+
+@Parcelize
 data class Link(
     val href: String,
     val rel: String,
     val title: Message?,
     val type: String?
-)
+) : Parcelable

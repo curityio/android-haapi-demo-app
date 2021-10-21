@@ -48,8 +48,9 @@ class PollingFragment: Fragment(R.layout.fragment_polling) {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        val step = requireArguments().getParcelable<PollingStep>(EXTRA_STEP) ?: throw IllegalStateException("Expecting a PollingStep")
         val haapiFlowViewModel = ViewModelProvider(requireActivity()).get(HaapiFlowViewModel::class.java)
-        pollingViewModel = ViewModelProvider(this, PollingViewModelFactory(haapiFlowViewModel))
+        pollingViewModel = ViewModelProvider(this, PollingViewModelFactory(step, haapiFlowViewModel))
             .get(PollingViewModel::class.java)
     }
 
@@ -111,15 +112,19 @@ class PollingFragment: Fragment(R.layout.fragment_polling) {
     }
 
     companion object {
+        private const val EXTRA_STEP = "io.curity.haapidemo.pollingFragment.extra_step"
 
-        fun newInstance(): PollingFragment {
-            return PollingFragment()
+        fun newInstance(step: PollingStep): PollingFragment {
+            val fragment = PollingFragment()
+            fragment.arguments = Bundle().apply {
+                putParcelable(EXTRA_STEP, step)
+            }
+            return fragment
         }
     }
 
-    class PollingViewModel(private val haapiFlowViewModel: HaapiFlowViewModel, private val timeMillis: Long = 3000): ViewModel() {
+    class PollingViewModel(private val pollingStep: PollingStep, private val haapiFlowViewModel: HaapiFlowViewModel, private val timeMillis: Long = 3000): ViewModel() {
 
-        private val pollingStep: PollingStep
         private var shouldPoll = true
         private var pollingJob: Job? = null
 
@@ -136,15 +141,6 @@ class PollingFragment: Fragment(R.layout.fragment_polling) {
             get() = pollingStep.cancel?.model?.actionTitle?.message
         val status: String
             get() = pollingStep.properties.status.discriminator
-
-        init {
-            val step = haapiFlowViewModel.liveStep.value
-            if (step is PollingStep) {
-                pollingStep = step
-            } else {
-                throw IllegalStateException("The step should be PollingStep when using PollingViewModel instead it was $step")
-            }
-        }
 
         fun submit() {
             haapiFlowViewModel.submit(pollingStep.main.model, emptyMap())
@@ -184,11 +180,11 @@ class PollingFragment: Fragment(R.layout.fragment_polling) {
         }
     }
 
-    class PollingViewModelFactory(private val haapiFlowViewModel: HaapiFlowViewModel): ViewModelProvider.Factory {
+    class PollingViewModelFactory(private val step: PollingStep, private val haapiFlowViewModel: HaapiFlowViewModel): ViewModelProvider.Factory {
         override fun <T : ViewModel?> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(PollingViewModel::class.java)) {
                 @Suppress("UNCHECKED_CAST")
-                return PollingViewModel(haapiFlowViewModel) as T
+                return PollingViewModel(step, haapiFlowViewModel) as T
             }
 
             throw IllegalArgumentException("Unknown ViewModel class PollingViewModel")

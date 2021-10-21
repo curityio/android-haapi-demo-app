@@ -37,8 +37,9 @@ class AuthorizationCompletedFragment: Fragment(R.layout.fragment_authorization_c
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        val step = requireArguments().getParcelable<AuthorizationCompleted>(EXTRA_STEP) ?: throw IllegalStateException("Expecting an AuthorizationCompleted")
         val haapiFlowViewModel = ViewModelProvider(requireActivity()).get(HaapiFlowViewModel::class.java)
-        authorizationCompletedViewModel = ViewModelProvider(this, AuthorizationCompletedViewModelFactory(haapiFlowViewModel))
+        authorizationCompletedViewModel = ViewModelProvider(this, AuthorizationCompletedViewModelFactory(step, haapiFlowViewModel))
             .get(AuthorizationCompletedViewModel::class.java)
     }
 
@@ -59,19 +60,7 @@ class AuthorizationCompletedFragment: Fragment(R.layout.fragment_authorization_c
         }
     }
 
-    class AuthorizationCompletedViewModel(private val haapiFlowViewModel: HaapiFlowViewModel): ViewModel() {
-
-        private val authorizationCompleted: AuthorizationCompleted
-
-        init {
-            val step = haapiFlowViewModel.liveStep.value
-            if (step is AuthorizationCompleted) {
-                authorizationCompleted = step
-            } else {
-                throw IllegalStateException("The step should be AuthorizationCompleted when using AuthorizationCompletedViewModel")
-            }
-        }
-
+    class AuthorizationCompletedViewModel(private val authorizationCompleted: AuthorizationCompleted, private val haapiFlowViewModel: HaapiFlowViewModel): ViewModel() {
         val isLoading: LiveData<Boolean>
             get() = haapiFlowViewModel.isLoading
 
@@ -85,12 +74,12 @@ class AuthorizationCompletedFragment: Fragment(R.layout.fragment_authorization_c
         }
     }
 
-    class AuthorizationCompletedViewModelFactory(private val haapiFlowViewModel: HaapiFlowViewModel): ViewModelProvider.Factory {
+    class AuthorizationCompletedViewModelFactory(private val step: AuthorizationCompleted, private val haapiFlowViewModel: HaapiFlowViewModel): ViewModelProvider.Factory {
 
         override fun <T : ViewModel?> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(AuthorizationCompletedViewModel::class.java)) {
                 @Suppress("UNCHECKED_CAST")
-                return AuthorizationCompletedViewModel(haapiFlowViewModel) as T
+                return AuthorizationCompletedViewModel(step, haapiFlowViewModel) as T
             }
 
             throw IllegalArgumentException("Unknown ViewModel class AuthorizationCompletedViewModel")
@@ -98,9 +87,14 @@ class AuthorizationCompletedFragment: Fragment(R.layout.fragment_authorization_c
     }
 
     companion object {
+        private const val EXTRA_STEP = "io.curity.haapidemo.authorizationCompletedFragment.extra_step"
 
-        fun newInstance(): AuthorizationCompletedFragment {
-            return AuthorizationCompletedFragment()
+        fun newInstance(step: AuthorizationCompleted): AuthorizationCompletedFragment {
+            val fragment = AuthorizationCompletedFragment()
+            fragment.arguments = Bundle().apply {
+                putParcelable(EXTRA_STEP, step)
+            }
+            return fragment
         }
     }
 }

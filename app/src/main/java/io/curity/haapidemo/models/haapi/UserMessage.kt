@@ -16,7 +16,11 @@
 
 package io.curity.haapidemo.models.haapi
 
+import android.os.Parcelable
+import kotlinx.android.parcel.Parcelize
+
+@Parcelize
 data class UserMessage(
     val text: Message,
     val classList: List<String>
-)
+) : Parcelable

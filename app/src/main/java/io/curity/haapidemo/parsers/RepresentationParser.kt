@@ -105,7 +105,7 @@ object RepresentationParser
                     "properties"
                 ))
             )
-            else -> obj.optJSONObject("properties")?.let { Properties.Unknown(it) }
+            else -> obj.optJSONObject("properties")?.let { Properties.Unknown(it.toString()) }
         }
 
     private fun parseUserMessage(obj: JSONObject) =
@@ -119,7 +119,7 @@ private object PropertiesParser
 {
     fun parseAuthorizationResponse(obj: JSONObject) = parsing("oauth-authorization-response") {
         Properties.AuthorizationResponse(
-            json = obj,
+            jsonString = obj.toString(),
             code = obj.stringOpt("code"),
             state = obj.stringOpt("state"),
             scope = obj.stringOpt("scope"),
@@ -135,7 +135,7 @@ private object PropertiesParser
 
     fun parsePolling(obj: JSONObject) = parsing("polling") {
         Properties.Polling(
-            json = obj,
+            jsonString = obj.toString(),
             recipientOfCommunication = obj.stringOpt("recipientOfCommunication"),
             status = parseStatus(obj.string("status"))
         )
@@ -176,7 +176,7 @@ private object ActionParser
             model = ActionFormModelParser.parse(obj.getJSONObject("model")),
             properties = obj.optJSONObject("properties")?.run {
                 Action.Form.Properties(
-                    json = this,
+                    jsonString = this.toString(),
                     authenticatorType = this.optString("authenticatorType")
                 )
             }
@@ -190,7 +190,7 @@ private object ActionParser
             model = ActionSelectorModelParser.parse(obj.getJSONObject("model")),
             properties = obj.optJSONObject("properties")?.run {
                 Action.Selector.Properties(
-                    json = this,
+                    jsonString = this.toString(),
                 )
             }
         )

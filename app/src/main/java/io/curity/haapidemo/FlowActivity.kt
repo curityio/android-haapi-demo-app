@@ -105,7 +105,7 @@ class FlowActivity : AppCompatActivity() {
                     val headerTitle = step.title.message ?: ""
                     title = headerTitle
                     headerView.setText(headerTitle)
-                    commitNewFragment(AuthenticatorSelectorFragment.newInstance(), step)
+                    commitNewFragment(AuthenticatorSelectorFragment.newInstance(step), step)
                 }
                 is InteractiveForm -> {
                     // If we have only one action then we use it for the title otherwise, we use the `type`
@@ -116,7 +116,7 @@ class FlowActivity : AppCompatActivity() {
                     }
                     title = headerTitle
                     headerView.setText(headerTitle)
-                    commitNewFragment(InteractiveFormFragment.newInstance(), step)
+                    commitNewFragment(InteractiveFormFragment.newInstance(step), step)
                 }
                 is TokensStep -> {
                     val headerTitle = "Success"
@@ -128,19 +128,19 @@ class FlowActivity : AppCompatActivity() {
                     val headerTitle = step.type.discriminator.uppercase()
                     title = headerTitle
                     headerView.setText(headerTitle)
-                    commitNewFragment(AuthorizationCompletedFragment.newInstance(), step)
+                    commitNewFragment(AuthorizationCompletedFragment.newInstance(step), step)
                 }
                 is PollingStep -> {
                     val headerTitle = step.type.discriminator.uppercase()
                     title = headerTitle
                     headerView.setText(headerTitle)
-                    commitNewFragment(PollingFragment.newInstance(), step)
+                    commitNewFragment(PollingFragment.newInstance(step), step)
                 }
                 is UserConsentStep -> {
                     val headerTitle = step.type.discriminator.uppercase()
                     title = headerTitle
                     headerView.setText(headerTitle)
-                    commitNewFragment(UserConsentFragment.newInstance(), step)
+                    commitNewFragment(UserConsentFragment.newInstance(step), step)
                 }
                 is SystemErrorStep -> {
                     showAlert(step)
@@ -152,7 +152,7 @@ class FlowActivity : AppCompatActivity() {
                         val intent = Intent(Intent.ACTION_VIEW, uri)
                         startActivity(intent)
                         pendingContinueAction = step.actionModel.continueActions.filterIsInstance<Action.Form>().first().model
-                        // If the browser can be opend then we apply the cancel step to the UI
+                        // If the browser can be opened then we apply the cancel step to the UI
                         haapiFlowViewModel.applyActionForm(step.cancel!!)
                     } catch (exception: ActivityNotFoundException) {
                         haapiFlowViewModel.interrupt(

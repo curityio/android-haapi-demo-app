@@ -16,18 +16,24 @@
 
 package io.curity.haapidemo.models.haapi.actions
 
-sealed class Arguments
+import android.os.Parcelable
+import kotlinx.android.parcel.Parcelize
+
+sealed class Arguments: Parcelable
 {
+    @Parcelize
     class ExternalBrowser(
         val href: String
     ) : Arguments()
 
+    @Parcelize
     class BankID(
         val href: String,
         val autoStartToken: String,
         val redirect: String,
     ) : Arguments()
 
+    @Parcelize
     class EncapAutoActivation(
         val href: String,
         val activationCode: String,

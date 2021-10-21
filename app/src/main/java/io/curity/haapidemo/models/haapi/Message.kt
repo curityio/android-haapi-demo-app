@@ -16,13 +16,16 @@
 
 package io.curity.haapidemo.models.haapi
 
+import android.os.Parcelable
+import kotlinx.android.parcel.Parcelize
 import kotlin.reflect.KProperty1
 
-sealed class Message
+sealed class Message: Parcelable
 {
     abstract val key: String?
     abstract val message: String?
 
+    @Parcelize
     class OfKey(
         override val key: String
     ) : Message()
@@ -30,6 +33,7 @@ sealed class Message
         override val message: String? = null
     }
 
+    @Parcelize
     class OfLiteral(
         override val message: String
     ) : Message()
@@ -37,6 +41,7 @@ sealed class Message
         override val key: String? = null
     }
 
+    @Parcelize
     class OfLiteralAndKey(
         override val message: String,
         override val key: String,

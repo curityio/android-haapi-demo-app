@@ -64,8 +64,9 @@ class UserConsentFragment: Fragment(R.layout.fragment_user_consent) {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        val step = requireArguments().getParcelable<UserConsentStep>(EXTRA_STEP) ?: throw IllegalStateException("Expecting an UserConsentStep")
         val haapiFlowViewModel = ViewModelProvider(requireActivity()).get(HaapiFlowViewModel::class.java)
-        userConsentViewModel = ViewModelProvider(this, UserConsentViewModelFactory(haapiFlowViewModel))
+        userConsentViewModel = ViewModelProvider(this, UserConsentViewModelFactory(step, haapiFlowViewModel))
             .get(UserConsentViewModel::class.java)
     }
 
@@ -120,9 +121,7 @@ class UserConsentFragment: Fragment(R.layout.fragment_user_consent) {
         }
     }
 
-    class UserConsentViewModel(private val haapiFlowViewModel: HaapiFlowViewModel): ViewModel() {
-
-        private val userConstentStep: UserConsentStep
+    class UserConsentViewModel(private val userConstentStep: UserConsentStep, private val haapiFlowViewModel: HaapiFlowViewModel): ViewModel() {
 
         private var _interactiveFormItems: MutableList<InteractiveFormItem> = mutableListOf()
         val interactiveFormItems: List<InteractiveFormItem>
@@ -135,13 +134,6 @@ class UserConsentFragment: Fragment(R.layout.fragment_user_consent) {
             get() = haapiFlowViewModel.isLoading
 
         init {
-            val step = haapiFlowViewModel.liveStep.value
-            if (step is UserConsentStep) {
-                userConstentStep = step
-            } else {
-                throw IllegalStateException("The step should be UserConsentStep when using UserConsentViewModel instead it was $step")
-            }
-
             setupInteractiveFormItems()
         }
         
@@ -220,12 +212,12 @@ class UserConsentFragment: Fragment(R.layout.fragment_user_consent) {
         }
     }
 
-    class UserConsentViewModelFactory(private val haapiFlowViewModel: HaapiFlowViewModel): ViewModelProvider.Factory {
+    class UserConsentViewModelFactory(private val step: UserConsentStep, private val haapiFlowViewModel: HaapiFlowViewModel): ViewModelProvider.Factory {
 
         override fun <T : ViewModel?> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(UserConsentViewModel::class.java)) {
                 @Suppress("UNCHECKED_CAST")
-                return UserConsentViewModel(haapiFlowViewModel) as T
+                return UserConsentViewModel(step, haapiFlowViewModel) as T
             }
 
             throw IllegalArgumentException("Unknown ViewModel class UserConsentViewModel")
@@ -234,9 +226,14 @@ class UserConsentFragment: Fragment(R.layout.fragment_user_consent) {
 
     companion object {
         private const val DATA_COPY = "io.curity.haapidemo.userConsentFragment.data_copy"
+        private const val EXTRA_STEP = "io.curity.haapidemo.userConsentFragment.extra_step"
 
-        fun newInstance(): UserConsentFragment {
-            return UserConsentFragment()
+        fun newInstance(step: UserConsentStep): UserConsentFragment {
+            val fragment = UserConsentFragment()
+            fragment.arguments = Bundle().apply {
+                putParcelable(EXTRA_STEP, step)
+            }
+            return fragment
         }
     }
 }

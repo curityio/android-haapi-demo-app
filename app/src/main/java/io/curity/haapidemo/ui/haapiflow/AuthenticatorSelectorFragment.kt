@@ -53,9 +53,10 @@ class AuthenticatorSelectorFragment: Fragment() {
         recyclerView = root.findViewById(R.id.recycler_view)
         recyclerView.adapter = adapter
 
+        val step = requireArguments().getParcelable<AuthenticatorSelector>(EXTRA_STEP) ?: throw IllegalStateException("Expecting an AuthenticatorSelector")
         val haapiFlowViewModel = ViewModelProvider(requireActivity()).get(HaapiFlowViewModel::class.java)
 
-        authenticatorSelectorViewModel = ViewModelProvider(this, AuthenticatorSelectorViewModelFactory(haapiFlowViewModel))
+        authenticatorSelectorViewModel = ViewModelProvider(this, AuthenticatorSelectorViewModelFactory(step, haapiFlowViewModel))
             .get(AuthenticatorSelectorViewModel::class.java)
         adapter.submitList(authenticatorSelectorViewModel.authenticatorOptions)
 
@@ -95,20 +96,13 @@ class AuthenticatorSelectorFragment: Fragment() {
         authenticatorSelectorViewModel.submit(actionForm)
     }
 
-    private class AuthenticatorSelectorViewModel(private val haapiFlowViewModel: HaapiFlowViewModel): ViewModel() {
+    private class AuthenticatorSelectorViewModel(private val authenticatorSelectorStep: AuthenticatorSelector, private val haapiFlowViewModel: HaapiFlowViewModel): ViewModel() {
 
         val isLoading: LiveData<Boolean>
             get() = haapiFlowViewModel.isLoading
 
         val authenticatorOptions: List<AuthenticatorOption>
-            get() {
-                val step = haapiFlowViewModel.liveStep.value
-                if (step is AuthenticatorSelector) {
-                    return step.authenticators
-                } else {
-                    throw IllegalStateException("The step should be AuthenticatorSelector when using AuthenticatorSelectorViewModel instead it was $step")
-                }
-            }
+            get() = authenticatorSelectorStep.authenticators
 
         fun submit(form: ActionModel.Form) {
             haapiFlowViewModel.submit(
@@ -123,12 +117,12 @@ class AuthenticatorSelectorFragment: Fragment() {
         }
     }
 
-    private class AuthenticatorSelectorViewModelFactory(private val haapiFlowViewModel: HaapiFlowViewModel): ViewModelProvider.Factory {
+    private class AuthenticatorSelectorViewModelFactory(private val step: AuthenticatorSelector, private val haapiFlowViewModel: HaapiFlowViewModel): ViewModelProvider.Factory {
 
         override fun <T : ViewModel?> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(AuthenticatorSelectorViewModel::class.java)) {
                 @Suppress("UNCHECKED_CAST")
-                return AuthenticatorSelectorViewModel(haapiFlowViewModel) as T
+                return AuthenticatorSelectorViewModel(step, haapiFlowViewModel) as T
             }
 
             throw IllegalArgumentException("Unknown ViewModel class AuthenticatorSelectorViewModel")
@@ -163,9 +157,14 @@ class AuthenticatorSelectorFragment: Fragment() {
     }
 
     companion object {
+        private const val EXTRA_STEP = "io.curity.haapidemo.authenticatorSelectorFragment.extra_step"
 
-        fun newInstance(): AuthenticatorSelectorFragment {
-            return AuthenticatorSelectorFragment()
+        fun newInstance(step: AuthenticatorSelector): AuthenticatorSelectorFragment {
+            val fragment = AuthenticatorSelectorFragment()
+            fragment.arguments = Bundle().apply {
+                putParcelable(EXTRA_STEP, step)
+            }
+            return fragment
         }
     }
 }
