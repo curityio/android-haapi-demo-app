@@ -202,6 +202,12 @@ class HaapiFlowManager (
             .build()
 
         val newStep = requestHaapi(request)
+        if (haapiFlowConfiguration.followRedirect && newStep is Redirect) {
+            val submittedStep = submitForm(newStep.action.model, emptyMap())
+            updateStep(submittedStep)
+            return submittedStep
+        }
+
         updateStep(newStep)
 
         return newStep
