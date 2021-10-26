@@ -69,6 +69,12 @@ class HaapiFlowViewModel(haapiFlowConfiguration: HaapiFlowConfiguration): ViewMo
         }
     }
 
+    fun refreshAccessToken(refreshToken: String) {
+        executeHaapi {
+            haapiFlowManager.refreshAccessToken(refreshToken)
+        }
+    }
+
     fun followLink(link: Link) {
         executeHaapi {
             haapiFlowManager.followLink(link)

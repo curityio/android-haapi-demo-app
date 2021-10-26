@@ -55,4 +55,20 @@
         android:layout_height="wrap_content"
         app:titleText="@string/refresh_token"/>
 
+    <io.curity.haapidemo.uicomponents.ProgressButton
+        android:id="@+id/refresh_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/padding"
+        android:text="@string/refresh_token"
+        style="@style/PrimaryProgressButton" />
+
+    <io.curity.haapidemo.uicomponents.ProgressButton
+        android:id="@+id/signout_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/padding"
+        android:text="@string/sign_out"
+        style="@style/PrimaryProgressButton" />
+
 </LinearLayout>

@@ -20,10 +20,12 @@ import android.os.Bundle
 import android.view.View
 import android.widget.LinearLayout
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.*
 import io.curity.haapidemo.R
 import io.curity.haapidemo.models.OAuthTokenResponse
 import io.curity.haapidemo.uicomponents.DisclosureContent
 import io.curity.haapidemo.uicomponents.DisclosureView
+import io.curity.haapidemo.uicomponents.ProgressButton
 
 class TokensFragment: Fragment(R.layout.fragment_tokens) {
 
@@ -32,13 +34,19 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
     private lateinit var refreshDisclosureView: DisclosureView
     private lateinit var linearLayoutIDToken: LinearLayout
 
-    private lateinit var oAuthTokenResponse: OAuthTokenResponse
+    private lateinit var refreshTokenButton: ProgressButton
+    private lateinit var signOutButton: ProgressButton
+
+    private lateinit var tokensViewModel: TokensViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         if (arguments != null) {
-            oAuthTokenResponse = requireArguments().getSerializable(EXTRA_OAUTH_TOKEN_RESPONSE) as OAuthTokenResponse
+            val oAuthTokenResponse = requireArguments().getSerializable(EXTRA_OAUTH_TOKEN_RESPONSE) as OAuthTokenResponse
+            val haapiFlowViewModel = ViewModelProvider(requireActivity()).get(HaapiFlowViewModel::class.java)
+            tokensViewModel = ViewModelProvider(this, TokensViewModelFactory(oAuthTokenResponse, haapiFlowViewModel))
+                .get(TokensViewModel::class.java)
         } else {
             throw IllegalArgumentException("TokensFragment was not instantiated with newInstance()")
         }
@@ -52,8 +60,12 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
         refreshDisclosureView = view.findViewById(R.id.refresh_disclosure_view)
         linearLayoutIDToken = view.findViewById(R.id.linear_layout_id_token)
 
-        accessDisclosureView.setContentText(oAuthTokenResponse.accessToken)
-        val idToken = oAuthTokenResponse.idToken
+        refreshTokenButton = view.findViewById(R.id.refresh_button)
+        signOutButton = view.findViewById(R.id.signout_button)
+
+        accessDisclosureView.setContentText(tokensViewModel.accessToken)
+
+        val idToken = tokensViewModel.idToken
         if (idToken != null) {
             idTokenDisclosureView.setContentText(idToken)
             linearLayoutIDToken.visibility = View.VISIBLE
@@ -61,18 +73,63 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
             linearLayoutIDToken.visibility = View.GONE
         }
 
-        val disclosureContents: MutableList<DisclosureContent> = mutableListOf()
-        oAuthTokenResponse.properties.keys().forEach {
-            if (it == "id_token" || it == "access_token" || it == "refresh_token") { return@forEach }
-            disclosureContents.add(DisclosureContent(it, oAuthTokenResponse.properties.get(it).toString()))
-        }
-        accessDisclosureView.setDisclosureContents(disclosureContents)
+        accessDisclosureView.setDisclosureContents(tokensViewModel.disclosureContents)
 
-        if (oAuthTokenResponse.refreshToken != null) {
+        val refreshToken = tokensViewModel.refreshToken
+        if (refreshToken != null) {
             refreshDisclosureView.visibility = View.VISIBLE
-            refreshDisclosureView.setContentText(oAuthTokenResponse.refreshToken!!)
+            refreshDisclosureView.setContentText(refreshToken)
         } else {
             refreshDisclosureView.visibility = View.GONE
+        }
+
+        refreshTokenButton.setOnClickListener {
+            tokensViewModel.refreshToken()
+        }
+
+        signOutButton.setOnClickListener {
+            requireActivity().finish()
+        }
+    }
+
+    class TokensViewModel(
+        private val oAuthTokenResponse: OAuthTokenResponse,
+        private val haapiFlowViewModel: HaapiFlowViewModel
+    ): ViewModel() {
+
+        val accessToken: String = oAuthTokenResponse.accessToken
+        val idToken: String? = oAuthTokenResponse.idToken
+        val refreshToken: String? = oAuthTokenResponse.refreshToken
+        val disclosureContents: List<DisclosureContent>
+
+        init {
+            val mutableDisclosureContents = mutableListOf<DisclosureContent>()
+            oAuthTokenResponse.properties.keys().forEach {
+                if (it == "id_token" || it == "access_token" || it == "refresh_token") { return@forEach }
+                mutableDisclosureContents.add(DisclosureContent(it, oAuthTokenResponse.properties.get(it).toString()))
+            }
+            disclosureContents = mutableDisclosureContents
+        }
+
+        fun refreshToken() {
+            if (oAuthTokenResponse.refreshToken != null) {
+                haapiFlowViewModel.refreshAccessToken(oAuthTokenResponse.refreshToken)
+            }
+        }
+    }
+
+    class TokensViewModelFactory(
+        private val oAuthTokenResponse: OAuthTokenResponse,
+        private val haapiFlowViewModel: HaapiFlowViewModel
+    ): ViewModelProvider.Factory {
+
+        override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+            if (modelClass.isAssignableFrom(TokensViewModel::class.java)) {
+                @Suppress("UNCHECKED_CAST")
+                return TokensViewModel(oAuthTokenResponse, haapiFlowViewModel) as T
+            }
+
+            throw IllegalArgumentException("Unknown ViewModel class TokensViewModel")
         }
     }
 
