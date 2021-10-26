@@ -15,11 +15,61 @@
       limitations under the License.
     -->
 <resources>
+    <attr name="background" format="reference" />
+    <attr name="tintColor" format="color" />
+    <attr name="textAppearance" format="reference"/>
+    <attr name="srcCompat" format="reference"/>
+    <attr name="labelStyle" format="reference" />
+    <attr name="labelText" format="string" />
+    <attr name="valueStyle" format="reference" />
+    <attr name="valueText" format="string" />
+
     <declare-styleable name="ProgressButton"> <!--  It is mandatory it has the same name as the UI component  -->
-        <attr name="background" format="reference" />
+        <attr name="background"/>
         <attr name="textAppearanceButton" format="reference"/>
-        <attr name="tintColor" format="color" />
+        <attr name="tintColor"/>
         <attr name="android:foreground" />
         <attr name="android:text" />
+        <attr name="strokeColor" />
+    </declare-styleable>
+
+    <declare-styleable name="MessageView">
+        <attr name="background"/>
+        <attr name="backgroundColor" format="color" />
+        <attr name="android:textColor" format="reference"/>
+        <attr name="tintColor" />
+        <attr name="android:text" />
+        <attr name="srcCompat"/>
+        <attr name="textAppearance"/>
+    </declare-styleable>
+
+    <declare-styleable name="HeaderView">
+        <attr name="textAppearance" />
+        <attr name="srcCompat" />
+        <attr name="android:text" />
+    </declare-styleable>
+
+    <declare-styleable name="LabelTextView">
+        <attr name="labelStyle" />
+        <attr name="valueStyle" />
+        <attr name="labelText" />
+        <attr name="valueText"  />
+    </declare-styleable>
+
+    <declare-styleable name="DisclosureView">
+        <attr name="titleStyle" format="reference" />
+        <attr name="contentStyle" format="reference" />
+        <attr name="titleText" format="string" />
+        <attr name="contentText" format="string" />
+    </declare-styleable>
+
+    <declare-styleable name="FormTextView">
+        <attr name="labelStyle" />
+        <attr name="valueStyle" />
+        <attr name="labelText" />
+        <attr name="valueText"  />
+        <attr name="android:hint" />
+        <attr name="passwordToggleEnabled" />
+        <attr name="errorEnabled" />
     </declare-styleable>
 </resources>

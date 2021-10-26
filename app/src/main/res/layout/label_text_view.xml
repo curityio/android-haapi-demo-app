@@ -14,14 +14,24 @@
       See the License for the specific language governing permissions and
       limitations under the License.
     -->
-<resources>
-    <dimen name="cornerRadius">6dp</dimen>
-    <dimen name="spacing">16dp</dimen>
-    <dimen name="tabBarHeight">56dp</dimen>
-    <dimen name="componentSpacing">8dp</dimen>
-    <dimen name="padding">8dp</dimen>
-    <dimen name="paddingTopBottom">8dp</dimen>
-    <dimen name="paddingStartEnd">16dp</dimen>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:tools="http://schemas.android.com/tools">
 
-    <dimen name="app_bar_height">180dp</dimen>
-</resources>
+    <TextView
+        android:id="@+id/label"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        tools:text="Label"/>
+
+    <TextView
+        android:id="@+id/value"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
+        tools:text="Value"/>
+
+</LinearLayout>

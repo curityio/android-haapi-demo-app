@@ -27,7 +27,7 @@ import io.curity.haapidemo.R
 class LoadingActionViewHolder private constructor(itemView: View): RecyclerView.ViewHolder(itemView) {
 
     private val progressBar: ProgressBar = itemView.findViewById(R.id.progressBar)
-    private val textView: TextView = itemView.findViewById(R.id.textView)
+    private val textView: TextView = itemView.findViewById(R.id.text_view)
 
     fun bind(text: CharSequence) {
         textView.text = text

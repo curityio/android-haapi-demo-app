@@ -36,4 +36,13 @@
     <color name="text_headings">#FFFFFF</color>
     <color name="text_paragraphs">#FFFFFF</color>
     <color name="warning">#E0C01C</color>
+
+<!--  MessageView color  -->
+    <color name="error_text_color">@android:color/white</color>
+    <color name="warning_text_color">@android:color/white</color>
+    <color name="info_text_color">@android:color/white</color>
+
+    <color name="error_background">#CA2E2B</color>
+    <color name="warning_background">#E0C01C</color>
+    <color name="info_background">#70BBE1</color>
 </resources>

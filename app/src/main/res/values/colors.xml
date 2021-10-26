@@ -36,4 +36,13 @@
     <color name="text_headings">#111111</color>
     <color name="text_paragraphs">#333333</color>
     <color name="warning">#E0C01C</color>
+
+<!--  MessageView color  -->
+    <color name="error_text_color">#CA2E2B</color>
+    <color name="warning_text_color">#E0C01C</color>
+    <color name="info_text_color">#70BBE1</color>
+
+    <color name="error_background">#14CA2E2B</color>
+    <color name="warning_background">#14E0C01C</color>
+    <color name="info_background">#1470BBE1</color>
 </resources>

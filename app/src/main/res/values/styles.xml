@@ -30,26 +30,6 @@
         <item name="android:textColor">@color/error</item>
     </style>
 
-    <style name="TextAppearance.Title" parent="@style/TextAppearance.MaterialComponents.Headline4">
-        <item name="android:textStyle">normal</item>
-        <item name="android:textSize">40sp</item>
-        <item name="android:letterSpacing">-0.02</item>
-        <item name="android:textColor">@color/text</item>
-    </style>
-
-    <style name="TextAppearance.Body" parent="@style/TextAppearance.MaterialComponents.Body1">
-        <item name="android:letterSpacing">-0.02</item>
-        <item name="android:textColor">@color/text</item>
-        <item name="android:textAlignment">viewStart</item>
-        <item name="android:lineSpacingExtra">5sp</item>
-    </style>
-    
-    <style name="Theme.BottomUpAnimation" parent="AppTheme">
-        <item name="android:activityOpenEnterAnimation">@anim/bottom_up_anim</item>
-        <item name="android:activityOpenExitAnimation">@anim/initial_anim</item>
-        <item name="android:activityCloseEnterAnimation">@anim/initial_anim</item>
-        <item name="android:activityCloseExitAnimation">@anim/bottom_down_anim</item>
-    </style>
 <!--    Text Appearance for buttons-->
     <style name="TextAppearance.ProgressButton.Primary" parent="@style/TextAppearance.MaterialComponents.Body1">
         <item name="android:textStyle">normal</item>
@@ -78,6 +58,7 @@
         <item name="textAppearanceButton">@style/TextAppearance.ProgressButton.Primary</item>
         <item name="tintColor">#FFFFFF</item>
         <item name="android:foreground">?attr/selectableItemBackground</item>
+        <item name="strokeColor">@color/primary</item>
     </style>
 
     <style name="SecondaryProgressButton">
@@ -85,6 +66,97 @@
         <item name="textAppearanceButton">@style/TextAppearance.ProgressButton.Secondary</item>
         <item name="tintColor">#333333</item>
         <item name="android:foreground">@drawable/ripple_effect</item>
+        <item name="strokeColor">@color/grey</item>
     </style>
 <!--    end-->
+
+<!--    MessageView style that conform to stylable MessageView-->
+    <style name="MessageView" parent="">
+        <item name="background">@drawable/message_view_shape</item>
+        <item name="android:textColor">@color/text</item>
+        <item name="tintColor">@color/text</item>
+        <item name="srcCompat">@drawable/ic_warningrounded</item>
+        <item name="textAppearance">@style/TextAppearance.MaterialComponents.Caption</item>
+    </style>
+
+    <style name="WarningMessageview" parent="MessageView">
+        <item name="backgroundColor">@color/warning_background</item>
+        <item name="android:textColor">@color/warning_text_color</item>
+        <item name="tintColor">@color/warning_text_color</item>
+    </style>
+
+    <style name="ErrorMessageView" parent="MessageView">
+        <item name="backgroundColor">@color/error_background</item>
+        <item name="android:textColor">@color/error_text_color</item>
+        <item name="tintColor">@color/error_text_color</item>
+        <item name="srcCompat">@drawable/ic_warning</item>
+    </style>
+
+    <style name="InfoMessageView" parent="MessageView">
+        <item name="backgroundColor">@color/info_background</item>
+        <item name="android:textColor">@color/info_text_color</item>
+        <item name="tintColor">@color/info_text_color</item>
+    </style>
+<!--    end-->
+
+    <style name="TextAppearance.Title" parent="@style/TextAppearance.MaterialComponents.Headline4">
+        <item name="android:textStyle">normal</item>
+        <item name="android:textSize">40sp</item>
+        <item name="android:letterSpacing">-0.02</item>
+        <item name="android:textColor">@color/text</item>
+    </style>
+
+    <style name="TextAppearance.Body" parent="@style/TextAppearance.MaterialComponents.Body1">
+        <item name="android:letterSpacing">-0.02</item>
+        <item name="android:textColor">@color/text</item>
+        <item name="android:textAlignment">viewStart</item>
+        <item name="android:lineSpacingExtra">5sp</item>
+    </style>
+
+    <style name="TextAppearance.Body.Black" parent="TextAppearance.Body">
+        <item name="android:textColor">@android:color/black</item>
+    </style>
+
+    <style name="TextAppearance.Caption" parent="@style/TextAppearance.MaterialComponents.Caption">
+    </style>
+
+    <style name="TextAppearance.TitleHeader" parent="@style/TextAppearance.MaterialComponents.Headline5">
+        <item name="android:textColor">@color/text</item>
+        <item name="android:letterSpacing">-0.02</item>
+    </style>
+
+    <style name="TextAppearance.Code18" parent="">
+        <item name="fontFamily">@font/ibm_plex_mono_regular</item>
+        <item name="android:textColor">@color/spot_green</item>
+        <item name="android:textSize">18sp</item>
+    </style>
+
+    <style name="TextAppearance.Code14" parent="TextAppearance.Code18">
+        <item name="android:textColor">@color/text</item>
+        <item name="android:textSize">14sp</item>
+    </style>
+
+    <style name="TextAppearance.BodyMedium" parent="TextAppearance.Body">
+        <item name="fontFamily">@font/ibm_plex_mono_medium</item>
+    </style>
+    
+    <style name="Theme.BottomUpAnimation" parent="AppTheme">
+        <item name="android:activityOpenEnterAnimation">@anim/bottom_up_anim</item>
+        <item name="android:activityOpenExitAnimation">@anim/initial_anim</item>
+        <item name="android:activityCloseEnterAnimation">@anim/initial_anim</item>
+        <item name="android:activityCloseExitAnimation">@anim/bottom_down_anim</item>
+    </style>
+
+<!--    Checkbox-->
+    <style name="Haapi.Checkbox" parent="">
+        <item name="android:button">@drawable/haapi_checkbox</item>
+        <item name="android:paddingLeft">19dp</item>
+        <item name="android:textAppearance">@style/TextAppearance.Caption</item>
+        <item name="android:textColor">@color/text</item>
+    </style>
+
+    <style name="Haapi.Checkbox.Small" parent="Haapi.Checkbox">
+        <item name="android:button">@drawable/haapi_checkbox_small</item>
+        <item name="android:paddingLeft">13dp</item>
+    </style>
 </resources>
