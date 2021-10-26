@@ -16,14 +16,17 @@
 
 package io.curity.haapidemo.models.haapi
 
+import android.os.Parcelable
 import io.curity.haapidemo.models.haapi.actions.Action
+import kotlinx.android.parcel.Parcelize
 
 /**
  * Representation of non-error HAAPI responses
  */
+@Parcelize
 data class HaapiRepresentation(val type: RepresentationType,
                                val properties: Properties?,
                                val actions: List<Action>,
                                val links: List<Link>,
                                val metadata: Map<String, String>,
-                               val messages: List<UserMessage>)
+                               val messages: List<UserMessage>) : Parcelable

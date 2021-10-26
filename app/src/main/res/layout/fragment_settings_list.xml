@@ -58,7 +58,8 @@
         android:tint="@android:color/white"
         android:backgroundTint="@color/spot_green"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        android:contentDescription="@string/add_content_description"/>
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

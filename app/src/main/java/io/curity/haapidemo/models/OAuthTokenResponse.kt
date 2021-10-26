@@ -16,6 +16,8 @@
 
 package io.curity.haapidemo.models
 
+import org.json.JSONObject
+import java.io.Serializable
 import java.time.Duration
 
 /**
@@ -27,5 +29,6 @@ data class OAuthTokenResponse(
     val scope: String?,
     val expiresIn: Duration?,
     val refreshToken: String?,
-    val idToken: String?
-)
+    val idToken: String?,
+    val properties: JSONObject
+) : Serializable

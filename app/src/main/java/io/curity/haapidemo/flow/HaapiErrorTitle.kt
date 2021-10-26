@@ -23,5 +23,6 @@ enum class HaapiErrorTitle(val title: String) {
     HAAPI("Haapi Error"),
     INVALID_ACTION("Invalid action"),
     NETWORK("Network error"),
-    UNEXPECTED("Unexpected error")
+    UNEXPECTED("Unexpected error"),
+    HAAPI_DRIVER("Haapi Driver error")
 }

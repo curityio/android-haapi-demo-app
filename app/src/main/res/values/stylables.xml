@@ -72,4 +72,13 @@
         <attr name="passwordToggleEnabled" />
         <attr name="errorEnabled" />
     </declare-styleable>
+
+    <declare-styleable name="ProblemView">
+        <attr name="textAppearance" />
+        <attr name="android:text" />
+    </declare-styleable>
+
+    <declare-styleable name="SelectView">
+        <attr name="labelStyle" />
+    </declare-styleable>
 </resources>

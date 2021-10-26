@@ -14,28 +14,28 @@
       See the License for the specific language governing permissions and
       limitations under the License.
     -->
-<resources>
-    <color name="button_border">#DADADA</color>
-    <color name="button_text">#FFFFFF</color>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <color name="button_border" tools:ignore="UnusedResources">#DADADA</color>
+    <color name="button_text" tools:ignore="UnusedResources">#FFFFFF</color>
     <color name="error">#CA2E2B</color>
-    <color name="form_labels">#333333</color>
+    <color name="form_labels" tools:ignore="UnusedResources">#333333</color>
     <color name="grey">#C6C6C6</color>
-    <color name="grey_light">#DADADA</color>
-    <color name="grey_placeholder">#B3B3B3</color>
-    <color name="info">#70BBE1</color>
-    <color name="links">#D55BA0</color>
+    <color name="grey_light" tools:ignore="UnusedResources">#DADADA</color>
+    <color name="grey_placeholder" tools:ignore="UnusedResources">#B3B3B3</color>
+    <color name="info" tools:ignore="UnusedResources">#70BBE1</color>
+    <color name="links" tools:ignore="UnusedResources">#D55BA0</color>
     <color name="primary">#646E85</color>
     <color name="primary_dark">#FFFFFF</color>
     <color name="primary_medium">#FFFFFF</color>
     <color name="secondary_action">#FFFFFF</color>
     <color name="spot_green">#4AA69E</color>
     <color name="spot_magenta">#D55BA0</color>
-    <color name="spot_yellow">#ECE668</color>
-    <color name="success">#4CAF50</color>
+    <color name="spot_yellow" tools:ignore="UnusedResources">#ECE668</color>
+    <color name="success" tools:ignore="UnusedResources">#4CAF50</color>
     <color name="text">#333333</color>
     <color name="text_headings">#111111</color>
-    <color name="text_paragraphs">#333333</color>
-    <color name="warning">#E0C01C</color>
+    <color name="text_paragraphs" tools:ignore="UnusedResources">#333333</color>
+    <color name="warning" tools:ignore="UnusedResources">#E0C01C</color>
 
 <!--  MessageView color  -->
     <color name="error_text_color">#CA2E2B</color>

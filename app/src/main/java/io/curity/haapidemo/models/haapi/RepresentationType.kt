@@ -16,22 +16,38 @@
 
 package io.curity.haapidemo.models.haapi
 
-sealed class RepresentationType(override val discriminator: String) : EnumLike
+import android.os.Parcelable
+import kotlinx.android.parcel.Parcelize
+
+sealed class RepresentationType(override val discriminator: String) : EnumLike, Parcelable
 {
+    @Parcelize
     object AuthenticationStep : RepresentationType("authentication-step")
+    @Parcelize
     object RedirectionStep : RepresentationType("redirection-step")
+    @Parcelize
     object RegistrationStep : RepresentationType("registration-step")
+    @Parcelize
     object PollingStep : RepresentationType("polling-step")
+    @Parcelize
     object ContinueSameStep : RepresentationType("continue-same-step")
+    @Parcelize
     object ConsentorStep : RepresentationType("consentor-step")
+    @Parcelize
     object UserConsentStep : RepresentationType("user-consent-step")
+    @Parcelize
     object OauthAuthorizationResponse : RepresentationType("oauth-authorization-response")
 
     // Problems
+    @Parcelize
     object IncorrectCredentialsProblem : RepresentationType("https://curity.se/problems/incorrect-credentials")
+    @Parcelize
     object InvalidInputProblem : RepresentationType("https://curity.se/problems/invalid-input")
+    @Parcelize
     object UnexpectedProblem : RepresentationType("https://curity.se/problems/unexpected")
+    @Parcelize
     object AuthorizationResponseProblem : RepresentationType("https://curity.se/problems/error-authorization-response")
 
+    @Parcelize
     data class Unknown(val value: String) : RepresentationType(value)
 }

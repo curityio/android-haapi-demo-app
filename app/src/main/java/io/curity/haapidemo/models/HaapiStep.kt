@@ -11,10 +11,12 @@
 
 package io.curity.haapidemo.models
 
+import android.os.Parcelable
 import io.curity.haapidemo.models.haapi.*
 import io.curity.haapidemo.models.haapi.actions.Action
 import io.curity.haapidemo.models.haapi.actions.ActionModel
 import io.curity.haapidemo.models.haapi.problems.HaapiProblem
+import kotlinx.android.parcel.Parcelize
 
 /**
  * Sealed class hierarchy to represent the high-level steps described by the [HaapiRepresentation] class.
@@ -28,26 +30,32 @@ import io.curity.haapidemo.models.haapi.problems.HaapiProblem
  */
 sealed class HaapiStep
 
+@Parcelize
 data class Redirect(
     val action: Action.Form,
-) : HaapiStep()
+) : HaapiStep(), Parcelable
 
+@Parcelize
 data class AuthenticatorOption(
     val label: Message,
     val type: String?,
     val action: Action.Form,
-)
+) : Parcelable
 
+@Parcelize
 data class AuthenticatorSelector(
     val title: Message,
     val authenticators: List<AuthenticatorOption>,
-) : HaapiStep()
+) : HaapiStep(), Parcelable
 
+@Parcelize
 data class InteractiveForm(
-    val action: Action.Form,
+    val actions: List<Action.Form>,
+    val type: RepresentationType,
     val cancel: Action.Form?,
-    val links: List<Link>
-) : HaapiStep()
+    val links: List<Link>,
+    val messages: List<UserMessage>
+) : HaapiStep(), Parcelable
 
 data class ExternalBrowserClientOperation(
     val actionModel: ActionModel.ClientOperation.ExternalBrowser,
@@ -69,16 +77,20 @@ data class UnknownClientOperation(
     val cancel: Action.Form?
 ) : HaapiStep()
 
-
+@Parcelize
 data class PollingStep(
+    val type: RepresentationType,
     val properties: Properties.Polling,
     val main: Action.Form,
     val cancel: Action.Form?,
-) : HaapiStep()
+) : HaapiStep(), Parcelable
 
+@Parcelize
 data class AuthorizationCompleted(
+    val type: RepresentationType,
+    val links: List<Link>,
     val responseParameters: Properties.AuthorizationResponse,
-) : HaapiStep()
+) : HaapiStep(), Parcelable
 
 data class ContinueSameStep(
     val representation: HaapiRepresentation
@@ -104,3 +116,10 @@ data class SystemErrorStep(
 data class TokensStep(
     val oAuthTokenResponse: OAuthTokenResponse
 ): HaapiStep()
+
+@Parcelize
+data class UserConsentStep(
+    val messages: List<UserMessage>,
+    val type: RepresentationType,
+    val actions: List<Action.Form>
+): HaapiStep(), Parcelable

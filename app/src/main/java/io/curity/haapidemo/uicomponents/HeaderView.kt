@@ -18,6 +18,7 @@ package io.curity.haapidemo.uicomponents
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import android.util.AttributeSet
 import android.view.LayoutInflater
@@ -51,8 +52,8 @@ class HeaderView @JvmOverloads constructor(
         context.obtainStyledAttributes(
             attrs,
             R.styleable.HeaderView,
-            defStyleAttr,
-            0
+            0,
+            defStyleAttr
         ).apply {
             try {
 
@@ -86,5 +87,9 @@ class HeaderView @JvmOverloads constructor(
     @Suppress("Unused")
     fun setImageResource(@DrawableRes resId: Int) {
         imageView.setImageResource(resId)
+    }
+
+    fun setImageBitmap(bitmap: Bitmap) {
+        imageView.setImageBitmap(bitmap)
     }
 }

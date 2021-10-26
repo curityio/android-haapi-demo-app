@@ -20,7 +20,6 @@ import se.curity.identityserver.haapi.android.sdk.HaapiTokenManager
 import se.curity.identityserver.haapi.android.sdk.okhttp.OkHttpUtils.addHaapiInterceptor
 import java.net.URI
 import java.time.Duration
-import io.curity.haapidemo.*
 import io.curity.haapidemo.models.*
 import io.curity.haapidemo.models.haapi.Message
 import io.curity.haapidemo.models.haapi.PollingStatus
@@ -53,7 +52,7 @@ class FlowTests
         val authenticatorForm = response.assertOfType<InteractiveForm>()
 
         response = httpClient.submit(
-            authenticatorForm.action,
+            authenticatorForm.actions.first(),
             "userName" to "testuser", "password" to "Password1"
         ).toHaapiStep()
         val redirectFromLogin = response.assertOfType<Redirect>()
@@ -82,7 +81,7 @@ class FlowTests
         val authenticatorForm = response.assertOfType<InteractiveForm>()
 
         response = httpClient.submit(
-            authenticatorForm.action,
+            authenticatorForm.actions.first(),
             "userName" to "testuser", "password" to "Password1"
         ).toHaapiStep()
         val redirectFromLogin = response.assertOfType<Redirect>()
@@ -114,7 +113,7 @@ class FlowTests
         val authenticatorForm = response.assertOfType<InteractiveForm>()
 
         response = httpClient.submit(
-            authenticatorForm.action,
+            authenticatorForm.actions.first(),
             "userName" to "testuser"
         ).toHaapiStep()
         val firstPolling = response.assertOfType<PollingStep>()
@@ -133,7 +132,7 @@ class FlowTests
         response.assertOfType<InteractiveForm>()
 
         response = httpClient.submit(
-            authenticatorForm.action,
+            authenticatorForm.actions.first(),
             "userName" to "testuser"
         ).toHaapiStep()
         response.assertOfType<PollingStep>()

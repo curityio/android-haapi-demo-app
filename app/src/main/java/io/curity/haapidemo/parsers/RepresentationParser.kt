@@ -53,7 +53,8 @@ object RepresentationParser
             scope = obj.stringOpt("scope"),
             expiresIn = obj.longFromNumberOrStringOpt("expires_in")?.let { Duration.ofSeconds(it) },
             refreshToken = obj.stringOpt("refresh_token"),
-            idToken = obj.stringOpt("id_token")
+            idToken = obj.stringOpt("id_token"),
+            properties = obj
         )
     }
 
@@ -78,7 +79,7 @@ object RepresentationParser
                 )
             RepresentationType.AuthorizationResponseProblem ->
                 AuthorizationProblem(
-                    title = obj.string("title"),
+                    title = obj.stringOpt("title") ?: obj.string("error"),
                     code = obj.stringOpt("code"),
                     messages = obj.list("messages", RepresentationParser::parseUserMessage),
                     links = obj.list("links", LinkParser::parse),
@@ -104,7 +105,7 @@ object RepresentationParser
                     "properties"
                 ))
             )
-            else -> obj.optJSONObject("properties")?.let { Properties.Unknown(it) }
+            else -> obj.optJSONObject("properties")?.let { Properties.Unknown(it.toString()) }
         }
 
     private fun parseUserMessage(obj: JSONObject) =
@@ -118,7 +119,7 @@ private object PropertiesParser
 {
     fun parseAuthorizationResponse(obj: JSONObject) = parsing("oauth-authorization-response") {
         Properties.AuthorizationResponse(
-            json = obj,
+            jsonString = obj.toString(),
             code = obj.stringOpt("code"),
             state = obj.stringOpt("state"),
             scope = obj.stringOpt("scope"),
@@ -134,7 +135,7 @@ private object PropertiesParser
 
     fun parsePolling(obj: JSONObject) = parsing("polling") {
         Properties.Polling(
-            json = obj,
+            jsonString = obj.toString(),
             recipientOfCommunication = obj.stringOpt("recipientOfCommunication"),
             status = parseStatus(obj.string("status"))
         )
@@ -175,7 +176,7 @@ private object ActionParser
             model = ActionFormModelParser.parse(obj.getJSONObject("model")),
             properties = obj.optJSONObject("properties")?.run {
                 Action.Form.Properties(
-                    json = this,
+                    jsonString = this.toString(),
                     authenticatorType = this.optString("authenticatorType")
                 )
             }
@@ -189,7 +190,7 @@ private object ActionParser
             model = ActionSelectorModelParser.parse(obj.getJSONObject("model")),
             properties = obj.optJSONObject("properties")?.run {
                 Action.Selector.Properties(
-                    json = this,
+                    jsonString = this.toString(),
                 )
             }
         )
@@ -395,7 +396,7 @@ private fun JSONObject.messageOpt(name: String): Message?
 
 private fun JSONObject.message(name: String): Message
 {
-    return messageOpt(name) ?: throw ModelException("Missing field '$name'")
+    return messageOpt(name) ?: messageOpt("name") ?: Message.OfLiteral("Missing label")
 }
 
 

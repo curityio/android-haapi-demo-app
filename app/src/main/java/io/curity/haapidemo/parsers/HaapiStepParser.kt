@@ -36,8 +36,8 @@ fun HaapiRepresentation.toHaapiStep(): HaapiStep =
         is RepresentationType.RegistrationStep -> handleAuthenticationStep(this)
         is RepresentationType.PollingStep -> handlePollingStep(this)
         is RepresentationType.ContinueSameStep -> ContinueSameStep(this)
-        is RepresentationType.ConsentorStep -> UnknownStep(this)
-        is RepresentationType.UserConsentStep -> UnknownStep(this)
+        is RepresentationType.ConsentorStep -> handleAuthenticationStep(this)
+        is RepresentationType.UserConsentStep -> handleUserConsentStep(this)
         is RepresentationType.OauthAuthorizationResponse -> handleAuthorizationStep(this)
         is RepresentationType.Unknown -> UnknownStep(this)
 
@@ -120,10 +120,13 @@ private fun handleAuthenticationStep(representation: HaapiRepresentation): Haapi
         }
     } else
     {
-        val action = representation.actions.findForm {
-            it.kind != "cancel" && it.kind != "continue"
-        } ?: return UnknownStep(representation)
-        InteractiveForm(action, cancel, representation.links)
+        InteractiveForm(
+            actions = representation.actions.filterIsInstance<Action.Form>(),
+            type = representation.type,
+            cancel = cancel,
+            links = representation.links,
+            messages = representation.messages
+        )
     }
 }
 
@@ -155,37 +158,57 @@ private fun handlePollingStep(representation: HaapiRepresentation): HaapiStep
     {
         return UnknownStep(representation)
     }
-    val properties = representation.properties?.let { it }
-    if (properties !is Properties.Polling)
+    val properties = representation.properties
+
+    if (properties == null || properties !is Properties.Polling)
     {
         return InvalidStep(representation)
     }
 
-    val polling = representation.properties as? Properties.Polling
-    return if (polling?.status == PollingStatus.Pending)
-    {
-        val pollAction =
-            representation.actions.findForm { it.kind == "poll" } ?: return InvalidStep(
-                representation
-            )
+    return when (properties.status) {
+        is PollingStatus.Pending -> {
+            val pollAction =
+                representation.actions.findForm { it.kind == "poll" } ?: return InvalidStep(
+                    representation
+                )
 
-        val cancelAction = representation.actions.findForm { it.kind == "cancel" }
-        PollingStep(
-            properties,
-            pollAction,
-            cancelAction
-        )
-    } else
-    {
-        val continueAction =
-            representation.actions.findForm { it.kind == "continue" } ?: return InvalidStep(
+            val cancelAction = representation.actions.findForm { it.kind == "cancel" }
+            PollingStep(
+                representation.type,
+                properties,
+                pollAction,
+                cancelAction
+            )
+        }
+        is PollingStatus.Done -> {
+            val formAction =
+                representation.actions.findForm { it.kind == "form" || it.kind == "redirect" } ?: return InvalidStep(
+                    representation
+                )
+            PollingStep(
+                representation.type,
+                properties,
+                formAction,
+                null
+            )
+        }
+        is PollingStatus.Failed -> {
+            val anyAction =
+                representation.actions.findForm { it.kind == "continue" || it.kind == "redirect"  } ?: return InvalidStep(
+                    representation
+                )
+            PollingStep(
+                representation.type,
+                properties,
+                anyAction,
+                null
+            )
+        }
+        is PollingStatus.Unknown -> {
+            return InvalidStep(
                 representation
             )
-        PollingStep(
-            properties,
-            continueAction,
-            null
-        )
+        }
     }
 }
 
@@ -201,7 +224,21 @@ private fun handleAuthorizationStep(representation: HaapiRepresentation): HaapiS
         return InvalidStep(representation)
     }
     return AuthorizationCompleted(
-        properties
+        type = representation.type,
+        links = representation.links,
+        responseParameters = properties
+    )
+}
+
+private fun handleUserConsentStep(representation: HaapiRepresentation): HaapiStep {
+    if (representation.type != RepresentationType.UserConsentStep) {
+        return UnknownStep(representation)
+    }
+
+    return UserConsentStep(
+        messages = representation.messages,
+        type = representation.type,
+        actions = representation.actions.filterIsInstance<Action.Form>()
     )
 }
 
@@ -211,3 +248,7 @@ private fun requiresInteraction(action: Action.Form) =
 private fun List<Action>.findForm(predicate: (Action.Form) -> Boolean): Action.Form? =
     this.filterIsInstance<Action.Form>()
         .find { predicate(it) }
+
+private fun List<Action>.findForms(predicate: (Action.Form) -> Boolean): List<Action.Form> =
+    filterIsInstance<Action.Form>()
+        .filter { predicate(it) }

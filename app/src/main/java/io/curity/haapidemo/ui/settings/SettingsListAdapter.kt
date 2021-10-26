@@ -21,13 +21,13 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import io.curity.haapidemo.flow.HaapiFlowConfiguration
 import io.curity.haapidemo.ui.settings.profile.ProfileViewHolder
-import io.curity.haapidemo.uicomponents.SectionViewHolder
+import io.curity.haapidemo.uicomponents.SettingsSectionViewHolder
 
 class SettingsListAdapter(private val clickHandler: (HaapiFlowConfiguration) -> Unit): ListAdapter<SettingsItem, RecyclerView.ViewHolder>(CONFIG_COMPARATOR) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return when(viewType) {
-            SettingsType.Header.ordinal -> SectionViewHolder.from(parent)
+            SettingsType.Header.ordinal -> SettingsSectionViewHolder.from(parent)
             SettingsType.Configuration.ordinal -> ProfileViewHolder.from(parent)
 
             else -> throw ClassCastException("No class for viewType $viewType")
@@ -36,7 +36,7 @@ class SettingsListAdapter(private val clickHandler: (HaapiFlowConfiguration) -> 
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (holder) {
-            is SectionViewHolder -> {
+            is SettingsSectionViewHolder -> {
                 val headerItem = getItem(position) as SettingsItem.Header
                 holder.bind(headerItem.title)
             }

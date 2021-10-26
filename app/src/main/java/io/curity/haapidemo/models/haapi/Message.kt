@@ -16,11 +16,16 @@
 
 package io.curity.haapidemo.models.haapi
 
-sealed class Message
+import android.os.Parcelable
+import kotlinx.android.parcel.Parcelize
+import kotlin.reflect.KProperty1
+
+sealed class Message: Parcelable
 {
     abstract val key: String?
     abstract val message: String?
 
+    @Parcelize
     class OfKey(
         override val key: String
     ) : Message()
@@ -28,6 +33,7 @@ sealed class Message
         override val message: String? = null
     }
 
+    @Parcelize
     class OfLiteral(
         override val message: String
     ) : Message()
@@ -35,8 +41,21 @@ sealed class Message
         override val key: String? = null
     }
 
+    @Parcelize
     class OfLiteralAndKey(
         override val message: String,
         override val key: String,
     ) : Message()
+
+    fun value(kproperty: KProperty1<Message, String?> = Message::message): String {
+        return if (key != null && message != null) {
+            kproperty.get(this) as String
+        } else if (key != null) {
+            key  as String
+        } else if (message != null) {
+            message  as String
+        } else {
+            throw IllegalStateException("A Message cannot have no value for `key` or `message`")
+        }
+    }
 }

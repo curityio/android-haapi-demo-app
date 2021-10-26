@@ -16,13 +16,19 @@
 
 package io.curity.haapidemo.models.haapi.actions
 
+import android.os.Parcelable
 import io.curity.haapidemo.models.haapi.EnumLike
+import kotlinx.android.parcel.Parcelize
 
-sealed class ActionTemplate(override val discriminator: String) : EnumLike
+sealed class ActionTemplate(override val discriminator: String) : EnumLike, Parcelable
 {
+    @Parcelize
     object Form : ActionTemplate("form")
+    @Parcelize
     object Selector : ActionTemplate("selector")
+    @Parcelize
     object ClientOperation : ActionTemplate("client-operation")
 
+    @Parcelize
     data class Unknown(val value: String) : ActionTemplate(value)
 }

@@ -41,7 +41,7 @@ class HaapiFlowManagerTest {
         tokenEndpointURI = "https://$EMULATOR_HOST_IP$PORT/dev/oauth/token",
         authorizationEndpointURI = "https://$EMULATOR_HOST_IP$PORT/dev/oauth/authorize",
         metaDataBaseURLString = "",
-        redirectURI = "haapi:start",
+        redirectURI = "app://haapi",
         followRedirect = true,
         isSSLTrustVerificationEnabled = false,
         selectedScopes = listOf("open", "profile")
@@ -131,7 +131,7 @@ class HaapiFlowManagerTest {
         val authenticatorSelector = flowManager.start() as AuthenticatorSelector
         val usernameAuthenticator = authenticatorSelector.authenticators.first { it.type == "username" && it.label.message == "username" }
         val interactiveForm = flowManager.submitForm(usernameAuthenticator.action.model, emptyMap()) as InteractiveForm
-        val newStep = flowManager.submitForm(interactiveForm.action.model, mapOf("username" to "testuser")) as AuthorizationCompleted
+        val newStep = flowManager.submitForm(interactiveForm.actions.first().model, mapOf("username" to "testuser")) as AuthorizationCompleted
         val code = newStep.responseParameters.code!!
 
         // When: Fetching the access token with a valid authorization code
@@ -152,7 +152,7 @@ class HaapiFlowManagerTest {
         val authenticatorSelector = flowManager.start() as AuthenticatorSelector
         val usernameAuthenticator = authenticatorSelector.authenticators.first { it.type == "username" && it.label.message == "username" }
         val interactiveForm = flowManager.submitForm(usernameAuthenticator.action.model, emptyMap()) as InteractiveForm
-        val newStep = flowManager.submitForm(interactiveForm.action.model, mapOf("username" to "testuser")) as AuthorizationCompleted
+        val newStep = flowManager.submitForm(interactiveForm.actions.first().model, mapOf("username" to "testuser")) as AuthorizationCompleted
         val code = newStep.responseParameters.code!!
 
         // When: Fetching the accesstoken with an invalid authorization code
@@ -170,7 +170,7 @@ class HaapiFlowManagerTest {
         val authenticatorSelector = flowManager.start() as AuthenticatorSelector
         val usernameAuthenticator = authenticatorSelector.authenticators.first { it.type == "username" && it.label.message == "username" }
         val interactiveForm = flowManager.submitForm(usernameAuthenticator.action.model, emptyMap()) as InteractiveForm
-        val accessTokenStep = flowManager.submitForm(interactiveForm.action.model, mapOf("username" to "testuser")) as TokensStep
+        val accessTokenStep = flowManager.submitForm(interactiveForm.actions.first().model, mapOf("username" to "testuser")) as TokensStep
 
         // When: Refreshing its access token with an invalid refresh_token
         val invalidRefreshToken = accessTokenStep.oAuthTokenResponse.refreshToken!! + "$"
@@ -187,7 +187,7 @@ class HaapiFlowManagerTest {
         val authenticatorSelector = flowManager.start() as AuthenticatorSelector
         val usernameAuthenticator = authenticatorSelector.authenticators.first { it.type == "username" && it.label.message == "username" }
         val interactiveForm = flowManager.submitForm(usernameAuthenticator.action.model, emptyMap()) as InteractiveForm
-        val accessTokenStep = flowManager.submitForm(interactiveForm.action.model, mapOf("username" to "testuser")) as TokensStep
+        val accessTokenStep = flowManager.submitForm(interactiveForm.actions.first().model, mapOf("username" to "testuser")) as TokensStep
 
         // When: Refreshing its access token
         val refreshStep = flowManager.refreshAccessToken(accessTokenStep.oAuthTokenResponse.refreshToken!!)
@@ -302,7 +302,7 @@ class HaapiFlowManagerTest {
         Assert.assertTrue("Expecting an InteractiveForm", submitStep is InteractiveForm)
         val interactiveForm = submitStep as InteractiveForm
 
-        val step3 = flowManager.submitForm(interactiveForm.action.model, mapOf("userName" to "testuser", "password" to "Password1"))
+        val step3 = flowManager.submitForm(interactiveForm.actions.first().model, mapOf("userName" to "testuser", "password" to "Password1"))
         Assert.assertTrue("Expecting an Access Token", step3 is TokensStep)
 
         val accessToken = step3 as TokensStep

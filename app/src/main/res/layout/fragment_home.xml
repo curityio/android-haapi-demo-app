@@ -50,25 +50,28 @@
     <ImageView
         android:id="@+id/image_view"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
         android:src="@drawable/ic_startillustration"
         app:layout_constraintEnd_toEndOf="@+id/description_home"
         app:layout_constraintStart_toStartOf="@+id/description_home"
         android:layout_marginTop="13dp"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="parent"
-        tools:layout_editor_absoluteY="214dp" />
+        app:layout_constraintTop_toBottomOf="@+id/description_home"
+        app:layout_constraintBottom_toTopOf="@+id/button"
+        android:contentDescription="@string/start_auth_content_description"
+        />
 
-    <Button
+    <io.curity.haapidemo.uicomponents.ProgressButton
         android:id="@+id/button"
         android:layout_width="match_parent"
-        android:layout_height="50dp"
+        android:layout_height="wrap_content"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/image_view"
         app:layout_constraintBottom_toBottomOf="parent"
         android:layout_marginStart="13dp"
         android:layout_marginEnd="13dp"
+        android:layout_marginBottom="72dp"
         android:text="@string/button_home"
+        style="@style/PrimaryProgressButton"
         />
 </androidx.constraintlayout.widget.ConstraintLayout>

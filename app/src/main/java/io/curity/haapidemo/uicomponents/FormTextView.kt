@@ -18,6 +18,7 @@ package io.curity.haapidemo.uicomponents
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.text.TextWatcher
 import android.text.method.HideReturnsTransformationMethod
 import android.text.method.PasswordTransformationMethod
 import android.util.AttributeSet
@@ -84,8 +85,8 @@ class FormTextView @JvmOverloads constructor(
         context.obtainStyledAttributes(
             attrs,
             R.styleable.FormTextView,
-            defStyleAttr,
-            0
+            0,
+            defStyleAttr
         ).apply {
             try {
                 getResourceId(R.styleable.FormTextView_labelStyle, R.style.TextAppearance_Body).let {
@@ -171,6 +172,28 @@ class FormTextView @JvmOverloads constructor(
     @Suppress("Unused")
     fun setHint(text: CharSequence) {
         textInputEditText.hint = text
+    }
+
+    /**
+     * Adds a TextWatcher whenever the TextInput's text changes.
+     *
+     * @param textWatcher A TextWatcher
+     */
+    fun addTextChangedListener(textWatcher: TextWatcher) {
+        textInputEditText.addTextChangedListener(textWatcher)
+    }
+
+    /**
+     * Removes the specified TextWatcher from the list of those whose methods are called whenever the TextInput's text changes.
+     *
+     * @param textWatcher A TextWatcher
+     */
+    fun removeTextChangedListener(textWatcher: TextWatcher) {
+        textInputEditText.removeTextChangedListener(textWatcher)
+    }
+
+    fun setInputType(inputType: Int) {
+        textInputEditText.inputType = inputType
     }
 
     /**

@@ -16,12 +16,18 @@
 
 package io.curity.haapidemo.flow
 
+import android.annotation.SuppressLint
 import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
+import io.curity.haapidemo.Constant
 import io.curity.haapidemo.models.*
 import io.curity.haapidemo.models.haapi.Link
+import io.curity.haapidemo.models.haapi.RepresentationType
+import io.curity.haapidemo.models.haapi.actions.Action
 import io.curity.haapidemo.models.haapi.actions.ActionModel
+import io.curity.haapidemo.models.haapi.problems.AuthorizationProblem
+import io.curity.haapidemo.models.haapi.problems.HaapiProblem
 import io.curity.haapidemo.parsers.RepresentationParser
 import io.curity.haapidemo.parsers.toHaapiStep
 import kotlinx.coroutines.*
@@ -30,6 +36,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.json.JSONObject
 import se.curity.identityserver.haapi.android.sdk.HaapiTokenManager
 import se.curity.identityserver.haapi.android.sdk.HttpURLConnectionProvider
+import se.curity.identityserver.haapi.android.sdk.UnexpectedTokenAccessException
 import se.curity.identityserver.haapi.android.sdk.okhttp.OkHttpUtils.addHaapiInterceptor
 import java.io.Closeable
 import java.io.IOException
@@ -68,6 +75,7 @@ class HaapiFlowManager (
 ): HaapiFlowManageable, Closeable {
 
     private val representationParser = RepresentationParser
+    private var didStart = false
 
     private val _liveStep = MutableLiveData<HaapiStep?>(null)
     override val liveStep: LiveData<HaapiStep?>
@@ -100,11 +108,12 @@ class HaapiFlowManager (
     }
 
     override suspend fun start(): HaapiStep {
+        didStart = true
         val authorizationURLBuilder = haapiFlowConfiguration.authorizationEndpointURI.toHttpUrl()
             .newBuilder()
             .addQueryParameter("client_id", haapiFlowConfiguration.clientId)
             .addQueryParameter("response_type", "code")
-            .addQueryParameter("redirect_uri", "haapi:start")
+            .addQueryParameter("redirect_uri", haapiFlowConfiguration.redirectURI)
 
         if (haapiFlowConfiguration.selectedScopes.isNotEmpty()) {
             val scopeParameter = haapiFlowConfiguration.selectedScopes.joinToString(" ")
@@ -123,7 +132,7 @@ class HaapiFlowManager (
     }
 
     override suspend fun submitForm(form: ActionModel.Form, parameters: Map<String, String>): HaapiStep {
-        if (_liveStep.value == null) {
+        if (!didStart) {
             return SystemErrorStep(HaapiErrorTitle.INVALID_ACTION.title, "Cannot submitForm because the HaapiFlow did not start or a " +
                     "systemError happened.. Please use start() or reset().")
         }
@@ -138,11 +147,12 @@ class HaapiFlowManager (
                 for (field in form.fields) {
                     if (field.value == null) {
                         Log.d("Missing", "$field has no values")
+                        urlBuilder.addQueryParameter(field.name, parameters[field.name])
                     } else {
                         urlBuilder.addQueryParameter(field.name, parameters[field.name] ?: field.value)
                     }
                 }
-                request = requestBuilder.get().build()
+                request = requestBuilder.url(urlBuilder.build()).get().build()
             }
             form.method.toUpperCase() == "POST" -> {
                 val requestBody = FormBody.Builder().also {
@@ -159,6 +169,7 @@ class HaapiFlowManager (
             }
         }
 
+        Log.d(Constant.TAG_HAAPI_REPRESENTATION, "Sending request: ${request.url} with parameters: $parameters")
         val step = requestHaapi(request)
         updateStep(step)
         if (haapiFlowConfiguration.followRedirect && step is Redirect) {
@@ -175,7 +186,7 @@ class HaapiFlowManager (
     }
 
     override suspend fun followLink(link: Link): HaapiStep {
-        if (_liveStep.value == null) {
+        if (!didStart) {
             return SystemErrorStep(HaapiErrorTitle.INVALID_ACTION.title, "Cannot followLink because the HaapiFlow did not start or a " +
                     "systemError happened. Please use start() or reset().")
         }
@@ -191,9 +202,37 @@ class HaapiFlowManager (
             .build()
 
         val newStep = requestHaapi(request)
+        if (haapiFlowConfiguration.followRedirect && newStep is Redirect) {
+            val submittedStep = submitForm(newStep.action.model, emptyMap())
+            updateStep(submittedStep)
+            return submittedStep
+        }
+
         updateStep(newStep)
 
         return newStep
+    }
+
+    override suspend fun applyActionForm(actionForm: Action.Form): HaapiStep {
+        return if (actionForm.kind == "redirect") {
+            if (haapiFlowConfiguration.followRedirect) {
+                submitForm(actionForm.model, emptyMap())
+            } else {
+                val redirectStep = Redirect(action = actionForm)
+                updateStep(redirectStep)
+                redirectStep
+            }
+        } else {
+            val newStep = InteractiveForm(
+                actions = listOf(actionForm),
+                type = RepresentationType.AuthenticationStep,
+                cancel = null,
+                links = emptyList(),
+                messages = emptyList()
+            )
+            updateStep(newStep)
+            newStep
+        }
     }
 
     override suspend fun fetchAccessToken(authorizationCode: String): HaapiStep {
@@ -234,6 +273,7 @@ class HaapiFlowManager (
 
     override fun reset() {
         updateStep(null)
+        didStart = false
     }
 
     /**
@@ -272,6 +312,7 @@ class HaapiFlowManager (
                 val jsonObject = JSONObject(responseBody!!.string())
                 val contentType = response.header("content-type")
 
+                Log.d(Constant.TAG_HAAPI_REPRESENTATION, jsonObject.toString())
                 if (response.isSuccessful) {
                     when (contentType) {
                         "application/vnd.auth+json" -> {
@@ -279,7 +320,9 @@ class HaapiFlowManager (
                         }
                         "application/json" -> {
                             val oAuthTokenResponse = representationParser.parseAccessToken(jsonObject)
-                            TokensStep(oAuthTokenResponse = oAuthTokenResponse)
+                            TokensStep(
+                                oAuthTokenResponse = oAuthTokenResponse
+                            )
                         }
                         else -> {
                             SystemErrorStep(
@@ -291,7 +334,8 @@ class HaapiFlowManager (
                 } else {
                     if (contentType == "application/problem+json") {
                         val problem = representationParser.parseProblem(jsonObject)
-                        ProblemStep(problem)
+                        val systemErrorStep = problem.systemError()
+                        systemErrorStep ?: ProblemStep(problem)
                     } else {
                         SystemErrorStep(
                             HaapiErrorTitle.UNEXPECTED.title, "Response was unsuccessful with " +
@@ -303,6 +347,10 @@ class HaapiFlowManager (
                 when (e) {
                     is IOException, is IllegalStateException -> SystemErrorStep(
                         HaapiErrorTitle.HAAPI.title,
+                        e.message ?: ""
+                    )
+                    is UnexpectedTokenAccessException -> SystemErrorStep(
+                        HaapiErrorTitle.HAAPI_DRIVER.title,
                         e.message ?: ""
                     )
                     else -> SystemErrorStep(HaapiErrorTitle.NETWORK.title, e.message ?: "")
@@ -374,10 +422,12 @@ private fun HaapiFlowConfiguration.tokenFormBodyBuilder(grantType: String): Form
 //region Private extensions for disabling SSL Verification !!!
 private val trustManager = object : X509TrustManager
 {
+    @SuppressLint("TrustAllX509TrustManager")
     override fun checkClientTrusted(p0: Array<out X509Certificate>, p1: String)
     {
     }
 
+    @SuppressLint("TrustAllX509TrustManager")
     override fun checkServerTrusted(p0: Array<out X509Certificate>, p1: String)
     {
     }
@@ -411,5 +461,26 @@ private fun URLConnection.disableSslTrustVerification(): URLConnection
 
 private val UNCHECKED_CONNECTION_PROVIDER: HttpURLConnectionProvider = {
     it.openConnection().disableSslTrustVerification() as HttpURLConnection
+}
+
+private fun HaapiProblem.systemError(): SystemErrorStep? {
+    return when (code) {
+        "invalid_redirect_uri", "authorization_failed", "access_denied" -> {
+            val errorTitle: String
+            val description: String
+            if (this is AuthorizationProblem) {
+                errorTitle = error
+                description = errorDescription
+            } else {
+                errorTitle = title
+                description = messages?.joinToString { it.text.message ?: it.text.key ?: "" } ?: ""
+            }
+            SystemErrorStep(
+                title = errorTitle,
+                description = description
+            )
+        }
+        else -> null
+    }
 }
 //endregion

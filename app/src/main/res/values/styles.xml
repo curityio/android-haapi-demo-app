@@ -13,7 +13,7 @@
       See the License for the specific language governing permissions and
       limitations under the License.
     -->
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
     <style name="AppTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
         <!-- Customize your theme here. -->
@@ -21,11 +21,11 @@
         <item name="android:windowAnimationStyle">@style/Theme.BottomUpAnimation</item>
     </style>
 
-    <style name="LabelTextViewStyle" parent="android:Widget.TextView">
+    <style name="LabelTextViewStyle" parent="android:Widget.TextView" tools:ignore="UnusedResources">
         <item name="android:textSize">14sp</item>
     </style>
 
-    <style name="ErrorTextViewStyle" parent="android:Widget.TextView">
+    <style name="ErrorTextViewStyle" parent="android:Widget.TextView" tools:ignore="UnusedResources">
         <item name="android:textSize">14sp</item>
         <item name="android:textColor">@color/error</item>
     </style>
@@ -50,6 +50,11 @@
         <item name="android:textColor">@color/text_headings</item>
     </style>
 
+    <style name="TextAppearance.Links" parent="TextAppearance.ProgressButton.Primary">
+        <item name="android:textColor">@android:color/holo_blue_dark</item>
+        <item name="android:textAlignment">center</item>
+    </style>
+
 <!--    end-->
 
 <!--    ProgressButton style that conform to stylable ProgressButton-->
@@ -67,6 +72,13 @@
         <item name="tintColor">#333333</item>
         <item name="android:foreground">@drawable/ripple_effect</item>
         <item name="strokeColor">@color/grey</item>
+    </style>
+
+    <style name="LinkProgressButton" parent="">
+        <item name="background">@android:color/transparent</item>
+        <item name="textAppearanceButton">@style/TextAppearance.Links</item>
+        <item name="android:foreground">?attr/selectableItemBackground</item>
+        <item name="tintColor">@android:color/holo_blue_dark</item>
     </style>
 <!--    end-->
 
@@ -117,6 +129,10 @@
         <item name="android:textColor">@android:color/black</item>
     </style>
 
+    <style name="TextAppearance.Body.Error" parent="TextAppearance.Body">
+        <item name="android:textColor">@color/error</item>
+    </style>
+
     <style name="TextAppearance.Caption" parent="@style/TextAppearance.MaterialComponents.Caption">
     </style>
 
@@ -158,5 +174,9 @@
     <style name="Haapi.Checkbox.Small" parent="Haapi.Checkbox">
         <item name="android:button">@drawable/haapi_checkbox_small</item>
         <item name="android:paddingLeft">13dp</item>
+    </style>
+<!--    HeaderView-->
+    <style name="HeaderView.Link" parent="">
+        <item name="textAppearance">@style/TextAppearance.Links</item>
     </style>
 </resources>

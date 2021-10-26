@@ -10,6 +10,11 @@
   -->
 
 <config xmlns="http://tail-f.com/ns/config/1.0">
+    <environments xmlns="https://curity.se/ns/conf/base">
+        <environment>
+            <base-url>https://10.0.2.2:8443</base-url>
+        </environment>
+    </environments>
     <profiles xmlns="https://curity.se/ns/conf/base">
         <profile>
             <id>oauth-dev</id>
@@ -23,7 +28,7 @@
                                 <id>haapi-android-client</id>
                                 <client-name>Haapi Android Client</client-name>
                                 <no-authentication>true</no-authentication>
-                                <redirect-uris tags=" aHR0cHM6Ly8je0xPQ0FMSE9TVCB8IGxvY2FsaG9zdH06Nzc3Ny9jbGllbnQtY2FsbGJhY2s= ">haapi:start</redirect-uris>
+                                <redirect-uris>app://haapi</redirect-uris>
                                 <audience>haapi-client</audience>
                                 <scope>address</scope>
                                 <scope>email</scope>
@@ -32,20 +37,14 @@
                                 <scope>profile</scope>
                                 <scope>read</scope>
                                 <scope>write</scope>
-                                <allowed-origins>https://localhost:8443</allowed-origins>
-                                <allowed-origins>https://example.com:8443</allowed-origins>
                                 <capabilities>
                                     <code/>
-                                    <implicit/>
-                                    <client-credentials/>
                                     <haapi/>
                                 </capabilities>
                                 <attestation>
                                     <android>
                                         <package-name>io.curity.haapidemo</package-name>
-<!--                                        <package-name>io.curity.androidcat</package-name>-->
-<!--                                        <package-name>se.curity.identityserver.haapi.android.sdk.test</package-name>-->
-                                        <signature-digest>rIplnew74f38oCiH+qvg4KUEvhV6LAXLhkf+m+V71B8=</signature-digest>
+                                        <signature-digest>Z2DKEZO2XWFWQnApoRCzhqhIxzODe7BUsArj4Up9oKQ=</signature-digest>
                                         <android-policy>emulator-policy</android-policy>
                                     </android>
                                 </attestation>

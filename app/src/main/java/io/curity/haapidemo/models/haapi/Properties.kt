@@ -16,15 +16,18 @@
 
 package io.curity.haapidemo.models.haapi
 
-import org.json.JSONObject
+import android.os.Parcelable
+import kotlinx.android.parcel.IgnoredOnParcel
+import kotlinx.android.parcel.Parcelize
 import java.time.Duration
 
-sealed class Properties
+sealed class Properties : Parcelable
 {
-    abstract val json: JSONObject
+    abstract val jsonString: String
 
+    @Parcelize
     data class AuthorizationResponse(
-        override val json: JSONObject,
+        override val jsonString: String,
         val code: String?,
         val state: String?,
         val scope: String?,
@@ -35,13 +38,15 @@ sealed class Properties
         val sessionState: String?
     ) : Properties()
 
+    @Parcelize
     data class Polling(
-        override val json: JSONObject,
+        override val jsonString: String,
         val recipientOfCommunication: String?,
         val status: PollingStatus,
-    ) : Properties()
+    ) : Properties(), Parcelable
 
+    @Parcelize
     data class Unknown(
-        override val json: JSONObject,
+        override val jsonString: String
     ) : Properties()
 }

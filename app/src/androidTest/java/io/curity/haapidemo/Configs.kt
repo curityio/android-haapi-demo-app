@@ -35,7 +35,7 @@ val AUTHORIZATION_REQUEST_URI: HttpUrl = AUTHORIZATION_ENDPOINT.toHttpUrl()
         .addQueryParameter("response_type", "code")
         .addQueryParameter("scope", "read")
         .addQueryParameter("state", "foo")
-        .addQueryParameter("redirect_uri", "haapi:start")
+        .addQueryParameter("redirect_uri", "app://haapi")
         .build()
 
 val AUTHORIZATION_REQUEST_USING_IMPLICIT_URI: HttpUrl = AUTHORIZATION_ENDPOINT.toHttpUrl()
@@ -44,7 +44,7 @@ val AUTHORIZATION_REQUEST_USING_IMPLICIT_URI: HttpUrl = AUTHORIZATION_ENDPOINT.t
         .addQueryParameter("response_type", "token")
         .addQueryParameter("scope", "read")
         .addQueryParameter("state", "foo")
-        .addQueryParameter("redirect_uri", "haapi:start")
+        .addQueryParameter("redirect_uri", "app://haapi")
         .build()
 
 

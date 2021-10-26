@@ -16,12 +16,16 @@
 
 package io.curity.haapidemo.models.haapi.actions
 
+import android.os.Parcelable
 import io.curity.haapidemo.models.haapi.Field
 import io.curity.haapidemo.models.haapi.Message
+import kotlinx.android.parcel.Parcelize
+import kotlinx.android.parcel.RawValue
 import org.json.JSONObject
 
-sealed class ActionModel
+sealed class ActionModel: Parcelable
 {
+    @Parcelize
     data class Form(
         val href: String,
         val method: String,
@@ -30,16 +34,18 @@ sealed class ActionModel
         val fields: List<Field>
     ) : ActionModel()
 
+    @Parcelize
     data class Selector(
         val options: List<Action>
     ) : ActionModel()
 
-    sealed class ClientOperation
+    sealed class ClientOperation : Parcelable
     {
         abstract val name: String
         abstract val continueActions: List<Action>
         abstract val errorActions: List<Action>
 
+        @Parcelize
         data class ExternalBrowser(
             val arguments: Arguments.ExternalBrowser,
             override val continueActions: List<Action>,
@@ -49,6 +55,7 @@ sealed class ActionModel
             override val name = "external-browser"
         }
 
+        @Parcelize
         data class BankID(
             val arguments: Arguments.BankID,
             override val continueActions: List<Action>,
@@ -58,6 +65,7 @@ sealed class ActionModel
             override val name = "bankid"
         }
 
+        @Parcelize
         data class EncapAutoActivation(
             val arguments: Arguments.EncapAutoActivation,
             override val continueActions: List<Action>,
@@ -67,9 +75,10 @@ sealed class ActionModel
             override val name = "encap-auto-activation"
         }
 
+        @Parcelize
         data class Unknown(
             override val name: String,
-            val arguments: JSONObject?,
+            val arguments: @RawValue JSONObject?,
             override val continueActions: List<Action>,
             override val errorActions: List<Action>,
         ) : ClientOperation()

@@ -20,6 +20,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
+import io.curity.haapidemo.R
 import io.curity.haapidemo.uicomponents.*
 
 class ProfileAdapter(
@@ -29,11 +30,11 @@ class ProfileAdapter(
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return when(viewType) {
-            ProfileItem.Type.Header.ordinal -> SectionViewHolder.from(parent)
+            ProfileItem.Type.Header.ordinal -> SettingsSectionViewHolder.from(parent)
             ProfileItem.Type.Content.ordinal -> TextViewHolder.from(parent)
             ProfileItem.Type.Toggle.ordinal -> ToggleViewHolder.from(parent)
             ProfileItem.Type.LoadingAction.ordinal -> LoadingActionViewHolder.from(parent)
-            ProfileItem.Type.Checkbox.ordinal -> CheckboxViewHolder.from(parent)
+            ProfileItem.Type.Checkbox.ordinal -> CheckboxViewHolder.from(parent, leftMargin = parent.context.resources.getDimension(R.dimen.padding).toInt())
             ProfileItem.Type.Recycler.ordinal -> RecyclerViewHolder.from(parent)
             else -> throw ClassCastException("No class for viewType $viewType")
         }
@@ -41,7 +42,7 @@ class ProfileAdapter(
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (holder) {
-            is SectionViewHolder -> {
+            is SettingsSectionViewHolder -> {
                 val headerItem = getItem(position) as ProfileItem.Header
                 holder.bind(headerItem.title)
             }
@@ -72,6 +73,7 @@ class ProfileAdapter(
                 holder.bind(
                     text = item.text,
                     isChecked = item.isChecked,
+                    isClickable = true,
                     didToggle =  { toggleHandler(position) }
                 )
             }

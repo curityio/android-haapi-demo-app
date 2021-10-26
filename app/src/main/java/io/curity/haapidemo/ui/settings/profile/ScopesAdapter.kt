@@ -19,6 +19,7 @@ package io.curity.haapidemo.ui.settings.profile
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
+import io.curity.haapidemo.R
 import io.curity.haapidemo.uicomponents.CheckboxViewHolder
 
 class ScopesAdapter(private val checkHandler: (Int) -> Unit): ListAdapter<ProfileItem.Checkbox, CheckboxViewHolder>(
@@ -26,12 +27,12 @@ class ScopesAdapter(private val checkHandler: (Int) -> Unit): ListAdapter<Profil
 ) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CheckboxViewHolder {
-        return CheckboxViewHolder.from(parent)
+        return CheckboxViewHolder.from(parent, leftMargin = parent.context.resources.getDimension(R.dimen.spacing).toInt())
     }
 
     override fun onBindViewHolder(holder: CheckboxViewHolder, position: Int) {
         val item = getItem(position)
-        holder.bind(text = item.text, isChecked = item.isChecked) {
+        holder.bind(text = item.text, isChecked = item.isChecked, isClickable = true) {
             checkHandler(position)
         }
     }

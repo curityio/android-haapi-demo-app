@@ -22,6 +22,7 @@ import android.graphics.Color
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -51,8 +52,8 @@ class MessageView @JvmOverloads constructor(
         context.obtainStyledAttributes(
             attrs,
             R.styleable.MessageView,
-            defStyleAttr,
-            0
+            0,
+            defStyleAttr
         ).apply {
             try {
                 val bgDrawable = getDrawable(R.styleable.MessageView_background) ?: AppCompatResources.getDrawable(
@@ -93,13 +94,28 @@ class MessageView @JvmOverloads constructor(
 
     @Suppress("Unused")
     fun applyStyle(style: MessageStyle) {
-        background.setBackgroundColor(style.backgroundColor)
+        background.setBackgroundColor(resources.getColor(style.backgroundColor, null))
 
-        textView.setTextColor(style.textColor)
-        textView.setTextAppearance(style.textAppearance)
+        textView.setTextColor(resources.getColor(style.textColor, null))
+        textView.setTextAppearance(style.textColor)
 
-        imageView.setColorFilter(style.tintColor)
+        imageView.setColorFilter(resources.getColor(style.tintColor, null))
         imageView.setImageResource(style.imageResource)
+    }
+
+    companion object {
+        fun newInstance(context: Context, text: String, style: MessageStyle): MessageView {
+            val view = MessageView(context)
+            val newLayoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            newLayoutParams.setMargins(0, context.resources.getDimension(R.dimen.padding).toInt(), 0, 0)
+            view.layoutParams = newLayoutParams
+            view.setText(text)
+            view.applyStyle(style)
+            return view
+        }
     }
 }
 

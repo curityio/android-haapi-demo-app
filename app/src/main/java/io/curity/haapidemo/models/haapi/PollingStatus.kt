@@ -16,11 +16,17 @@
 
 package io.curity.haapidemo.models.haapi
 
-sealed class PollingStatus(override val discriminator: String) : EnumLike
-{
-    object Pending : PollingStatus("pending")
-    object Done : PollingStatus("done")
-    object Failed : PollingStatus("failed")
+import android.os.Parcelable
+import kotlinx.android.parcel.Parcelize
 
+sealed class PollingStatus(override val discriminator: String) : EnumLike, Parcelable
+{
+    @Parcelize
+    object Pending : PollingStatus("pending")
+    @Parcelize
+    object Done : PollingStatus("done")
+    @Parcelize
+    object Failed : PollingStatus("failed")
+    @Parcelize
     data class Unknown(val value: String) : PollingStatus(value)
 }

@@ -59,6 +59,10 @@ class DisclosureView @JvmOverloads constructor(
                 collapseLinearLayout.visibility = View.GONE
             }
         }
+
+        root.setOnClickListener {
+            toggleButton.isChecked = !toggleButton.isChecked
+        }
     }
 
     @SuppressLint("Recycle")
@@ -66,8 +70,8 @@ class DisclosureView @JvmOverloads constructor(
         context.obtainStyledAttributes(
             attrs,
             R.styleable.DisclosureView,
-            defStyleAttr,
-            0
+            0,
+            defStyleAttr
         ).apply {
             try {
                 getResourceId(R.styleable.DisclosureView_titleStyle, R.style.TextAppearance_BodyMedium).let {

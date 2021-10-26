@@ -23,8 +23,11 @@ import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.LayoutInflater
 import android.view.View
+import android.widget.ImageView
 import android.widget.ProgressBar
+import android.widget.Space
 import android.widget.TextView
+import androidx.annotation.DrawableRes
 import androidx.appcompat.content.res.AppCompatResources
 import androidx.constraintlayout.widget.ConstraintLayout
 import io.curity.haapidemo.R
@@ -41,10 +44,12 @@ class ProgressButton @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
-): ConstraintLayout(context, attrs, defStyleAttr) {
+): ConstraintLayout(context, attrs, defStyleAttr), ViewStopLoadable {
 
     private val progressBar: ProgressBar
     private val textView: TextView
+    private val imageView: ImageView
+    private val space: Space
 
     var isLoading: Boolean = false
         private set
@@ -53,6 +58,8 @@ class ProgressButton @JvmOverloads constructor(
         val root = LayoutInflater.from(context).inflate(R.layout.progress_btn_layout, this, true)
         progressBar = root.findViewById(R.id.progressBar)
         textView = root.findViewById(R.id.text_view)
+        imageView = root.findViewById(R.id.image_view)
+        space = root.findViewById(R.id.spacer)
 
         loadAttrs(attrs, defStyleAttr)
 
@@ -64,8 +71,8 @@ class ProgressButton @JvmOverloads constructor(
         context.obtainStyledAttributes(
             attrs,
             R.styleable.ProgressButton,
-            defStyleAttr,
-            0
+            0,
+            defStyleAttr
         )
             .apply {
                 try {
@@ -119,6 +126,15 @@ class ProgressButton @JvmOverloads constructor(
     }
 
     /**
+     * Sets an image with a @DrawableRes [image]
+     */
+    fun setImage(@DrawableRes image: Int) {
+        imageView.setImageResource(image)
+        imageView.visibility = VISIBLE
+        space.visibility = VISIBLE
+    }
+
+    /**
      * Set the loading state to `ProgressButton`. If loading is `true` then the text is hidden, the spinner is shown and
      * ProgressButton is not clickable unless calling `setLoading(false)`.
      *
@@ -127,13 +143,19 @@ class ProgressButton @JvmOverloads constructor(
     fun setLoading(loading: Boolean) {
         isLoading = loading
         if (isLoading) {
-            progressBar.visibility = View.VISIBLE
-            textView.visibility = View.GONE
+            progressBar.visibility = VISIBLE
+            textView.visibility = GONE
+            imageView.visibility = GONE
             isClickable = false
         } else {
-            progressBar.visibility = View.GONE
-            textView.visibility = View.VISIBLE
+            progressBar.visibility = GONE
+            textView.visibility = VISIBLE
+            imageView.visibility = VISIBLE
             isClickable = true
         }
+    }
+
+    override fun stopLoading() {
+        setLoading(false)
     }
 }

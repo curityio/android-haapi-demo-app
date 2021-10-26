@@ -20,6 +20,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.CheckBox
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
 import io.curity.haapidemo.R
 
@@ -30,21 +31,25 @@ class CheckboxViewHolder private constructor(itemView: View): RecyclerView.ViewH
     fun bind(
         text: CharSequence,
         isChecked: Boolean,
+        isClickable: Boolean,
         didToggle: () -> Unit)
     {
         checkboxView.text = text
         checkboxView.isChecked = isChecked
-
+        checkboxView.isClickable = isClickable
         checkboxView.setOnCheckedChangeListener { _, _ ->
             didToggle()
         }
     }
 
     companion object {
-        fun from(parentView: ViewGroup): CheckboxViewHolder {
+        fun from(parentView: ViewGroup, leftMargin: Int): CheckboxViewHolder {
             val layoutInflater = LayoutInflater.from(parentView.context)
             val view = layoutInflater.inflate(R.layout.checkbox_view_item, parentView, false)
 
+            val customParams = ConstraintLayout.LayoutParams(view.layoutParams)
+            customParams.setMargins(leftMargin, 0, 0, 0)
+            view.layoutParams = customParams
             return CheckboxViewHolder(view)
         }
     }

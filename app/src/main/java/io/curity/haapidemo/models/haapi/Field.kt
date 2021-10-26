@@ -16,73 +16,91 @@
 
 package io.curity.haapidemo.models.haapi
 
-sealed class Field(
-    val name: String,
-    val value: String?
-)
-{
-    class Hidden(
-        name: String,
-        value: String
-    ) : Field(name, value)
+import android.os.Parcelable
+import kotlinx.android.parcel.Parcelize
 
+sealed class Field : Parcelable
+{
+    abstract val name: String
+    abstract val value: String?
+
+    @Parcelize
+    data class Hidden(
+        override val name: String,
+        override val value: String
+    ) : Field()
+
+    @Parcelize
     class Text(
-        name: String,
-        value: String?,
+        override val name: String,
+        override val value: String?,
         val label: Message?,
         val placeholder: String?,
         val kind: TextKind?
-    ) : Field(name, value)
+    ) : Field()
 
-    sealed class TextKind(override val discriminator: String) : EnumLike
+    sealed class TextKind(override val discriminator: String) : EnumLike, Parcelable
     {
+        @Parcelize
         object Number : TextKind("number")
+        @Parcelize
         object Email : TextKind("email")
+        @Parcelize
         object Url : TextKind("url")
+        @Parcelize
         object Tel : TextKind("tel")
+        @Parcelize
         object Color : TextKind("color")
 
+        @Parcelize
         data class UNKNOWN(val kind: String) : TextKind(kind)
     }
 
+    @Parcelize
     class Username(
-        name: String,
+        override val name: String,
         val label: Message?,
         val placeholder: String?,
-        value: String?,
-    ) : Field(name, value)
+        override val value: String?,
+    ) : Field()
 
+    @Parcelize
     class Password(
-        name: String,
-        value: String?,
+        override val name: String,
+        override val value: String?,
         val label: Message?,
         val placeholder: String?,
-    ) : Field(name, value)
+    ) : Field()
 
+    @Parcelize
     class Checkbox(
-        name: String,
+        override val name: String,
         val label: Message?,
-        value: String?,
+        override val value: String?,
         val checked: Boolean,
         val readonly: Boolean,
-    ) : Field(name, value)
+    ) : Field()
 
+    @Parcelize
     class Select(
-        name: String,
-        value: String?,
-        label: Message,
-        options: List<Option>
-    ) : Field(name, value)
+        override val name: String,
+        override val value: String?,
+        val label: Message,
+        val options: List<Option>
+    ) : Field()
     {
+        @Parcelize
         class Option(
             val label: Message,
             val value: String,
             val selected: Boolean
-        )
+        ): Parcelable
     }
 
+    @Parcelize
     class Context(
-        name: String
-    ) : Field(name, null)
-
+        override val name: String
+    ) : Field() {
+        override val value: String? = null
+    }
 }

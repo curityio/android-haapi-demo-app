@@ -15,7 +15,12 @@
       limitations under the License.
     -->
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="io.curity.haapidemo">
+    package="io.curity.haapidemo"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:ignore="LockedOrientationActivity">
+
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
         android:allowBackup="false"
@@ -26,7 +31,18 @@
         android:theme="@style/AppTheme">
         <activity android:name=".ShowcaseActivity" android:label="@string/title_activity_showcase"/>
         <activity android:name=".ProfileActivity"></activity>
-        <activity android:name=".FlowActivity"></activity>
+        <activity android:name=".FlowActivity"
+            android:launchMode="singleTop">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="app"
+                    android:host="haapi"
+                    />
+            </intent-filter>
+        </activity>
         <activity android:name=".MainActivity"
             android:screenOrientation="portrait">
             <intent-filter>
@@ -36,5 +52,4 @@
             </intent-filter>
         </activity>
     </application>
-
 </manifest>
