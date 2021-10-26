@@ -30,9 +30,10 @@ import kotlinx.android.parcel.Parcelize
  */
 sealed class HaapiStep
 
+@Parcelize
 data class Redirect(
     val action: Action.Form,
-) : HaapiStep()
+) : HaapiStep(), Parcelable
 
 @Parcelize
 data class AuthenticatorOption(

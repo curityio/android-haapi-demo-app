@@ -21,6 +21,7 @@ import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import io.curity.haapidemo.R
+import io.curity.haapidemo.models.Redirect
 import io.curity.haapidemo.uicomponents.MessageView
 import io.curity.haapidemo.uicomponents.ProgressButton
 import java.lang.IllegalArgumentException
@@ -28,6 +29,7 @@ import java.lang.IllegalArgumentException
 class RedirectFragment: Fragment(R.layout.fragment_redirect) {
 
     private var message: String? = null
+    private lateinit var redirectionStep: Redirect
     private lateinit var haapiFlowViewModel: HaapiFlowViewModel
 
     private lateinit var button: ProgressButton
@@ -37,6 +39,7 @@ class RedirectFragment: Fragment(R.layout.fragment_redirect) {
 
         if (arguments != null) {
             message = requireArguments().getString(EXTRA_MESSAGE)
+            redirectionStep = requireArguments().getParcelable(EXTRA_STEP) ?: throw IllegalStateException("Expecting an AuthenticatorSelector")
         } else {
             throw IllegalArgumentException("RedirectFragment.newInstance() was not used")
         }
@@ -54,10 +57,7 @@ class RedirectFragment: Fragment(R.layout.fragment_redirect) {
 
         button = view.findViewById(R.id.button)
         button.setOnClickListener {
-            val modelForm = haapiFlowViewModel.actionModelForm
-            if (modelForm != null) {
-                haapiFlowViewModel.submit(modelForm, emptyMap())
-            }
+            haapiFlowViewModel.submit(redirectionStep.action.model, emptyMap())
         }
 
         haapiFlowViewModel.isLoading.observe(viewLifecycleOwner) {
@@ -66,12 +66,17 @@ class RedirectFragment: Fragment(R.layout.fragment_redirect) {
     }
 
     companion object {
-        private const val EXTRA_MESSAGE = "io.curity.fragment_redirect.message"
+        private const val EXTRA_MESSAGE = "io.curity.redirectFragment.extra_message"
+        private const val EXTRA_STEP = "io.curity.redirectFragment.extra_step"
 
-        fun newInstance(message: String? = null): RedirectFragment {
+        fun newInstance(
+            step: Redirect,
+            message: String? = null
+        ): RedirectFragment {
             return RedirectFragment().apply {
                 val bundle = Bundle()
                 bundle.putString(EXTRA_MESSAGE, message)
+                bundle.putParcelable(EXTRA_STEP, step)
 
                 arguments = bundle
             }

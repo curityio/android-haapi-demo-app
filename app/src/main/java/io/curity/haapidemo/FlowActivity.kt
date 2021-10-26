@@ -99,7 +99,7 @@ class FlowActivity : AppCompatActivity() {
                 is Redirect -> {
                     title = step.action.kind
                     headerView.setText(step.action.kind)
-                    commitNewFragment(RedirectFragment.newInstance(), step)
+                    commitNewFragment(RedirectFragment.newInstance(step), step)
                 }
                 is AuthenticatorSelector -> {
                     val headerTitle = step.title.message ?: ""

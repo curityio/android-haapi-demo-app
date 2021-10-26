@@ -16,14 +16,11 @@
 
 package io.curity.haapidemo.ui.haapiflow
 
-import android.util.Log
 import androidx.lifecycle.*
-import io.curity.haapidemo.Constant
 import io.curity.haapidemo.flow.HaapiFlowConfiguration
 import io.curity.haapidemo.flow.HaapiFlowManager
 import io.curity.haapidemo.models.*
 import io.curity.haapidemo.models.haapi.Link
-import io.curity.haapidemo.models.haapi.RepresentationType
 import io.curity.haapidemo.models.haapi.actions.Action
 import io.curity.haapidemo.models.haapi.actions.ActionModel
 import kotlinx.coroutines.Dispatchers
@@ -41,14 +38,6 @@ class HaapiFlowViewModel(haapiFlowConfiguration: HaapiFlowConfiguration): ViewMo
     private val _isLoading = MutableLiveData(false)
     val isLoading: LiveData<Boolean>
         get() = _isLoading
-
-    val actionModelForm: ActionModel.Form?
-        get() {
-            return when (val step = liveStep.value) {
-                is Redirect -> { step.action.model }
-                else -> { return null }
-            }
-        }
 
     val redirectURI = haapiFlowConfiguration.redirectURI
 
