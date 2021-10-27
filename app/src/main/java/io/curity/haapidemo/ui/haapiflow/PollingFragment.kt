@@ -27,12 +27,11 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import io.curity.haapidemo.Constant
 import io.curity.haapidemo.R
-import io.curity.haapidemo.models.PollingStep
-import io.curity.haapidemo.models.haapi.PollingStatus
 import io.curity.haapidemo.uicomponents.ProgressButton
 import io.curity.haapidemo.uicomponents.ViewStopLoadable
 import kotlinx.coroutines.*
-import java.util.*
+import se.curity.haapi.models.android.sdk.models.haapi.PollingStatus
+import se.curity.haapi.models.android.sdk.models.haapi.PollingStep
 
 class PollingFragment: Fragment(R.layout.fragment_polling) {
 
@@ -136,20 +135,20 @@ class PollingFragment: Fragment(R.layout.fragment_polling) {
 
         val isLoading = haapiFlowViewModel.isLoading
         val mainActionTitle: String
-            get() = pollingStep.main.model.actionTitle?.message ?: pollingStep.main.kind.toUpperCase(Locale.getDefault())
+            get() = pollingStep.mainAction.model.actionTitle?.value() ?: pollingStep.mainAction.kind.discriminator.uppercase()
         val cancelActionTitle: String?
-            get() = pollingStep.cancel?.model?.actionTitle?.message
+            get() = pollingStep.cancelAction?.model?.actionTitle?.value()
         val status: String
             get() = pollingStep.properties.status.discriminator
 
         fun submit() {
-            haapiFlowViewModel.submit(pollingStep.main.model, emptyMap())
+            haapiFlowViewModel.submit(pollingStep.mainAction.model, emptyMap())
         }
 
         fun cancel() {
             pollingJob?.cancel()
             shouldPoll = false
-            val cancelActionForm = pollingStep.cancel
+            val cancelActionForm = pollingStep.cancelAction
             if (cancelActionForm != null) {
                 haapiFlowViewModel.submit(cancelActionForm.model, emptyMap())
             }

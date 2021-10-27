@@ -55,4 +55,11 @@
     <string name="add_content_description">An add logo</string>
     <string name="progress_btn_content_description">An image that illustrates the progress button</string>
     <string name="close_haapi_flow_content_description">Button to close the flow activity</string>
+
+<!--    Titles-->
+    <string name="redirection">Redirection</string>
+    <string name="polling">Polling</string>
+    <string name="oauth_authorization_completed">OAuth authorization completed</string>
+    <string name="user_consent">User consent</string>
+    <string name="success">Success</string>
 </resources>

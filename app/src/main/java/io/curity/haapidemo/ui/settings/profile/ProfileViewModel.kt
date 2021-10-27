@@ -19,8 +19,8 @@ import android.accounts.NetworkErrorException
 import androidx.lifecycle.*
 import io.curity.haapidemo.ProfileIndex
 import io.curity.haapidemo.flow.HaapiFlowConfiguration
-import io.curity.haapidemo.flow.disableSslTrustVerification
 import io.curity.haapidemo.ui.settings.HaapiFlowConfigurationRepository
+import io.curity.haapidemo.utils.disableSslTrustVerification
 import kotlinx.coroutines.*
 import okhttp3.OkHttpClient
 import okhttp3.Request

@@ -21,15 +21,15 @@ import android.view.View
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import io.curity.haapidemo.R
-import io.curity.haapidemo.models.Redirect
 import io.curity.haapidemo.uicomponents.MessageView
 import io.curity.haapidemo.uicomponents.ProgressButton
+import se.curity.haapi.models.android.sdk.models.haapi.RedirectionStep
 import java.lang.IllegalArgumentException
 
 class RedirectFragment: Fragment(R.layout.fragment_redirect) {
 
     private var message: String? = null
-    private lateinit var redirectionStep: Redirect
+    private lateinit var redirectionStep: RedirectionStep
     private lateinit var haapiFlowViewModel: HaapiFlowViewModel
 
     private lateinit var button: ProgressButton
@@ -57,7 +57,7 @@ class RedirectFragment: Fragment(R.layout.fragment_redirect) {
 
         button = view.findViewById(R.id.button)
         button.setOnClickListener {
-            haapiFlowViewModel.submit(redirectionStep.action.model, emptyMap())
+            haapiFlowViewModel.submit(redirectionStep.actionForm.model, emptyMap())
         }
 
         haapiFlowViewModel.isLoading.observe(viewLifecycleOwner) {
@@ -70,13 +70,13 @@ class RedirectFragment: Fragment(R.layout.fragment_redirect) {
         private const val EXTRA_STEP = "io.curity.redirectFragment.extra_step"
 
         fun newInstance(
-            step: Redirect,
+            redirectionStep: RedirectionStep,
             message: String? = null
         ): RedirectFragment {
             return RedirectFragment().apply {
                 val bundle = Bundle()
                 bundle.putString(EXTRA_MESSAGE, message)
-                bundle.putParcelable(EXTRA_STEP, step)
+                bundle.putParcelable(EXTRA_STEP, redirectionStep)
 
                 arguments = bundle
             }

@@ -16,6 +16,7 @@
 
 package io.curity.haapidemo.ui.haapiflow
 
+import android.annotation.SuppressLint
 import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.text.Editable
@@ -39,17 +40,15 @@ import androidx.recyclerview.widget.RecyclerView
 import io.curity.haapidemo.Constant
 import io.curity.haapidemo.ProblemHandable
 import io.curity.haapidemo.R
-import io.curity.haapidemo.models.InteractiveForm
-import io.curity.haapidemo.models.haapi.Field
-import io.curity.haapidemo.models.haapi.Link
-import io.curity.haapidemo.models.haapi.UserMessage
-import io.curity.haapidemo.models.haapi.actions.ActionModel
-import io.curity.haapidemo.models.haapi.extensions.messageStyle
-import io.curity.haapidemo.models.haapi.extensions.toInteractiveFormItemCheckbox
-import io.curity.haapidemo.models.haapi.problems.*
 import io.curity.haapidemo.uicomponents.*
 import io.curity.haapidemo.utils.Clearable
 import io.curity.haapidemo.utils.dismissKeyboard
+import io.curity.haapidemo.utils.messageStyle
+import io.curity.haapidemo.utils.toInteractiveFormItemCheckbox
+import se.curity.haapi.models.android.sdk.models.haapi.*
+import se.curity.haapi.models.android.sdk.models.haapi.actions.Action
+import se.curity.haapi.models.android.sdk.models.haapi.actions.ActionModel
+import se.curity.haapi.models.android.sdk.models.haapi.actions.FormField
 import java.lang.ref.WeakReference
 import java.util.*
 import kotlin.collections.HashMap
@@ -81,7 +80,7 @@ class InteractiveFormFragment: Fragment(R.layout.fragment_interactive_form), Pro
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val step = requireArguments().getParcelable<InteractiveForm>(EXTRA_STEP) ?: throw IllegalStateException("Expecting an InteractiveForm")
+        val step = requireArguments().getParcelable<HaapiRepresentation>(EXTRA_STEP) ?: throw IllegalStateException("Expecting an InteractiveForm")
         val haapiFlowViewModel = ViewModelProvider(requireActivity()).get(HaapiFlowViewModel::class.java)
         interactiveFormViewModel = ViewModelProvider(this, InteractiveFormViewModelFactory(step, haapiFlowViewModel))
             .get(InteractiveFormViewModel::class.java)
@@ -105,6 +104,7 @@ class InteractiveFormFragment: Fragment(R.layout.fragment_interactive_form), Pro
         }
     }
 
+    @SuppressLint("NotifyDataSetChanged")
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
@@ -147,7 +147,7 @@ class InteractiveFormFragment: Fragment(R.layout.fragment_interactive_form), Pro
             interactiveFormViewModel.userMessages.forEach { userMessage ->
                 val messageView = MessageView.newInstance(
                     context = requireContext(),
-                    text = userMessage.text.message ?: "",
+                    text = userMessage.text.value(),
                     style = userMessage.messageStyle()
                 )
                 messagesLayout.addView(messageView)
@@ -179,13 +179,13 @@ class InteractiveFormFragment: Fragment(R.layout.fragment_interactive_form), Pro
                     val bitmap = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.size)
                     val headerViewLink = HeaderView(requireContext(), null, R.style.HeaderView_Link).apply {
                         this.setImageBitmap(bitmap)
-                        this.setText(link.title?.message ?: "")
+                        this.setText(link.title?.value() ?: "")
                     }
                     linksLayout.addView(headerViewLink)
                 }
             } else {
                 val button = ProgressButton(requireContext(), null, R.style.LinkProgressButton).apply {
-                    this.setText(link.title?.message ?: "")
+                    this.setText(link.title?.value() ?: "")
                     this.setOnClickListener {
                         dismissKeyboard()
                         weakButton = WeakReference(this)
@@ -203,15 +203,15 @@ class InteractiveFormFragment: Fragment(R.layout.fragment_interactive_form), Pro
         Log.d(Constant.TAG_FRAGMENT_LIFECYCLE, "InteractiveForm is destroyed")
     }
 
-    override fun handleProblem(problem: HaapiProblem) {
-        interactiveFormViewModel.handleProblem(problem)
+    override fun handleProblemRepresentation(problem: ProblemRepresentation) {
+        interactiveFormViewModel.handleProblemRepresentation(problem)
     }
 
     companion object {
         private const val DATA_COPY = "io.curity.haapidemo.interactiveFormFragment.data_copy"
         private const val EXTRA_STEP = "io.curity.haapidemo.interactiveFormFragment.extra_step"
 
-        fun newInstance(step: InteractiveForm): InteractiveFormFragment {
+        fun newInstance(step: HaapiRepresentation): InteractiveFormFragment {
             val fragment = InteractiveFormFragment()
             fragment.arguments = Bundle().apply {
                 putParcelable(EXTRA_STEP, step)
@@ -221,7 +221,7 @@ class InteractiveFormFragment: Fragment(R.layout.fragment_interactive_form), Pro
     }
 }
 
-class InteractiveFormViewModel(private val interactiveFormStep: InteractiveForm, private val haapiFlowViewModel: HaapiFlowViewModel): ViewModel(), ProblemHandable {
+class InteractiveFormViewModel(private val interactiveFormStep: HaapiRepresentation, private val haapiFlowViewModel: HaapiFlowViewModel): ViewModel(), ProblemHandable {
 
     private var _interactiveFormItems: MutableList<InteractiveFormItem> = mutableListOf()
     val interactiveFormItems: List<InteractiveFormItem>
@@ -259,10 +259,14 @@ class InteractiveFormViewModel(private val interactiveFormStep: InteractiveForm,
     private fun setupInteractiveFormItems() {
         _interactiveFormItems.clear()
         for (action in interactiveFormStep.actions) {
+            if (action !is Action.Form) {
+                return
+            }
+
             // We display the section title only if we have multiple actions
             if (interactiveFormStep.actions.size > 1) {
                 action.title?.let {
-                    val label = it.message ?: it.key ?: ""
+                    val label = it.value()
                     _interactiveFormItems.add(
                         InteractiveFormItem.SectionTitle(label)
                     )
@@ -270,76 +274,61 @@ class InteractiveFormViewModel(private val interactiveFormStep: InteractiveForm,
             }
             for (field in action.model.fields) {
                 when (field) {
-                    is Field.Text -> {
-                        val inputType = when (field.kind) {
-                            is Field.TextKind.Number -> InputType.TYPE_CLASS_NUMBER
-                            is Field.TextKind.Tel -> InputType.TYPE_CLASS_PHONE
-                            else -> InputType.TYPE_CLASS_TEXT
-                        }
-
-                        _interactiveFormItems.add(
-                            InteractiveFormItem.EditText(
-                                key = field.name,
-                                inputType = inputType,
-                                label = field.label?.message ?: "",
-                                hint = field.placeholder ?: "",
-                                value = field.value ?: ""
+                    is FormField.Text -> {
+                        if (field.type == FormField.Type.Password) {
+                            _interactiveFormItems.add(
+                                InteractiveFormItem.Password(
+                                    key = field.name,
+                                    label = field.label?.value() ?: "",
+                                    hint = field.label?.value() ?: "",
+                                    value = field.value ?: ""
+                                )
                             )
-                        )
+                        } else {
+                            val inputType = when (field.kind) {
+                                is FormField.Text.Kind.Number -> InputType.TYPE_CLASS_NUMBER
+                                is FormField.Text.Kind.Tel -> InputType.TYPE_CLASS_PHONE
+                                else -> InputType.TYPE_CLASS_TEXT
+                            }
+
+                            _interactiveFormItems.add(
+                                InteractiveFormItem.EditText(
+                                    key = field.name,
+                                    inputType = inputType,
+                                    label = field.label?.value() ?: "",
+                                    hint = field.label?.value() ?: "",
+                                    value = field.value ?: ""
+                                )
+                            )
+                        }
                     }
-                    is Field.Hidden -> {
+                    is FormField.Hidden -> {
                         Log.d(Constant.TAG, "Field.Hidden is ignored")
                     }
 
-                    is Field.Select -> {
-                        val selectOptions = field.options.mapNotNull { option ->
-                            val label = option.label.message
-                            if (label == null) {
-                                null
-                            } else {
-                                SelectOption(
-                                    label = label,
-                                    value = option.value
-                                )
-                            }
+                    is FormField.Select -> {
+                        val selectOptions = field.options.map { option ->
+                            val label = option.label.value()
+                            SelectOption(
+                                label = label,
+                                value = option.value
+                            )
                         }
                         _interactiveFormItems.add(
                             InteractiveFormItem.Select(
                                 key = field.name,
-                                label = field.label.message ?: "",
+                                label = field.label.value(),
                                 selectOptions = selectOptions,
                                 selectedIndex = field.options.indexOfFirst { it.selected }
                             )
                         )
                     }
 
-                    is Field.Context -> {
+                    is FormField.Context -> {
                         Log.w(Constant.TAG, "Field.Context was not handled")
                     }
 
-                    is Field.Username -> {
-                        _interactiveFormItems.add(
-                            InteractiveFormItem.EditText(
-                                key = field.name,
-                                inputType = InputType.TYPE_CLASS_TEXT,
-                                label = field.label?.message ?: "",
-                                hint = field.label?.message ?: "",
-                                value = field.value ?: ""
-                            )
-                        )
-                    }
-
-                    is Field.Password -> {
-                        _interactiveFormItems.add(
-                            InteractiveFormItem.Password(
-                                key = field.name,
-                                label = field.label?.message ?: "",
-                                hint = field.label?.message ?: "",
-                                value = field.value ?: ""
-                            )
-                        )
-                    }
-                    is Field.Checkbox -> {
+                    is FormField.Checkbox -> {
                         _interactiveFormItems.add(
                             field.toInteractiveFormItemCheckbox()
                         )
@@ -348,8 +337,8 @@ class InteractiveFormViewModel(private val interactiveFormStep: InteractiveForm,
             }
             _interactiveFormItems.add(
                 InteractiveFormItem.Button(
-                    key = action.kind,
-                    label = action.model.actionTitle?.message ?: "",
+                    key = action.kind.toString(),
+                    label = action.model.actionTitle?.value() ?: "",
                     actionModelForm = action.model
                 )
             )
@@ -376,7 +365,7 @@ class InteractiveFormViewModel(private val interactiveFormStep: InteractiveForm,
         _interactiveFormItems[position] = item
     }
 
-    fun submitActionModelForm(actionModelForm: ActionModel.Form) {
+    fun submitActionModelForm(actionModelForm: ActionModel.FormActionModel) {
         val indexAction = interactiveFormItems.indexOfFirst { it.id == actionModelForm.hashCode().toLong() }
         if (indexAction != -1) {
             val parameters: MutableMap<String, String> = mutableMapOf()
@@ -416,7 +405,7 @@ class InteractiveFormViewModel(private val interactiveFormStep: InteractiveForm,
         haapiFlowViewModel.followLink(link)
     }
 
-    override fun handleProblem(problem: HaapiProblem) {
+    override fun handleProblemRepresentation(problem: ProblemRepresentation) {
         if (problem is InvalidInputProblem) {
             Log.d(Constant.TAG, "Before {$_interactiveFormItems}")
             _interactiveFormItems.forEach { it.hasError = false }
@@ -440,15 +429,23 @@ class InteractiveFormViewModel(private val interactiveFormStep: InteractiveForm,
     data class ProblemContent(val title: String, val problemBundles: List<ProblemView.ProblemBundle>)
 }
 
-class InteractiveFormViewModelFactory(private val step: InteractiveForm, private val haapiFlowViewModel: HaapiFlowViewModel): ViewModelProvider.Factory {
+class InteractiveFormViewModelFactory(
+    private val haapiRepresentation: HaapiRepresentation,
+    private val haapiFlowViewModel: HaapiFlowViewModel
+): ViewModelProvider.Factory {
 
     override fun <T : ViewModel?> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(InteractiveFormViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return InteractiveFormViewModel(step, haapiFlowViewModel) as T
-        }
+        if (haapiRepresentation is AuthenticationStep || haapiRepresentation is RegistrationStep) {
+            if (modelClass.isAssignableFrom(InteractiveFormViewModel::class.java)) {
+                // TODO Check type if it is not an InteractiveFormStep
+                @Suppress("UNCHECKED_CAST")
+                return InteractiveFormViewModel(haapiRepresentation, haapiFlowViewModel) as T
+            }
 
-        throw IllegalArgumentException("Unknown ViewModel class InteractiveFormViewModel")
+            throw IllegalArgumentException("Unknown ViewModel class InteractiveFormViewModel")
+        } else {
+            throw IllegalStateException("HaapiRepresentation should be either an AuthenticationStep or a RegistrationStep: $haapiRepresentation")
+        }
     }
 }
 
@@ -481,7 +478,7 @@ sealed class InteractiveFormItem {
         override val id: Long = key.hashCode().toLong()
     }
 
-    data class Button(override val key: String, override val label: String, override var hasError: Boolean = false, val actionModelForm: ActionModel.Form): InteractiveFormItem() {
+    data class Button(override val key: String, override val label: String, override var hasError: Boolean = false, val actionModelForm: ActionModel.FormActionModel): InteractiveFormItem() {
         override val id: Long = actionModelForm.hashCode().toLong()
     }
 
@@ -510,7 +507,7 @@ data class SelectOption(val label: String, val value: String)
 
 class InteractiveFormAdapter(
     val itemChangeHandler: (Int, InteractiveFormItem) -> Unit,
-    val selectButtonHandler: (ActionModel.Form, ProgressButtonViewHolder) -> Unit
+    val selectButtonHandler: (ActionModel.FormActionModel, ProgressButtonViewHolder) -> Unit
 ): ListAdapter<InteractiveFormItem, RecyclerView.ViewHolder>(CONFIG_COMPARATOR) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
@@ -552,7 +549,7 @@ class InteractiveFormAdapter(
 
                         override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                             item.value = s.toString()
-                            itemChangeHandler(position, item)
+                            itemChangeHandler(holder.adapterPosition, item)
                         }
                     }
                 )
@@ -570,7 +567,7 @@ class InteractiveFormAdapter(
 
                     override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {
                         item.value = s.toString()
-                        itemChangeHandler(position, item)
+                        itemChangeHandler(holder.adapterPosition, item)
                     }
                 })
             }
@@ -591,7 +588,7 @@ class InteractiveFormAdapter(
                     isClickable = !item.readonly,
                     didToggle = {
                         item.checked = !item.checked
-                        itemChangeHandler(position, item)
+                        itemChangeHandler(holder.adapterPosition, item)
                     }
                 )
             }
@@ -605,7 +602,7 @@ class InteractiveFormAdapter(
                         override fun onItemSelected(parent: AdapterView<*>?, view: View?, selectedIndex: Int, id: Long) {
                             if (item.selectedIndex != selectedIndex) {
                                 item.selectedIndex = selectedIndex
-                                itemChangeHandler(position, item)
+                                itemChangeHandler(holder.adapterPosition, item)
                             }
                         }
 
@@ -662,20 +659,18 @@ class InteractiveFormAdapter(
     }
 }
 
-private fun HaapiProblem.problemBundle(): List<ProblemView.ProblemBundle> {
+private fun ProblemRepresentation.problemBundle(): List<ProblemView.ProblemBundle> {
     val problemBundles: MutableList<ProblemView.ProblemBundle> = mutableListOf()
     when (this) {
         is InvalidInputProblem -> {
             invalidFields.forEach { invalidField ->
                 val detail = invalidField.detail
-                if (detail != null) {
-                    problemBundles.add(
-                        ProblemView.ProblemBundle(
-                            text = detail,
-                            messageStyle = MessageStyle.Error()
-                        )
+                problemBundles.add(
+                    ProblemView.ProblemBundle(
+                        text = detail,
+                        messageStyle = MessageStyle.Error()
                     )
-                }
+                )
             }
         }
         is AuthorizationProblem -> { // Should not happen here but let's do it in the worst case
@@ -688,15 +683,13 @@ private fun HaapiProblem.problemBundle(): List<ProblemView.ProblemBundle> {
         }
         else -> {
             messages?.forEach { userMessage ->
-                val text = userMessage.text.message
-                if (text != null) {
-                    problemBundles.add(
-                        ProblemView.ProblemBundle(
-                            text = text,
-                            messageStyle = userMessage.messageStyle()
-                        )
+                val text = userMessage.text.value()
+                problemBundles.add(
+                    ProblemView.ProblemBundle(
+                        text = text,
+                        messageStyle = userMessage.messageStyle()
                     )
-                }
+                )
             }
         }
     }

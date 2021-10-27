@@ -29,12 +29,11 @@ import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import io.curity.haapidemo.Constant
 import io.curity.haapidemo.R
-import io.curity.haapidemo.models.AuthenticatorOption
-import io.curity.haapidemo.models.AuthenticatorSelector
-import io.curity.haapidemo.models.haapi.actions.ActionModel
 import io.curity.haapidemo.uicomponents.SelectorViewHolder
 import io.curity.haapidemo.uicomponents.ViewStopLoadable
 import io.curity.haapidemo.utils.getImageResources
+import se.curity.haapi.models.android.sdk.models.haapi.AuthenticatorSelectorStep
+import se.curity.haapi.models.android.sdk.models.haapi.actions.ActionModel
 import java.lang.ref.WeakReference
 
 class AuthenticatorSelectorFragment: Fragment() {
@@ -53,7 +52,7 @@ class AuthenticatorSelectorFragment: Fragment() {
         recyclerView = root.findViewById(R.id.recycler_view)
         recyclerView.adapter = adapter
 
-        val step = requireArguments().getParcelable<AuthenticatorSelector>(EXTRA_STEP) ?: throw IllegalStateException("Expecting an AuthenticatorSelector")
+        val step = requireArguments().getParcelable<AuthenticatorSelectorStep>(EXTRA_STEP) ?: throw IllegalStateException("Expecting an AuthenticatorSelector")
         val haapiFlowViewModel = ViewModelProvider(requireActivity()).get(HaapiFlowViewModel::class.java)
 
         authenticatorSelectorViewModel = ViewModelProvider(this, AuthenticatorSelectorViewModelFactory(step, haapiFlowViewModel))
@@ -91,20 +90,23 @@ class AuthenticatorSelectorFragment: Fragment() {
         })
     }
 
-    private fun submit(actionForm: ActionModel.Form, weakItem: WeakReference<ViewStopLoadable>) {
+    private fun submit(actionForm: ActionModel.FormActionModel, weakItem: WeakReference<ViewStopLoadable>) {
         this.weakItem = weakItem
         authenticatorSelectorViewModel.submit(actionForm)
     }
 
-    private class AuthenticatorSelectorViewModel(private val authenticatorSelectorStep: AuthenticatorSelector, private val haapiFlowViewModel: HaapiFlowViewModel): ViewModel() {
+    private class AuthenticatorSelectorViewModel(
+        private val authenticatorSelectorStep: AuthenticatorSelectorStep,
+        private val haapiFlowViewModel: HaapiFlowViewModel
+    ): ViewModel() {
 
         val isLoading: LiveData<Boolean>
             get() = haapiFlowViewModel.isLoading
 
-        val authenticatorOptions: List<AuthenticatorOption>
+        val authenticatorOptions: List<AuthenticatorSelectorStep.AuthenticatorOption>
             get() = authenticatorSelectorStep.authenticators
 
-        fun submit(form: ActionModel.Form) {
+        fun submit(form: ActionModel.FormActionModel) {
             haapiFlowViewModel.submit(
                 form,
                 emptyMap()
@@ -117,7 +119,10 @@ class AuthenticatorSelectorFragment: Fragment() {
         }
     }
 
-    private class AuthenticatorSelectorViewModelFactory(private val step: AuthenticatorSelector, private val haapiFlowViewModel: HaapiFlowViewModel): ViewModelProvider.Factory {
+    private class AuthenticatorSelectorViewModelFactory(
+        private val step: AuthenticatorSelectorStep,
+        private val haapiFlowViewModel: HaapiFlowViewModel
+    ): ViewModelProvider.Factory {
 
         override fun <T : ViewModel?> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(AuthenticatorSelectorViewModel::class.java)) {
@@ -129,8 +134,9 @@ class AuthenticatorSelectorFragment: Fragment() {
         }
     }
 
-    private class AuthenticatorSelectorAdapter(private val clickHandler: (ActionModel.Form, WeakReference<ViewStopLoadable>) -> Unit): ListAdapter<AuthenticatorOption, SelectorViewHolder>(
-        CONFIG_COMPARATOR) {
+    private class AuthenticatorSelectorAdapter(
+        private val clickHandler: (ActionModel.FormActionModel, WeakReference<ViewStopLoadable>) -> Unit
+    ): ListAdapter<AuthenticatorSelectorStep.AuthenticatorOption, SelectorViewHolder>(CONFIG_COMPARATOR) {
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SelectorViewHolder {
             return SelectorViewHolder.from(parent)
@@ -138,18 +144,27 @@ class AuthenticatorSelectorFragment: Fragment() {
 
         override fun onBindViewHolder(holder: SelectorViewHolder, position: Int) {
             val item = getItem(position)
-            holder.bind(item.label.message ?: "", imageResourceId = holder.itemView.getImageResources(item.haapiImageName())) {
+            holder.bind(
+                item.title.value(),
+                imageResourceId = holder.itemView.getImageResources(item.haapiImageName())
+            ) {
                 clickHandler(item.action.model, it)
             }
         }
 
         companion object {
-            private val CONFIG_COMPARATOR = object: DiffUtil.ItemCallback<AuthenticatorOption>() {
-                override fun areItemsTheSame(oldItem: AuthenticatorOption, newItem: AuthenticatorOption): Boolean {
+            private val CONFIG_COMPARATOR = object: DiffUtil.ItemCallback<AuthenticatorSelectorStep.AuthenticatorOption>() {
+                override fun areItemsTheSame(
+                    oldItem: AuthenticatorSelectorStep.AuthenticatorOption,
+                    newItem: AuthenticatorSelectorStep.AuthenticatorOption
+                ): Boolean {
                     return oldItem == newItem
                 }
 
-                override fun areContentsTheSame(oldItem: AuthenticatorOption, newItem: AuthenticatorOption): Boolean {
+                override fun areContentsTheSame(
+                    oldItem: AuthenticatorSelectorStep.AuthenticatorOption,
+                    newItem: AuthenticatorSelectorStep.AuthenticatorOption
+                ): Boolean {
                     return oldItem.type == newItem.type
                 }
             }
@@ -159,7 +174,7 @@ class AuthenticatorSelectorFragment: Fragment() {
     companion object {
         private const val EXTRA_STEP = "io.curity.haapidemo.authenticatorSelectorFragment.extra_step"
 
-        fun newInstance(step: AuthenticatorSelector): AuthenticatorSelectorFragment {
+        fun newInstance(step: AuthenticatorSelectorStep): AuthenticatorSelectorFragment {
             val fragment = AuthenticatorSelectorFragment()
             fragment.arguments = Bundle().apply {
                 putParcelable(EXTRA_STEP, step)
@@ -169,6 +184,6 @@ class AuthenticatorSelectorFragment: Fragment() {
     }
 }
 
-private fun AuthenticatorOption.haapiImageName(): String {
+private fun AuthenticatorSelectorStep.AuthenticatorOption.haapiImageName(): String {
     return "ic_icon_$type"
 }

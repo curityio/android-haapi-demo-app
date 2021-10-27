@@ -22,10 +22,10 @@ import android.widget.LinearLayout
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.*
 import io.curity.haapidemo.R
-import io.curity.haapidemo.models.OAuthTokenResponse
 import io.curity.haapidemo.uicomponents.DisclosureContent
 import io.curity.haapidemo.uicomponents.DisclosureView
 import io.curity.haapidemo.uicomponents.ProgressButton
+import se.curity.haapi.models.android.sdk.models.oauth.TokenResponse
 
 class TokensFragment: Fragment(R.layout.fragment_tokens) {
 
@@ -43,7 +43,7 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
         super.onCreate(savedInstanceState)
 
         if (arguments != null) {
-            val oAuthTokenResponse = requireArguments().getSerializable(EXTRA_OAUTH_TOKEN_RESPONSE) as OAuthTokenResponse
+            val oAuthTokenResponse = requireArguments().getParcelable<TokenResponse>(EXTRA_OAUTH_TOKEN_RESPONSE) ?: throw IllegalStateException("Expecting a TokenResponse")
             val haapiFlowViewModel = ViewModelProvider(requireActivity()).get(HaapiFlowViewModel::class.java)
             tokensViewModel = ViewModelProvider(this, TokensViewModelFactory(oAuthTokenResponse, haapiFlowViewModel))
                 .get(TokensViewModel::class.java)
@@ -93,40 +93,58 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
     }
 
     class TokensViewModel(
-        private val oAuthTokenResponse: OAuthTokenResponse,
+        private val tokenResponse: TokenResponse,
         private val haapiFlowViewModel: HaapiFlowViewModel
     ): ViewModel() {
 
-        val accessToken: String = oAuthTokenResponse.accessToken
-        val idToken: String? = oAuthTokenResponse.idToken
-        val refreshToken: String? = oAuthTokenResponse.refreshToken
+        val accessToken: String = tokenResponse.accessToken
+        val idToken: String? = tokenResponse.idToken
+        val refreshToken: String? = tokenResponse.refreshToken
         val disclosureContents: List<DisclosureContent>
 
         init {
             val mutableDisclosureContents = mutableListOf<DisclosureContent>()
-            oAuthTokenResponse.properties.keys().forEach {
-                if (it == "id_token" || it == "access_token" || it == "refresh_token") { return@forEach }
-                mutableDisclosureContents.add(DisclosureContent(it, oAuthTokenResponse.properties.get(it).toString()))
+            tokenResponse.tokenType?.let {
+                mutableDisclosureContents.add(
+                    DisclosureContent(
+                        label = "token_type",
+                        description = it
+                    )
+                )
             }
+            tokenResponse.scope?.let {
+                mutableDisclosureContents.add(
+                    DisclosureContent(
+                        label = "scope",
+                        description = it
+                    )
+                )
+            }
+            mutableDisclosureContents.add(
+                DisclosureContent(
+                    label = "expires_in",
+                    description = tokenResponse.expiresIn.seconds.toString()
+                )
+            )
             disclosureContents = mutableDisclosureContents
         }
 
         fun refreshToken() {
-            if (oAuthTokenResponse.refreshToken != null) {
-                haapiFlowViewModel.refreshAccessToken(oAuthTokenResponse.refreshToken)
+            tokenResponse.refreshToken?.let {
+                haapiFlowViewModel.refreshAccessToken(it)
             }
         }
     }
 
     class TokensViewModelFactory(
-        private val oAuthTokenResponse: OAuthTokenResponse,
+        private val tokenResponse: TokenResponse,
         private val haapiFlowViewModel: HaapiFlowViewModel
     ): ViewModelProvider.Factory {
 
         override fun <T : ViewModel?> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(TokensViewModel::class.java)) {
                 @Suppress("UNCHECKED_CAST")
-                return TokensViewModel(oAuthTokenResponse, haapiFlowViewModel) as T
+                return TokensViewModel(tokenResponse, haapiFlowViewModel) as T
             }
 
             throw IllegalArgumentException("Unknown ViewModel class TokensViewModel")
@@ -136,10 +154,10 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
     companion object {
         private const val EXTRA_OAUTH_TOKEN_RESPONSE = "io.curity.fragment_tokens.extra_oauth_token_response"
 
-        fun newInstance(oAuthTokenResponse: OAuthTokenResponse): TokensFragment {
+        fun newInstance(tokenResponse: TokenResponse): TokensFragment {
             val fragment = TokensFragment()
             fragment.arguments = Bundle().apply {
-                putSerializable(EXTRA_OAUTH_TOKEN_RESPONSE, oAuthTokenResponse)
+                putParcelable(EXTRA_OAUTH_TOKEN_RESPONSE, tokenResponse)
             }
             return fragment
         }

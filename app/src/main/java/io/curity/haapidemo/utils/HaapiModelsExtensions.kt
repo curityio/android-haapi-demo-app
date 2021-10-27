@@ -13,18 +13,18 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-package io.curity.haapidemo.models.haapi.extensions
+
+package io.curity.haapidemo.utils
 
 import android.content.Context
-import io.curity.haapidemo.models.haapi.Field
-import io.curity.haapidemo.models.haapi.UserMessage
 import io.curity.haapidemo.ui.haapiflow.InteractiveFormItem
 import io.curity.haapidemo.uicomponents.MessageStyle
 import io.curity.haapidemo.uicomponents.MessageView
-import java.util.*
+import se.curity.haapi.models.android.sdk.models.haapi.UserMessage
+import se.curity.haapi.models.android.sdk.models.haapi.actions.FormField
 
 fun UserMessage.messageStyle(): MessageStyle {
-    val lowerCaseClassList = classList.map { it.toLowerCase(Locale.getDefault()) }
+    val lowerCaseClassList = classList.map { it.lowercase() }
     return when {
         lowerCaseClassList.contains("error") -> {
             MessageStyle.Error()
@@ -41,15 +41,15 @@ fun UserMessage.messageStyle(): MessageStyle {
 fun List<UserMessage>.toMessageViews(context: Context): List<MessageView> = map { userMessage ->
     MessageView.newInstance(
         context = context,
-        text = userMessage.text.message ?: "",
+        text = userMessage.text.value(),
         style = userMessage.messageStyle()
     )
 }
 
-fun Field.Checkbox.toInteractiveFormItemCheckbox(): InteractiveFormItem.Checkbox {
+fun FormField.Checkbox.toInteractiveFormItemCheckbox(): InteractiveFormItem.Checkbox {
     return InteractiveFormItem.Checkbox(
         key = name,
-        label = label?.message ?: "",
+        label = label?.value() ?: "",
         readonly = readonly,
         checked = checked,
         value = value ?: "on"

@@ -27,15 +27,15 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.RecyclerView
 import io.curity.haapidemo.Constant
 import io.curity.haapidemo.R
-import io.curity.haapidemo.models.UserConsentStep
-import io.curity.haapidemo.models.haapi.Field
-import io.curity.haapidemo.models.haapi.UserMessage
-import io.curity.haapidemo.models.haapi.actions.ActionModel
-import io.curity.haapidemo.models.haapi.extensions.toInteractiveFormItemCheckbox
-import io.curity.haapidemo.models.haapi.extensions.toMessageViews
 import io.curity.haapidemo.uicomponents.ProgressButton
 import io.curity.haapidemo.uicomponents.ViewStopLoadable
 import io.curity.haapidemo.utils.dismissKeyboard
+import io.curity.haapidemo.utils.toInteractiveFormItemCheckbox
+import io.curity.haapidemo.utils.toMessageViews
+import se.curity.haapi.models.android.sdk.models.haapi.UserConsentStep
+import se.curity.haapi.models.android.sdk.models.haapi.UserMessage
+import se.curity.haapi.models.android.sdk.models.haapi.actions.ActionModel
+import se.curity.haapi.models.android.sdk.models.haapi.actions.FormField
 import java.lang.ref.WeakReference
 
 class UserConsentFragment: Fragment(R.layout.fragment_user_consent) {
@@ -141,7 +141,7 @@ class UserConsentFragment: Fragment(R.layout.fragment_user_consent) {
             _interactiveFormItems.clear()
             for (action in userConstentStep.actions) {
                 for (field in action.model.fields) {
-                    if (field is Field.Checkbox) {
+                    if (field is FormField.Checkbox) {
                         _interactiveFormItems.add(
                             field.toInteractiveFormItemCheckbox()
                         )
@@ -150,8 +150,8 @@ class UserConsentFragment: Fragment(R.layout.fragment_user_consent) {
 
                 _interactiveFormItems.add(
                     InteractiveFormItem.Button(
-                        key = action.kind,
-                        label = action.model.actionTitle?.message ?: "",
+                        key = action.kind.discriminator,
+                        label = action.model.actionTitle?.value() ?: "",
                         actionModelForm = action.model
                     )
                 )
@@ -184,7 +184,7 @@ class UserConsentFragment: Fragment(R.layout.fragment_user_consent) {
             _interactiveFormItems[position] = item
         }
 
-        fun submitActionModelForm(actionModelForm: ActionModel.Form) {
+        fun submitActionModelForm(actionModelForm: ActionModel.FormActionModel) {
             val indexAction = interactiveFormItems.indexOfFirst { it.id == actionModelForm.hashCode().toLong() }
             if (indexAction != -1) {
                 val parameters: MutableMap<String, String> = mutableMapOf()

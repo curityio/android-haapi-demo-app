@@ -65,10 +65,6 @@ data class HaapiFlowConfiguration(
     var supportedScopes: List<String> = emptyList()
 ) {
 
-    val uri: URI
-        get() = URI(tokenEndpointURI)
-
-
     companion object {
         fun newInstance(name: String = "haapi-android-client"): HaapiFlowConfiguration {
             return HaapiFlowConfiguration(
