@@ -102,6 +102,7 @@ class FlowActivity : AppCompatActivity() {
                         return@observe
                     }
                     when (response) {
+                        is OperationStep -> { handle(response) }
                         is HaapiRepresentation -> { handle(response) }
                         is ProblemRepresentation -> { handle(response) }
                     }
@@ -275,15 +276,23 @@ class FlowActivity : AppCompatActivity() {
             is UnknownStep -> {
                 showAlert("Unknown step is not implemented")
             }
+            is ExternalBrowserOperationStep, is EncapClientOperationStep, is BankIdOperationStep -> {
+                throw IllegalStateException("These steps should be handled by another handler. See below")
+            }
+        }
+    }
+
+    private fun handle(operationStep: OperationStep) {
+        when (operationStep) {
             is ExternalBrowserOperationStep -> {
-                val uri = haapiRepresentation.completeUri(haapiFlowViewModel.redirectURI)
+                val uri = operationStep.completeUri(haapiFlowViewModel.redirectURI)
                 Log.d(Constant.TAG_HAAPI_OPERATION, uri.toString())
                 try {
                     val intent = Intent(Intent.ACTION_VIEW, uri)
                     startActivity(intent)
-                    pendingContinueAction = haapiRepresentation.actionModel.continueActions.filterIsInstance<Action.Form>().first().model
+                    pendingContinueAction = operationStep.actionModel.continueActions.filterIsInstance<Action.Form>().first().model
                     // If the browser can be opened then we apply the cancel step to the UI
-                    haapiFlowViewModel.applyActionForm(haapiRepresentation.actions.first { it.kind is ActionKind.Cancel } as Action.Form)
+                    haapiFlowViewModel.applyActionForm(operationStep.actions.first { it.kind is ActionKind.Cancel } as Action.Form)
                 } catch (exception: ActivityNotFoundException) {
                     Log.d(Constant.TAG_HAAPI_OPERATION, "Could not open activity : $exception")
                     showAlert(
@@ -293,16 +302,16 @@ class FlowActivity : AppCompatActivity() {
                 }
             }
             is BankIdOperationStep -> {
-                Log.d(Constant.TAG_HAAPI_OPERATION, haapiRepresentation.actionModel.argument.href)
+                Log.d(Constant.TAG_HAAPI_OPERATION, operationStep.actionModel.argument.href)
                 val intent = Intent()
                     .setAction(Intent.ACTION_VIEW)
-                    .setData(Uri.parse(haapiRepresentation.actionModel.argument.href))
+                    .setData(Uri.parse(operationStep.actionModel.argument.href))
                     .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 try {
                     expectedCallback = OPERATION_BANKID_CALLBACK
                     resultLauncher.launch(intent)
                     // If the BankID can be opened then we apply the first action to the UI
-                    haapiFlowViewModel.applyActionForm(haapiRepresentation.actionModel.continueActions.first() as Action.Form)
+                    haapiFlowViewModel.applyActionForm(operationStep.actionModel.continueActions.first() as Action.Form)
                 } catch (exception: ActivityNotFoundException) {
                     Log.d(Constant.TAG_HAAPI_OPERATION, "Could not open bankid activity : $exception")
                     expectedCallback = NO_OPERATION_CALLBACK
