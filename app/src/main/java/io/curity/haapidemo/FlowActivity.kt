@@ -357,7 +357,9 @@ class FlowActivity : AppCompatActivity() {
             finish()
         }
 
-        alertDialog.show()
+        if (!isFinishing){
+            alertDialog.show()
+        }
     }
 
     private fun commitNewFragment(fragment: Fragment, representation: Any) {
