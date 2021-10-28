@@ -58,7 +58,7 @@ android {
 
     lintOptions {
         // App icons or density or config images are not important at the moment.
-        disable 'IconLauncherShape', 'IconDipSize', 'IconDuplicatesConfig', 'IconMissingDensityFolder'
+        disable 'IconLauncherShape', 'IconDipSize', 'IconDuplicatesConfig', 'IconMissingDensityFolder', 'GradleDependency'
         warningsAsErrors true
     }
 
@@ -97,8 +97,7 @@ dependencies {
     // Serialization
     implementation "org.jetbrains.kotlinx:kotlinx-serialization-core:1.2.2"
     implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.2.2"
-    implementation files('/Users/hla/Bitbucket/android-cat/haapi-models-android-sdk/build/outputs/aar/haapi-models-android-sdk-debug.aar')
-
+    implementation files('../../android-cat/haapi-models-android-sdk/build/outputs/aar/haapi-models-android-sdk-debug.aar')
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'androidx.arch.core:core-testing:2.1.0'
 
