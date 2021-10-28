@@ -229,11 +229,25 @@ class FlowActivity : AppCompatActivity() {
                 )
             }
             is PollingStep -> {
-                updateTitle(getString(R.string.polling))
-                commitNewFragment(
-                    fragment = PollingFragment.newInstance(haapiRepresentation),
-                    representation = haapiRepresentation
-                )
+                if (haapiRepresentation.properties.status == PollingStatus.Done &&
+                    haapiRepresentation.actions.size == 1 &&
+                    haapiFlowViewModel.haapiConfiguration.isAutoRedirect
+                ) {
+                    // Kill the PollingFragment to avoid polling and send the "redirect"
+                    updateTitle("")
+                    commitNewFragment(
+                        fragment = EmptyFragment(),
+                        representation = haapiRepresentation
+                    )
+                    progressBar.visibility = VISIBLE
+                    haapiFlowViewModel.submit(haapiRepresentation.mainAction.model, emptyMap())
+                } else {
+                    updateTitle(getString(R.string.polling))
+                    commitNewFragment(
+                        fragment = PollingFragment.newInstance(haapiRepresentation),
+                        representation = haapiRepresentation
+                    )
+                }
             }
             is OAuthAuthorizationResponseStep -> {
                 updateTitle(getString(R.string.oauth_authorization_completed))
