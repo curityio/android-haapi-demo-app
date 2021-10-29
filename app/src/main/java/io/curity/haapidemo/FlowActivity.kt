@@ -20,7 +20,6 @@ import android.app.AlertDialog
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.View.*
@@ -40,8 +39,6 @@ import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import se.curity.haapi.models.android.sdk.OAuthTokenService
 import se.curity.haapi.models.android.sdk.models.haapi.*
-import se.curity.haapi.models.android.sdk.models.haapi.actions.Action
-import se.curity.haapi.models.android.sdk.models.haapi.actions.ActionKind
 import se.curity.haapi.models.android.sdk.models.haapi.actions.ActionModel
 import se.curity.haapi.models.android.sdk.models.oauth.InvalidTokenResponse
 import se.curity.haapi.models.android.sdk.models.oauth.TokenResponse
@@ -146,6 +143,7 @@ class FlowActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         resultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            // BankID -> No action is needed
             if (expectedCallback == OPERATION_BANKID_CALLBACK) {
                 // Always return RESULT_CANCELED... when the new activity is opened
                 Log.d(Constant.TAG_HAAPI_OPERATION, "Callback received for BANKID: $result")
@@ -156,20 +154,11 @@ class FlowActivity : AppCompatActivity() {
 
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
+        Log.d(Constant.TAG_HAAPI_OPERATION, "Received an intent for deepLink: $intent")
         val continueAction = pendingContinueAction
-        if (continueAction != null) {
-            pendingContinueAction = null
-            Log.d(Constant.TAG_HAAPI_OPERATION, "Received an intent for deepLink: $intent")
-            val parameters: MutableMap<String, String> = mutableMapOf()
-            continueAction.fields.forEach { field ->
-                val value = intent?.data?.getQueryParameter(field.name)
-                if (value != null) {
-                    parameters[field.name] = value
-                } else {
-                    Log.w(Constant.TAG_HAAPI_OPERATION, "Cannot find field with name: ${field.name}")
-                }
-            }
-            haapiFlowViewModel.submit(continueAction, parameters)
+        if (intent != null && continueAction != null  && haapiFlowViewModel.canHandleIntent(intent)) {
+            val params = haapiFlowViewModel.formattedParamsForIntent(intent)
+            haapiFlowViewModel.submit(continueAction, params)
         } else {
             Log.w(Constant.TAG_HAAPI_OPERATION, "Received an intent for deepLink but it is IGNORED: $intent")
         }
@@ -251,14 +240,16 @@ class FlowActivity : AppCompatActivity() {
                 }
             }
             is OAuthAuthorizationResponseStep -> {
-                updateTitle(getString(R.string.oauth_authorization_completed))
-                OAuthTokenService(
-                    haapiConfiguration = haapiFlowViewModel.haapiConfiguration
-                )
-                commitNewFragment(
-                    fragment = AuthorizationCompletedFragment.newInstance(haapiRepresentation),
-                    representation = haapiRepresentation
-                )
+                if (haapiFlowViewModel.liveOAuthResponse.value?.getOrNull() !is TokenResponse) {
+                    updateTitle(getString(R.string.oauth_authorization_completed))
+                    OAuthTokenService(
+                        haapiConfiguration = haapiFlowViewModel.haapiConfiguration
+                    )
+                    commitNewFragment(
+                        fragment = AuthorizationCompletedFragment.newInstance(haapiRepresentation),
+                        representation = haapiRepresentation
+                    )
+                }
             }
             is ContinueSameStep -> {
                 showAlert("Continue same step is not implemented")
@@ -285,14 +276,13 @@ class FlowActivity : AppCompatActivity() {
     private fun handle(operationStep: OperationStep) {
         when (operationStep) {
             is ExternalBrowserOperationStep -> {
-                val uri = operationStep.completeUri(haapiFlowViewModel.redirectURI)
-                Log.d(Constant.TAG_HAAPI_OPERATION, uri.toString())
+                Log.d(Constant.TAG_HAAPI_OPERATION, "ExternalBrowserOP")
                 try {
-                    val intent = Intent(Intent.ACTION_VIEW, uri)
+                    val intent = operationStep.intent
                     startActivity(intent)
-                    pendingContinueAction = operationStep.actionModel.continueActions.filterIsInstance<Action.Form>().first().model
+                    pendingContinueAction = operationStep.continueAction
                     // If the browser can be opened then we apply the cancel step to the UI
-                    haapiFlowViewModel.applyActionForm(operationStep.actions.first { it.kind is ActionKind.Cancel } as Action.Form)
+                    haapiFlowViewModel.applyActionForm(operationStep.succeedIntentAction)
                 } catch (exception: ActivityNotFoundException) {
                     Log.d(Constant.TAG_HAAPI_OPERATION, "Could not open activity : $exception")
                     showAlert(
@@ -303,15 +293,11 @@ class FlowActivity : AppCompatActivity() {
             }
             is BankIdOperationStep -> {
                 Log.d(Constant.TAG_HAAPI_OPERATION, operationStep.actionModel.argument.href)
-                val intent = Intent()
-                    .setAction(Intent.ACTION_VIEW)
-                    .setData(Uri.parse(operationStep.actionModel.argument.href))
-                    .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                 try {
                     expectedCallback = OPERATION_BANKID_CALLBACK
-                    resultLauncher.launch(intent)
+                    resultLauncher.launch(operationStep.intent)
                     // If the BankID can be opened then we apply the first action to the UI
-                    haapiFlowViewModel.applyActionForm(operationStep.actionModel.continueActions.first() as Action.Form)
+                    haapiFlowViewModel.applyActionForm(operationStep.succeedIntentAction)
                 } catch (exception: ActivityNotFoundException) {
                     Log.d(Constant.TAG_HAAPI_OPERATION, "Could not open bankid activity : $exception")
                     expectedCallback = NO_OPERATION_CALLBACK
@@ -399,11 +385,4 @@ class FlowActivity : AppCompatActivity() {
             return intent
         }
     }
-}
-
-private fun ExternalBrowserOperationStep.completeUri(redirectUri: String): Uri {
-    return Uri.parse(actionModel.argument.href)
-        .buildUpon()
-        .appendQueryParameter("redirect_uri", redirectUri)
-        .build()
 }

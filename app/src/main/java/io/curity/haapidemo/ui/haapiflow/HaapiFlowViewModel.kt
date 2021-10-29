@@ -16,6 +16,7 @@
 
 package io.curity.haapidemo.ui.haapiflow
 
+import android.content.Intent
 import androidx.lifecycle.*
 import io.curity.haapidemo.flow.HaapiFlowConfiguration
 import io.curity.haapidemo.utils.disableSslTrustVerification
@@ -23,10 +24,7 @@ import kotlinx.coroutines.*
 import se.curity.haapi.models.android.sdk.HaapiConfiguration
 import se.curity.haapi.models.android.sdk.HaapiManager
 import se.curity.haapi.models.android.sdk.OAuthTokenService
-import se.curity.haapi.models.android.sdk.models.haapi.HaapiResult
-import se.curity.haapi.models.android.sdk.models.haapi.Link
-import se.curity.haapi.models.android.sdk.models.haapi.OAuthAuthorizationResponseStep
-import se.curity.haapi.models.android.sdk.models.haapi.PollingStep
+import se.curity.haapi.models.android.sdk.models.haapi.*
 import se.curity.haapi.models.android.sdk.models.haapi.actions.Action
 import se.curity.haapi.models.android.sdk.models.haapi.actions.ActionModel
 import se.curity.haapi.models.android.sdk.models.oauth.OAuthResponse
@@ -124,6 +122,14 @@ class HaapiFlowViewModel(private val haapiFlowConfiguration: HaapiFlowConfigurat
         }
     }
 
+    fun canHandleIntent(intent: Intent): Boolean {
+        return haapiManager.canHandleIntent(intent)
+    }
+
+    fun formattedParamsForIntent(intent: Intent): Map<String, String> {
+        return haapiManager.formattedParamsForIntent(intent)
+    }
+
     private fun processHaapiResult(haapiResult: HaapiResult) {
         val currentResponse = liveStep.value?.getOrNull()
         val latestResponse = haapiResult.getOrNull()
@@ -138,7 +144,6 @@ class HaapiFlowViewModel(private val haapiFlowConfiguration: HaapiFlowConfigurat
             val authorizationCode = latestResponse.properties.code
             if (authorizationCode != null) {
                 fetchAccessToken(authorizationCode)
-                return
             }
         }
         _liveStep.postValue(haapiResult)
