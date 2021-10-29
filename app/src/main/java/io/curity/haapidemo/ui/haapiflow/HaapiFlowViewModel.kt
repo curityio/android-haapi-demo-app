@@ -17,7 +17,9 @@
 package io.curity.haapidemo.ui.haapiflow
 
 import android.content.Intent
+import android.util.Log
 import androidx.lifecycle.*
+import io.curity.haapidemo.Constant
 import io.curity.haapidemo.flow.HaapiFlowConfiguration
 import io.curity.haapidemo.utils.disableSslTrustVerification
 import kotlinx.coroutines.*
@@ -45,6 +47,7 @@ class HaapiFlowViewModel(private val haapiFlowConfiguration: HaapiFlowConfigurat
         scopes = haapiFlowConfiguration.selectedScopes,
         httpURLConnectionProvider = { url ->
             val urlConnection = url.openConnection()
+            urlConnection.connectTimeout = 8000
             if (!haapiFlowConfiguration.isSSLTrustVerificationEnabled) {
                 urlConnection.disableSslTrustVerification() as HttpURLConnection
             } else {
@@ -54,6 +57,7 @@ class HaapiFlowViewModel(private val haapiFlowConfiguration: HaapiFlowConfigurat
     )
     private val haapiManager: HaapiManager = HaapiManager(haapiConfiguration = haapiConfiguration)
     private val oAuthTokenService: OAuthTokenService = OAuthTokenService(haapiConfiguration = haapiConfiguration)
+    private val coroutineExceptionHandler = CoroutineExceptionHandler { _, _ -> }
 
     val isAutoPolling = haapiFlowConfiguration.isAutoPollingEnabled
 
@@ -69,16 +73,19 @@ class HaapiFlowViewModel(private val haapiFlowConfiguration: HaapiFlowConfigurat
     val isLoading: LiveData<Boolean>
         get() = _isLoading
 
-    val redirectURI = haapiFlowConfiguration.redirectURI
-
-    private var currentJob: Job? = null
-
     private fun executeHaapi(haapiResultCommand: suspend () -> HaapiResult) {
         _isLoading.postValue(true)
-        currentJob = viewModelScope.launch(Dispatchers.IO) {
-            val result = haapiResultCommand()
-            _isLoading.postValue(false)
-            processHaapiResult(result)
+        viewModelScope.launch(Dispatchers.IO + coroutineExceptionHandler) {
+            try {
+                ensureActive()
+                val result = haapiResultCommand()
+                ensureActive()
+                _isLoading.postValue(false)
+                processHaapiResult(result)
+            } catch (e: CancellationException) {
+                coroutineExceptionHandler.handleException(coroutineContext, e)
+                processHaapiResult(HaapiResult.failure(e))
+            }
         }
     }
 
@@ -151,7 +158,7 @@ class HaapiFlowViewModel(private val haapiFlowConfiguration: HaapiFlowConfigurat
 
     override fun onCleared() {
         super.onCleared()
-        currentJob?.cancel(null)
+        viewModelScope.cancel()
         haapiManager.close()
     }
 }
