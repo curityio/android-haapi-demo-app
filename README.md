@@ -68,3 +68,8 @@ Follow the instructions in this page: https://curity.io/docs/idsvr/latest/develo
 - [An article](https://curity.io/resources/tutorials/howtos/haapi/authentication-api-android-sdk)
   showing how to properly configure the Curity Identity Server and a client to use the Hypermedia
   API from an Android app.
+
+## More information
+
+See the [Tutorial Walkthrough](https://curity.io/resources/learn/kotlin-android-haapi/) on the Curity website for an overview of this code example.\
+Please visit [curity.io](https://curity.io/) for more information about the Curity Identity Server.
