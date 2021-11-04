@@ -12,7 +12,7 @@
 # By default the Curity Identity Server will use a dynamic NGROK base URL
 # Set USE_NGROK to false and provide an IP address based URL otherwise
 #
-USE_NGROK=false
+USE_NGROK=true
 BASE_URL=https://10.0.2.2:8443
 
 #
