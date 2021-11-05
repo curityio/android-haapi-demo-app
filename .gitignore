@@ -7,3 +7,7 @@
 /captures
 .externalNativeBuild
 .cxx
+
+### Deployment files ###
+deployment
+license.json
