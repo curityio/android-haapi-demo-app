@@ -420,7 +420,7 @@ class InteractiveFormViewModel(private val interactiveFormStep: HaapiRepresentat
             Log.d(Constant.TAG, "After {$_interactiveFormItems}")
         }
         val problemContent = ProblemContent(
-            title = problem.title,
+            title = problem.title ?: "",
             problemBundles = problem.problemBundle()
         )
         _problemContentLiveData.postValue(problemContent)
