@@ -37,7 +37,6 @@ class HaapiFlowViewModel(private val haapiFlowConfiguration: HaapiFlowConfigurat
 
     val haapiConfiguration: HaapiConfiguration = HaapiConfiguration(
         keyStoreAlias = haapiFlowConfiguration.keyStoreAlias,
-        name = haapiFlowConfiguration.name,
         clientId = haapiFlowConfiguration.clientId,
         baseURI = URI.create(haapiFlowConfiguration.baseURLString),
         tokenEndpointURI = URI.create(haapiFlowConfiguration.tokenEndpointURI),
