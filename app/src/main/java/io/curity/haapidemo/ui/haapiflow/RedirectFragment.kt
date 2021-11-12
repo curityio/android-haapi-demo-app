@@ -57,7 +57,7 @@ class RedirectFragment: Fragment(R.layout.fragment_redirect) {
 
         button = view.findViewById(R.id.button)
         button.setOnClickListener {
-            haapiFlowViewModel.submit(redirectionStep.actionForm.model, emptyMap())
+            haapiFlowViewModel.submit(redirectionStep.redirectAction.model, emptyMap())
         }
 
         haapiFlowViewModel.isLoading.observe(viewLifecycleOwner) {
