@@ -16,19 +16,19 @@
 
 package io.curity.haapidemo.ui.haapiflow
 
-import android.content.Intent
-import android.util.Log
 import androidx.lifecycle.*
-import io.curity.haapidemo.Constant
 import io.curity.haapidemo.flow.HaapiFlowConfiguration
 import io.curity.haapidemo.utils.disableSslTrustVerification
 import kotlinx.coroutines.*
 import se.curity.haapi.models.android.sdk.HaapiConfiguration
 import se.curity.haapi.models.android.sdk.HaapiManager
 import se.curity.haapi.models.android.sdk.OAuthTokenService
-import se.curity.haapi.models.android.sdk.models.haapi.*
-import se.curity.haapi.models.android.sdk.models.haapi.actions.Action
-import se.curity.haapi.models.android.sdk.models.haapi.actions.ActionModel
+import se.curity.haapi.models.android.sdk.models.HaapiResult
+import se.curity.haapi.models.android.sdk.models.Link
+import se.curity.haapi.models.android.sdk.models.OAuthAuthorizationResponseStep
+import se.curity.haapi.models.android.sdk.models.PollingStep
+import se.curity.haapi.models.android.sdk.models.actions.Action
+import se.curity.haapi.models.android.sdk.models.actions.FormActionModel
 import se.curity.haapi.models.android.sdk.models.oauth.OAuthResponse
 import java.net.HttpURLConnection
 import java.net.URI
@@ -38,13 +38,13 @@ class HaapiFlowViewModel(private val haapiFlowConfiguration: HaapiFlowConfigurat
     val haapiConfiguration: HaapiConfiguration = HaapiConfiguration(
         keyStoreAlias = haapiFlowConfiguration.keyStoreAlias,
         clientId = haapiFlowConfiguration.clientId,
-        baseURI = URI.create(haapiFlowConfiguration.baseURLString),
-        tokenEndpointURI = URI.create(haapiFlowConfiguration.tokenEndpointURI),
-        authorizationEndpointURI = URI.create(haapiFlowConfiguration.authorizationEndpointURI),
-        appRedirectURIString = haapiFlowConfiguration.redirectURI,
+        baseUri = URI.create(haapiFlowConfiguration.baseURLString),
+        tokenEndpointUri = URI.create(haapiFlowConfiguration.tokenEndpointURI),
+        authorizationEndpointUri = URI.create(haapiFlowConfiguration.authorizationEndpointURI),
+        appRedirect = haapiFlowConfiguration.redirectURI,
         isAutoRedirect = haapiFlowConfiguration.followRedirect,
-        scopes = haapiFlowConfiguration.selectedScopes,
-        httpURLConnectionProvider = { url ->
+//        scopes = haapiFlowConfiguration.selectedScopes,
+        httpUrlConnectionProvider = { url ->
             val urlConnection = url.openConnection()
             urlConnection.connectTimeout = 8000
             if (!haapiFlowConfiguration.isSSLTrustVerificationEnabled) {
@@ -89,10 +89,14 @@ class HaapiFlowViewModel(private val haapiFlowConfiguration: HaapiFlowConfigurat
     }
 
     fun start() {
-        executeHaapi { haapiManager.start() }
+        executeHaapi {
+            haapiManager.start(
+                scopes = haapiFlowConfiguration.selectedScopes
+            )
+        }
     }
 
-    fun submit(form: ActionModel.FormActionModel, parameters: Map<String, String> = emptyMap()) {
+    fun submit(form: FormActionModel, parameters: Map<String, String> = emptyMap()) {
         executeHaapi {
             haapiManager.submitForm(form, parameters)
         }
@@ -120,20 +124,6 @@ class HaapiFlowViewModel(private val haapiFlowConfiguration: HaapiFlowConfigurat
         executeHaapi {
             haapiManager.followLink(link)
         }
-    }
-
-    fun applyActionForm(actionForm: Action.Form) {
-        executeHaapi {
-            haapiManager.applyActionForm(actionForm)
-        }
-    }
-
-    fun canHandleIntent(intent: Intent): Boolean {
-        return haapiManager.canHandleIntent(intent)
-    }
-
-    fun formattedParamsForIntent(intent: Intent): Map<String, String> {
-        return haapiManager.formattedParamsForIntent(intent)
     }
 
     private fun processHaapiResult(haapiResult: HaapiResult) {
@@ -176,6 +166,6 @@ class HaapiFlowViewModelFactory(val haapiFlowConfiguration: HaapiFlowConfigurati
 
 private fun PollingStep.isContentTheSame(pollingStep: PollingStep): Boolean {
     return this.properties.status == pollingStep.properties.status
-            && this.type.discriminator == pollingStep.type.discriminator
+            && this.type == pollingStep.type
             && this.mainAction.model.href == pollingStep.mainAction.model.href
 }

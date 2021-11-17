@@ -20,8 +20,8 @@ import android.content.Context
 import io.curity.haapidemo.ui.haapiflow.InteractiveFormItem
 import io.curity.haapidemo.uicomponents.MessageStyle
 import io.curity.haapidemo.uicomponents.MessageView
-import se.curity.haapi.models.android.sdk.models.haapi.UserMessage
-import se.curity.haapi.models.android.sdk.models.haapi.actions.FormField
+import se.curity.haapi.models.android.sdk.models.UserMessage
+import se.curity.haapi.models.android.sdk.models.actions.FormField
 
 fun UserMessage.messageStyle(): MessageStyle {
     val lowerCaseClassList = classList.map { it.lowercase() }

@@ -32,8 +32,8 @@ import io.curity.haapidemo.R
 import io.curity.haapidemo.uicomponents.SelectorViewHolder
 import io.curity.haapidemo.uicomponents.ViewStopLoadable
 import io.curity.haapidemo.utils.getImageResources
-import se.curity.haapi.models.android.sdk.models.haapi.AuthenticatorSelectorStep
-import se.curity.haapi.models.android.sdk.models.haapi.actions.ActionModel
+import se.curity.haapi.models.android.sdk.models.AuthenticatorSelectorStep
+import se.curity.haapi.models.android.sdk.models.actions.FormActionModel
 import java.lang.ref.WeakReference
 
 class AuthenticatorSelectorFragment: Fragment() {
@@ -90,7 +90,7 @@ class AuthenticatorSelectorFragment: Fragment() {
         })
     }
 
-    private fun submit(actionForm: ActionModel.FormActionModel, weakItem: WeakReference<ViewStopLoadable>) {
+    private fun submit(actionForm: FormActionModel, weakItem: WeakReference<ViewStopLoadable>) {
         this.weakItem = weakItem
         authenticatorSelectorViewModel.submit(actionForm)
     }
@@ -106,7 +106,7 @@ class AuthenticatorSelectorFragment: Fragment() {
         val authenticatorOptions: List<AuthenticatorSelectorStep.AuthenticatorOption>
             get() = authenticatorSelectorStep.authenticators
 
-        fun submit(form: ActionModel.FormActionModel) {
+        fun submit(form: FormActionModel) {
             haapiFlowViewModel.submit(
                 form,
                 emptyMap()
@@ -135,7 +135,7 @@ class AuthenticatorSelectorFragment: Fragment() {
     }
 
     private class AuthenticatorSelectorAdapter(
-        private val clickHandler: (ActionModel.FormActionModel, WeakReference<ViewStopLoadable>) -> Unit
+        private val clickHandler: (FormActionModel, WeakReference<ViewStopLoadable>) -> Unit
     ): ListAdapter<AuthenticatorSelectorStep.AuthenticatorOption, SelectorViewHolder>(CONFIG_COMPARATOR) {
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): SelectorViewHolder {

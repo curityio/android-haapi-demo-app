@@ -30,8 +30,8 @@ import io.curity.haapidemo.R
 import io.curity.haapidemo.uicomponents.ProgressButton
 import io.curity.haapidemo.uicomponents.ViewStopLoadable
 import kotlinx.coroutines.*
-import se.curity.haapi.models.android.sdk.models.haapi.PollingStatus
-import se.curity.haapi.models.android.sdk.models.haapi.PollingStep
+import se.curity.haapi.models.android.sdk.models.PollingStatus
+import se.curity.haapi.models.android.sdk.models.PollingStep
 
 class PollingFragment: Fragment(R.layout.fragment_polling) {
 
@@ -131,7 +131,7 @@ class PollingFragment: Fragment(R.layout.fragment_polling) {
             get() = shouldShowAutoPolling && shouldPoll
 
         val shouldShowAutoPolling: Boolean
-            get() = haapiFlowViewModel.isAutoPolling && pollingStep.properties.status == PollingStatus.Pending
+            get() = haapiFlowViewModel.isAutoPolling && pollingStep.properties.status == PollingStatus.PENDING
 
         val isLoading = haapiFlowViewModel.isLoading
         val mainActionTitle: String
@@ -139,7 +139,7 @@ class PollingFragment: Fragment(R.layout.fragment_polling) {
         val cancelActionTitle: String?
             get() = pollingStep.cancelAction?.model?.actionTitle?.value()
         val status: String
-            get() = pollingStep.properties.status.discriminator
+            get() = pollingStep.properties.status.value
 
         fun submit() {
             haapiFlowViewModel.submit(pollingStep.mainAction.model, emptyMap())

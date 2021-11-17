@@ -19,6 +19,7 @@ package io.curity.haapidemo.ui.haapiflow
 import android.annotation.SuppressLint
 import android.graphics.BitmapFactory
 import android.os.Bundle
+import android.os.Parcelable
 import android.text.Editable
 import android.text.InputType
 import android.text.TextWatcher
@@ -45,10 +46,11 @@ import io.curity.haapidemo.utils.Clearable
 import io.curity.haapidemo.utils.dismissKeyboard
 import io.curity.haapidemo.utils.messageStyle
 import io.curity.haapidemo.utils.toInteractiveFormItemCheckbox
-import se.curity.haapi.models.android.sdk.models.haapi.*
-import se.curity.haapi.models.android.sdk.models.haapi.actions.Action
-import se.curity.haapi.models.android.sdk.models.haapi.actions.ActionModel
-import se.curity.haapi.models.android.sdk.models.haapi.actions.FormField
+import kotlinx.android.parcel.Parcelize
+import se.curity.haapi.models.android.sdk.models.*
+import se.curity.haapi.models.android.sdk.models.actions.Action
+import se.curity.haapi.models.android.sdk.models.actions.FormActionModel
+import se.curity.haapi.models.android.sdk.models.actions.FormField
 import java.lang.ref.WeakReference
 import java.util.*
 import kotlin.collections.HashMap
@@ -80,9 +82,12 @@ class InteractiveFormFragment: Fragment(R.layout.fragment_interactive_form), Pro
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val step = requireArguments().getParcelable<HaapiRepresentation>(EXTRA_STEP) ?: throw IllegalStateException("Expecting an InteractiveForm")
+        val model = requireArguments().getParcelable<InteractiveFormModel>(EXTRA_FORM_MODEL) ?: throw IllegalStateException("Expecting an InteractiveForm")
         val haapiFlowViewModel = ViewModelProvider(requireActivity()).get(HaapiFlowViewModel::class.java)
-        interactiveFormViewModel = ViewModelProvider(this, InteractiveFormViewModelFactory(step, haapiFlowViewModel))
+        interactiveFormViewModel = ViewModelProvider(
+            this,
+            InteractiveFormViewModelFactory(model, haapiFlowViewModel)
+        )
             .get(InteractiveFormViewModel::class.java)
     }
 
@@ -209,19 +214,26 @@ class InteractiveFormFragment: Fragment(R.layout.fragment_interactive_form), Pro
 
     companion object {
         private const val DATA_COPY = "io.curity.haapidemo.interactiveFormFragment.data_copy"
-        private const val EXTRA_STEP = "io.curity.haapidemo.interactiveFormFragment.extra_step"
+        private const val EXTRA_FORM_MODEL = "io.curity.haapidemo.interactiveFormFragment.extra_step"
 
-        fun newInstance(step: HaapiRepresentation): InteractiveFormFragment {
+        fun newInstance(model: InteractiveFormModel): InteractiveFormFragment {
             val fragment = InteractiveFormFragment()
             fragment.arguments = Bundle().apply {
-                putParcelable(EXTRA_STEP, step)
+                putParcelable(EXTRA_FORM_MODEL, model)
             }
             return fragment
         }
     }
 }
 
-class InteractiveFormViewModel(private val interactiveFormStep: HaapiRepresentation, private val haapiFlowViewModel: HaapiFlowViewModel): ViewModel(), ProblemHandable {
+@Parcelize
+data class InteractiveFormModel(
+    val messages: List<UserMessage>,
+    val actions: List<Action.Form>,
+    val links: List<Link>
+) : Parcelable
+
+class InteractiveFormViewModel(private val interactiveFormModel: InteractiveFormModel, private val haapiFlowViewModel: HaapiFlowViewModel): ViewModel(), ProblemHandable {
 
     private var _interactiveFormItems: MutableList<InteractiveFormItem> = mutableListOf()
     val interactiveFormItems: List<InteractiveFormItem>
@@ -232,7 +244,7 @@ class InteractiveFormViewModel(private val interactiveFormStep: HaapiRepresentat
     }
 
     val userMessages: List<UserMessage>
-        get() = interactiveFormStep.messages
+        get() = interactiveFormModel.messages
 
     val mapDataCopy: HashMap<Long, String>
         get() {
@@ -258,13 +270,9 @@ class InteractiveFormViewModel(private val interactiveFormStep: HaapiRepresentat
 
     private fun setupInteractiveFormItems() {
         _interactiveFormItems.clear()
-        for (action in interactiveFormStep.actions) {
-            if (action !is Action.Form) {
-                return
-            }
-
+        for (action in interactiveFormModel.actions) {
             // We display the section title only if we have multiple actions
-            if (interactiveFormStep.actions.size > 1) {
+            if (interactiveFormModel.actions.size > 1) {
                 action.title?.let {
                     val label = it.value()
                     _interactiveFormItems.add(
@@ -357,7 +365,7 @@ class InteractiveFormViewModel(private val interactiveFormStep: HaapiRepresentat
 
     val links: List<Link>
         get() {
-            return interactiveFormStep.links
+            return interactiveFormModel.links
         }
 
     fun updateItem(item: InteractiveFormItem, position: Int) {
@@ -365,7 +373,7 @@ class InteractiveFormViewModel(private val interactiveFormStep: HaapiRepresentat
         _interactiveFormItems[position] = item
     }
 
-    fun submitActionModelForm(actionModelForm: ActionModel.FormActionModel) {
+    fun submitActionModelForm(actionModelForm: FormActionModel) {
         val indexAction = interactiveFormItems.indexOfFirst { it.id == actionModelForm.hashCode().toLong() }
         if (indexAction != -1) {
             val parameters: MutableMap<String, String> = mutableMapOf()
@@ -430,22 +438,18 @@ class InteractiveFormViewModel(private val interactiveFormStep: HaapiRepresentat
 }
 
 class InteractiveFormViewModelFactory(
-    private val haapiRepresentation: HaapiRepresentation,
+    private val interactiveFormModel: InteractiveFormModel,
     private val haapiFlowViewModel: HaapiFlowViewModel
 ): ViewModelProvider.Factory {
 
     override fun <T : ViewModel?> create(modelClass: Class<T>): T {
-        if (haapiRepresentation is AuthenticationStep || haapiRepresentation is RegistrationStep) {
-            if (modelClass.isAssignableFrom(InteractiveFormViewModel::class.java)) {
-                // TODO Check type if it is not an InteractiveFormStep
-                @Suppress("UNCHECKED_CAST")
-                return InteractiveFormViewModel(haapiRepresentation, haapiFlowViewModel) as T
-            }
-
-            throw IllegalArgumentException("Unknown ViewModel class InteractiveFormViewModel")
-        } else {
-            throw IllegalStateException("HaapiRepresentation should be either an AuthenticationStep or a RegistrationStep: $haapiRepresentation")
+        if (modelClass.isAssignableFrom(InteractiveFormViewModel::class.java)) {
+            // TODO Check type if it is not an InteractiveFormStep
+            @Suppress("UNCHECKED_CAST")
+            return InteractiveFormViewModel(interactiveFormModel, haapiFlowViewModel) as T
         }
+
+        throw IllegalArgumentException("Unknown ViewModel class InteractiveFormViewModel")
     }
 }
 
@@ -478,7 +482,7 @@ sealed class InteractiveFormItem {
         override val id: Long = key.hashCode().toLong()
     }
 
-    data class Button(override val key: String, override val label: String, override var hasError: Boolean = false, val actionModelForm: ActionModel.FormActionModel): InteractiveFormItem() {
+    data class Button(override val key: String, override val label: String, override var hasError: Boolean = false, val actionModelForm: FormActionModel): InteractiveFormItem() {
         override val id: Long = actionModelForm.hashCode().toLong()
     }
 
@@ -507,7 +511,7 @@ data class SelectOption(val label: String, val value: String)
 
 class InteractiveFormAdapter(
     val itemChangeHandler: (Int, InteractiveFormItem) -> Unit,
-    val selectButtonHandler: (ActionModel.FormActionModel, ProgressButtonViewHolder) -> Unit
+    val selectButtonHandler: (FormActionModel, ProgressButtonViewHolder) -> Unit
 ): ListAdapter<InteractiveFormItem, RecyclerView.ViewHolder>(CONFIG_COMPARATOR) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
@@ -682,7 +686,7 @@ private fun ProblemRepresentation.problemBundle(): List<ProblemView.ProblemBundl
             )
         }
         else -> {
-            messages?.forEach { userMessage ->
+            messages.forEach { userMessage ->
                 val text = userMessage.text.value()
                 problemBundles.add(
                     ProblemView.ProblemBundle(
