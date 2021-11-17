@@ -20,7 +20,6 @@ import android.app.AlertDialog
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.View.*
@@ -39,6 +38,7 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import se.curity.haapi.models.android.sdk.OAuthTokenService
+import se.curity.haapi.models.android.sdk.dataMap
 import se.curity.haapi.models.android.sdk.models.*
 import se.curity.haapi.models.android.sdk.models.actions.Action
 import se.curity.haapi.models.android.sdk.models.actions.ActionKind

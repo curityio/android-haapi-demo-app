@@ -22,6 +22,7 @@ import io.curity.haapidemo.utils.disableSslTrustVerification
 import kotlinx.coroutines.*
 import se.curity.haapi.models.android.sdk.HaapiConfiguration
 import se.curity.haapi.models.android.sdk.HaapiManager
+import se.curity.haapi.models.android.sdk.OAuthAuthorizationParameters
 import se.curity.haapi.models.android.sdk.OAuthTokenService
 import se.curity.haapi.models.android.sdk.models.HaapiResult
 import se.curity.haapi.models.android.sdk.models.Link
@@ -43,7 +44,6 @@ class HaapiFlowViewModel(private val haapiFlowConfiguration: HaapiFlowConfigurat
         authorizationEndpointUri = URI.create(haapiFlowConfiguration.authorizationEndpointURI),
         appRedirect = haapiFlowConfiguration.redirectURI,
         isAutoRedirect = haapiFlowConfiguration.followRedirect,
-//        scopes = haapiFlowConfiguration.selectedScopes,
         httpUrlConnectionProvider = { url ->
             val urlConnection = url.openConnection()
             urlConnection.connectTimeout = 8000
@@ -91,7 +91,9 @@ class HaapiFlowViewModel(private val haapiFlowConfiguration: HaapiFlowConfigurat
     fun start() {
         executeHaapi {
             haapiManager.start(
-                scopes = haapiFlowConfiguration.selectedScopes
+                authorizationParameters = OAuthAuthorizationParameters(
+                    scopes = haapiFlowConfiguration.selectedScopes
+                )
             )
         }
     }
