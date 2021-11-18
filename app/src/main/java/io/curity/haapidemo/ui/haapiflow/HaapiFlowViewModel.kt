@@ -28,7 +28,6 @@ import se.curity.haapi.models.android.sdk.models.HaapiResult
 import se.curity.haapi.models.android.sdk.models.Link
 import se.curity.haapi.models.android.sdk.models.OAuthAuthorizationResponseStep
 import se.curity.haapi.models.android.sdk.models.PollingStep
-import se.curity.haapi.models.android.sdk.models.actions.Action
 import se.curity.haapi.models.android.sdk.models.actions.FormActionModel
 import se.curity.haapi.models.android.sdk.models.oauth.OAuthResponse
 import java.net.HttpURLConnection
@@ -72,12 +71,12 @@ class HaapiFlowViewModel(private val haapiFlowConfiguration: HaapiFlowConfigurat
     val isLoading: LiveData<Boolean>
         get() = _isLoading
 
-    private fun executeHaapi(haapiResultCommand: suspend () -> HaapiResult) {
+    private fun executeHaapi(haapiResultCommand: suspend (scope: CoroutineScope) -> HaapiResult) {
         _isLoading.postValue(true)
-        viewModelScope.launch(Dispatchers.IO + coroutineExceptionHandler) {
+        viewModelScope.launch {
             try {
                 ensureActive()
-                val result = haapiResultCommand()
+                val result = haapiResultCommand(CoroutineScope(Dispatchers.IO + coroutineExceptionHandler))
                 ensureActive()
                 _isLoading.postValue(false)
                 processHaapiResult(result)
@@ -93,21 +92,22 @@ class HaapiFlowViewModel(private val haapiFlowConfiguration: HaapiFlowConfigurat
             haapiManager.start(
                 authorizationParameters = OAuthAuthorizationParameters(
                     scopes = haapiFlowConfiguration.selectedScopes
-                )
+                ),
+                onCoroutineScope = it
             )
         }
     }
 
     fun submit(form: FormActionModel, parameters: Map<String, String> = emptyMap()) {
         executeHaapi {
-            haapiManager.submitForm(form, parameters)
+            haapiManager.submitForm(form, parameters, it)
         }
     }
 
     fun fetchAccessToken(authorizationCode: String) {
         _isLoading.postValue(true)
-        viewModelScope.launch(Dispatchers.IO) {
-            val result = oAuthTokenService.fetchAccessToken(authorizationCode)
+        viewModelScope.launch {
+            val result = oAuthTokenService.fetchAccessToken(authorizationCode, onCoroutineScope = CoroutineScope(Dispatchers.IO))
             _isLoading.postValue(false)
             _liveOAuthResponse.postValue(result)
         }
@@ -116,7 +116,7 @@ class HaapiFlowViewModel(private val haapiFlowConfiguration: HaapiFlowConfigurat
     fun refreshAccessToken(refreshToken: String) {
         _isLoading.postValue(true)
         viewModelScope.launch(Dispatchers.IO) {
-            val result = oAuthTokenService.refreshAccessToken(refreshToken)
+            val result = oAuthTokenService.refreshAccessToken(refreshToken, this)
             _isLoading.postValue(false)
             _liveOAuthResponse.postValue(result)
         }
@@ -124,7 +124,7 @@ class HaapiFlowViewModel(private val haapiFlowConfiguration: HaapiFlowConfigurat
 
     fun followLink(link: Link) {
         executeHaapi {
-            haapiManager.followLink(link)
+            haapiManager.followLink(link, it)
         }
     }
 

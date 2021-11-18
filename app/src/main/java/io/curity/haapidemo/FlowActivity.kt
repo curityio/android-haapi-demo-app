@@ -395,7 +395,7 @@ class FlowActivity : AppCompatActivity() {
     }
 
     private fun handle(throwable: Throwable) {
-        showAlert(throwable.localizedMessage ?: "Something bad happened")
+        showAlert(throwable.message ?: "Something bad happened")
     }
 
     private fun showAlert(message: String, title: String? = null) {
