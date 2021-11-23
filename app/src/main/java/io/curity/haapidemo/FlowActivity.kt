@@ -37,7 +37,6 @@ import kotlinx.android.synthetic.main.activity_flow.*
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import se.curity.haapi.models.android.sdk.OAuthTokenService
 import se.curity.haapi.models.android.sdk.dataMap
 import se.curity.haapi.models.android.sdk.models.*
 import se.curity.haapi.models.android.sdk.models.actions.Action
@@ -257,9 +256,6 @@ class FlowActivity : AppCompatActivity() {
             is OAuthAuthorizationResponseStep -> {
                 if (haapiFlowViewModel.liveOAuthResponse.value?.getOrNull() !is TokenResponse) {
                     updateTitle(getString(R.string.oauth_authorization_completed))
-                    OAuthTokenService(
-                        haapiConfiguration = haapiFlowViewModel.haapiConfiguration
-                    )
                     commitNewFragment(
                         fragment = AuthorizationCompletedFragment.newInstance(haapiRepresentation),
                         representation = haapiRepresentation
