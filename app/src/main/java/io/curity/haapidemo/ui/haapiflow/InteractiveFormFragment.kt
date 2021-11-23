@@ -283,32 +283,42 @@ class InteractiveFormViewModel(private val interactiveFormModel: InteractiveForm
             for (field in action.model.fields) {
                 when (field) {
                     is FormField.Text -> {
-                        if (field.type == FormField.Type.Password) {
-                            _interactiveFormItems.add(
-                                InteractiveFormItem.Password(
-                                    key = field.name,
-                                    label = field.label?.value() ?: "",
-                                    hint = field.label?.value() ?: "",
-                                    value = field.value ?: ""
-                                )
-                            )
-                        } else {
-                            val inputType = when (field.kind) {
-                                is FormField.Text.Kind.Number -> InputType.TYPE_CLASS_NUMBER
-                                is FormField.Text.Kind.Tel -> InputType.TYPE_CLASS_PHONE
-                                else -> InputType.TYPE_CLASS_TEXT
-                            }
-
-                            _interactiveFormItems.add(
-                                InteractiveFormItem.EditText(
-                                    key = field.name,
-                                    inputType = inputType,
-                                    label = field.label?.value() ?: "",
-                                    hint = field.label?.value() ?: "",
-                                    value = field.value ?: ""
-                                )
-                            )
+                        val inputType = when (field.kind) {
+                            is FormField.Text.Kind.Number -> InputType.TYPE_CLASS_NUMBER
+                            is FormField.Text.Kind.Tel -> InputType.TYPE_CLASS_PHONE
+                            else -> InputType.TYPE_CLASS_TEXT
                         }
+
+                        _interactiveFormItems.add(
+                            InteractiveFormItem.EditText(
+                                key = field.name,
+                                inputType = inputType,
+                                label = field.label?.value() ?: "",
+                                hint = field.label?.value() ?: "",
+                                value = field.value ?: ""
+                            )
+                        )
+                    }
+                    is FormField.Username -> {
+                        _interactiveFormItems.add(
+                            InteractiveFormItem.EditText(
+                                key = field.name,
+                                inputType = InputType.TYPE_CLASS_TEXT,
+                                label = field.label?.value() ?: "",
+                                hint = field.label?.value() ?: "",
+                                value = field.value ?: ""
+                            )
+                        )
+                    }
+                    is FormField.Password -> {
+                        _interactiveFormItems.add(
+                            InteractiveFormItem.Password(
+                                key = field.name,
+                                label = field.label?.value() ?: "",
+                                hint = field.label?.value() ?: "",
+                                value = field.value ?: ""
+                            )
+                        )
                     }
                     is FormField.Hidden -> {
                         Log.d(Constant.TAG, "Field.Hidden is ignored")

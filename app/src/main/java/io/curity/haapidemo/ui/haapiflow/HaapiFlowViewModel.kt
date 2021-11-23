@@ -92,7 +92,7 @@ class HaapiFlowViewModel(private val haapiFlowConfiguration: HaapiFlowConfigurat
         executeHaapi {
             haapiManager.start(
                 authorizationParameters = OAuthAuthorizationParameters(
-                    scopes = haapiFlowConfiguration.selectedScopes
+                    scope = haapiFlowConfiguration.selectedScopes
                 ),
                 it
             )
