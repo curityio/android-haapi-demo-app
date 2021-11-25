@@ -15,22 +15,26 @@
  */
 package io.curity.haapidemo.ui.home
 
+import android.app.Activity
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
-import io.curity.haapidemo.FlowActivity
-import io.curity.haapidemo.R
-import io.curity.haapidemo.ShowcaseActivity
+import io.curity.haapidemo.*
 import io.curity.haapidemo.flow.HaapiFlowConfiguration
 import io.curity.haapidemo.uicomponents.ProgressButton
+import se.curity.haapi.models.android.sdk.models.oauth.TokenResponse
 
 class HomeFragment : Fragment() {
 
     private lateinit var activeHaapiConfigViewModel: ActiveHaapiConfigViewModel
+    private lateinit var launchActivity: ActivityResultLauncher<Intent>
     private var haapiFlowConfiguration: HaapiFlowConfiguration? = null
 
     private lateinit var button: ProgressButton
@@ -55,11 +59,24 @@ class HomeFragment : Fragment() {
             haapiFlowConfiguration = config
         }
 
+        launchActivity = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+            if (it.resultCode == Activity.RESULT_OK) {
+                val tokenResponse = it.data?.getParcelableExtra<TokenResponse>("TOKEN_RESPONSE")
+                startActivity(
+                    AuthenticatedActivity.newIntent(
+                        requireContext(),
+                        haapiFlowConfiguration!!,
+                        tokenResponse!!
+                    )
+                )
+            }
+        }
+
         button.setOnClickListener {
             val config = haapiFlowConfiguration
             if (config != null) {
                 val intent = FlowActivity.newIntent(requireContext(), config)
-                startActivity(intent)
+                launchActivity.launch(intent)
             }
         }
 

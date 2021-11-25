@@ -20,10 +20,7 @@ import androidx.lifecycle.*
 import io.curity.haapidemo.flow.HaapiFlowConfiguration
 import io.curity.haapidemo.utils.disableSslTrustVerification
 import kotlinx.coroutines.*
-import se.curity.haapi.models.android.sdk.HaapiConfiguration
-import se.curity.haapi.models.android.sdk.HaapiManager
-import se.curity.haapi.models.android.sdk.OAuthAuthorizationParameters
-import se.curity.haapi.models.android.sdk.OAuthTokenService
+import se.curity.haapi.models.android.sdk.*
 import se.curity.haapi.models.android.sdk.models.HaapiResult
 import se.curity.haapi.models.android.sdk.models.Link
 import se.curity.haapi.models.android.sdk.models.OAuthAuthorizationResponseStep
@@ -55,7 +52,12 @@ class HaapiFlowViewModel(private val haapiFlowConfiguration: HaapiFlowConfigurat
         }
     )
     private val haapiManager: HaapiManager = HaapiManager(haapiConfiguration = haapiConfiguration)
-    private val oAuthTokenService: OAuthTokenService = OAuthTokenService(haapiConfiguration = haapiConfiguration)
+    private val oAuthTokenManager: OAuthTokenManager = OAuthTokenManager(
+        clientId = haapiConfiguration.clientId,
+        tokenEndpointUri = haapiConfiguration.tokenEndpointUri,
+        appRedirect = haapiConfiguration.appRedirect,
+        httpURLConnectionProvider = haapiConfiguration.httpUrlConnectionProvider
+    )
     private val coroutineExceptionHandler = CoroutineExceptionHandler { _, _ -> }
 
     val isAutoPolling = haapiFlowConfiguration.isAutoPollingEnabled
@@ -109,7 +111,21 @@ class HaapiFlowViewModel(private val haapiFlowConfiguration: HaapiFlowConfigurat
         _isLoading.postValue(true)
         viewModelScope.launch {
             val result = withContext(Dispatchers.IO) {
-                oAuthTokenService.fetchAccessToken(authorizationCode, this.coroutineContext)
+                oAuthTokenManager.fetchAccessToken(authorizationCode, this.coroutineContext)
+            }
+            _isLoading.postValue(false)
+            _liveOAuthResponse.postValue(result)
+        }
+    }
+
+    fun fetchAccessToken(oAuthAuthorizationResponseStep: OAuthAuthorizationResponseStep) {
+        _isLoading.postValue(true)
+        viewModelScope.launch {
+            val result = withContext(Dispatchers.IO) {
+                oAuthTokenManager.fetchAccessToken(
+                    oAuthAuthorizationResponseStep.properties.code!!,
+                    this.coroutineContext
+                )
             }
             _isLoading.postValue(false)
             _liveOAuthResponse.postValue(result)
@@ -120,7 +136,7 @@ class HaapiFlowViewModel(private val haapiFlowConfiguration: HaapiFlowConfigurat
         _isLoading.postValue(true)
         viewModelScope.launch {
             val result = withContext(Dispatchers.IO) {
-                oAuthTokenService.refreshAccessToken(refreshToken, this.coroutineContext)
+                oAuthTokenManager.refreshAccessToken(refreshToken, this.coroutineContext)
             }
             _isLoading.postValue(false)
             _liveOAuthResponse.postValue(result)
@@ -144,12 +160,10 @@ class HaapiFlowViewModel(private val haapiFlowConfiguration: HaapiFlowConfigurat
         // Handle automatic fetchAccessToken
         if (latestResponse is OAuthAuthorizationResponseStep &&
             haapiFlowConfiguration.isAutoAuthorizationChallengedEnabled) {
-            val authorizationCode = latestResponse.properties.code
-            if (authorizationCode != null) {
-                fetchAccessToken(authorizationCode)
-            }
+            fetchAccessToken(latestResponse)
+        } else {
+            _liveStep.postValue(haapiResult)
         }
-        _liveStep.postValue(haapiResult)
     }
 
     override fun onCleared() {

@@ -107,6 +107,7 @@ class DisclosureView @JvmOverloads constructor(
 
     @Suppress("Unused")
     fun setDisclosureContents(contents: List<DisclosureContent>) {
+        verticalLinearLayout.removeAllViews()
         contents.forEach { content ->
             val labelTextView = LabelTextView(context).apply {
                 this.setLabel(content.label)

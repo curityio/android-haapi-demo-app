@@ -16,6 +16,7 @@
 
 package io.curity.haapidemo
 
+import android.app.Activity
 import android.app.AlertDialog
 import android.content.ActivityNotFoundException
 import android.content.Context
@@ -118,11 +119,10 @@ class FlowActivity : AppCompatActivity() {
                     }
                     when (response) {
                         is TokenResponse -> {
-                            updateTitle(getString(R.string.success))
-                            commitNewFragment(
-                                fragment = TokensFragment.newInstance(response),
-                                representation = response
-                            )
+                            val newIntent = Intent()
+                            newIntent.putExtra("TOKEN_RESPONSE", response)
+                            setResult(Activity.RESULT_OK, newIntent)
+                            finish()
                         }
                         is InvalidTokenResponse -> {
                             showAlert(
