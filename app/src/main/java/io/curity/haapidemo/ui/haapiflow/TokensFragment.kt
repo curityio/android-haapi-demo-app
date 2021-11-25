@@ -99,7 +99,8 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
         refreshTokenButton = view.findViewById(R.id.refresh_button)
         signOutButton = view.findViewById(R.id.signout_button)
 
-        headerView.setText("Congrats, you have a token")
+
+        headerView.setText(getString(R.string.success))
 
         tokensViewModel.liveTokenResponse.observe(viewLifecycleOwner, Observer {
             accessDisclosureView.setContentText(tokensViewModel.accessToken)

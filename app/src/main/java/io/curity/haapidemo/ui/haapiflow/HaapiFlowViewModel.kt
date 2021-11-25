@@ -123,7 +123,7 @@ class HaapiFlowViewModel(private val haapiFlowConfiguration: HaapiFlowConfigurat
         viewModelScope.launch {
             val result = withContext(Dispatchers.IO) {
                 oAuthTokenManager.fetchAccessToken(
-                    oAuthAuthorizationResponseStep.properties.code!!,
+                    oAuthAuthorizationResponseStep.properties.code,
                     this.coroutineContext
                 )
             }

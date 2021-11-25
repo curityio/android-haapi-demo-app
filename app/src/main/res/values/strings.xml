@@ -61,5 +61,5 @@
     <string name="polling">Polling</string>
     <string name="oauth_authorization_completed">OAuth authorization completed</string>
     <string name="user_consent">User consent</string>
-    <string name="success">Success</string>
+    <string name="success">Congrats, you have a token</string>
 </resources>
