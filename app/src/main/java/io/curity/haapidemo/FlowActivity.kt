@@ -196,7 +196,7 @@ class FlowActivity : AppCompatActivity() {
                 )
             }
             is AuthenticatorSelectorStep -> {
-                updateTitle(haapiRepresentation.title.value())
+                updateTitle(haapiRepresentation.title.literal)
                 commitNewFragment(
                     fragment = AuthenticatorSelectorFragment.newInstance(haapiRepresentation),
                     representation = haapiRepresentation
@@ -204,7 +204,7 @@ class FlowActivity : AppCompatActivity() {
             }
             is InteractiveFormStep -> {
                 val title = if (haapiRepresentation.actions.size == 1) {
-                    haapiRepresentation.actions.first().title?.value()
+                    haapiRepresentation.actions.first().title?.literal
                         ?: if (haapiRepresentation.type == RepresentationType.REGISTRATION_STEP) {
                             "Registration"
                         } else {
@@ -275,8 +275,8 @@ class FlowActivity : AppCompatActivity() {
             is ConsentorStep -> {
                 showAlert("Consentor step is not implemented")
             }
-            is RawHaapiRepresentationStep -> {
-                showAlert("Unknown step is not implemented")
+            is GenericRepresentationStep -> {
+                showAlert("Generic representation step is not implemented")
             }
             is ExternalBrowserOperationStep, is EncapClientOperationStep, is BankIdOperationStep -> {
                 throw IllegalStateException("These steps should be handled by another handler. See below")
@@ -297,7 +297,7 @@ class FlowActivity : AppCompatActivity() {
                     startActivity(intent)
                     externalBrowserOperationStep = operationStep
                     // If the browser can be opened then we apply the cancel step to the UI
-                    val title = operationStep.actionsToPresent.first().title?.value() ?: "External browser operation"
+                    val title = operationStep.actionsToPresent.first().title?.literal ?: "External browser operation"
                     updateTitle(title)
                     commitNewFragment(
                         fragment = InteractiveFormFragment.newInstance(
@@ -336,7 +336,7 @@ class FlowActivity : AppCompatActivity() {
                     } else {
                         // One or many actions - unfortunately if there is one action and it is a redirect, we cannot submit it
                         val title = if (operationStep.continueActions.size == 1) {
-                            operationStep.continueActions.first().title?.value() ?: "BankID operation"
+                            operationStep.continueActions.first().title?.literal ?: "BankID operation"
                         } else {
                             "BankID operation"
                         }
@@ -376,7 +376,7 @@ class FlowActivity : AppCompatActivity() {
             val message = if (problemRepresentation is AuthorizationProblem) {
                 problemRepresentation.errorDescription
             } else {
-                problemRepresentation.messages.joinToString { it.text.value() }
+                problemRepresentation.messages.joinToString { it.text.literal }
             }
             showAlert(
                 message = message,

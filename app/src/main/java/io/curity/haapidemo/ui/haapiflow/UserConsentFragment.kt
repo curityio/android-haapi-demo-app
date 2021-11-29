@@ -153,7 +153,7 @@ class UserConsentFragment: Fragment(R.layout.fragment_user_consent) {
                     _interactiveFormItems.add(
                         InteractiveFormItem.Button(
                             key = action.kind.discriminator,
-                            label = action.model.actionTitle?.value() ?: "",
+                            label = action.model.actionTitle?.literal ?: "",
                             actionModelForm = action.model
                         )
                     )

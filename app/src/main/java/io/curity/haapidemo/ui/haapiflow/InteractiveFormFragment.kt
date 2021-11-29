@@ -152,7 +152,7 @@ class InteractiveFormFragment: Fragment(R.layout.fragment_interactive_form), Pro
             interactiveFormViewModel.userMessages.forEach { userMessage ->
                 val messageView = MessageView.newInstance(
                     context = requireContext(),
-                    text = userMessage.text.value(),
+                    text = userMessage.text.literal,
                     style = userMessage.messageStyle()
                 )
                 messagesLayout.addView(messageView)
@@ -184,13 +184,13 @@ class InteractiveFormFragment: Fragment(R.layout.fragment_interactive_form), Pro
                     val bitmap = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.size)
                     val headerViewLink = HeaderView(requireContext(), null, R.style.HeaderView_Link).apply {
                         this.setImageBitmap(bitmap)
-                        this.setText(link.title?.value() ?: "")
+                        this.setText(link.title?.literal ?: "")
                     }
                     linksLayout.addView(headerViewLink)
                 }
             } else {
                 val button = ProgressButton(requireContext(), null, R.style.LinkProgressButton).apply {
-                    this.setText(link.title?.value() ?: "")
+                    this.setText(link.title?.literal ?: "")
                     this.setOnClickListener {
                         dismissKeyboard()
                         weakButton = WeakReference(this)
@@ -274,7 +274,7 @@ class InteractiveFormViewModel(private val interactiveFormModel: InteractiveForm
             // We display the section title only if we have multiple actions
             if (interactiveFormModel.actions.size > 1) {
                 action.title?.let {
-                    val label = it.value()
+                    val label = it.literal
                     _interactiveFormItems.add(
                         InteractiveFormItem.SectionTitle(label)
                     )
@@ -293,8 +293,8 @@ class InteractiveFormViewModel(private val interactiveFormModel: InteractiveForm
                             InteractiveFormItem.EditText(
                                 key = field.name,
                                 inputType = inputType,
-                                label = field.label?.value() ?: "",
-                                hint = field.label?.value() ?: "",
+                                label = field.label?.literal ?: "",
+                                hint = field.label?.literal ?: "",
                                 value = field.value ?: ""
                             )
                         )
@@ -304,8 +304,8 @@ class InteractiveFormViewModel(private val interactiveFormModel: InteractiveForm
                             InteractiveFormItem.EditText(
                                 key = field.name,
                                 inputType = InputType.TYPE_CLASS_TEXT,
-                                label = field.label?.value() ?: "",
-                                hint = field.label?.value() ?: "",
+                                label = field.label?.literal ?: "",
+                                hint = field.label?.literal ?: "",
                                 value = field.value ?: ""
                             )
                         )
@@ -314,8 +314,8 @@ class InteractiveFormViewModel(private val interactiveFormModel: InteractiveForm
                         _interactiveFormItems.add(
                             InteractiveFormItem.Password(
                                 key = field.name,
-                                label = field.label?.value() ?: "",
-                                hint = field.label?.value() ?: "",
+                                label = field.label?.literal ?: "",
+                                hint = field.label?.literal ?: "",
                                 value = field.value ?: ""
                             )
                         )
@@ -326,7 +326,7 @@ class InteractiveFormViewModel(private val interactiveFormModel: InteractiveForm
 
                     is FormField.Select -> {
                         val selectOptions = field.options.map { option ->
-                            val label = option.label.value()
+                            val label = option.label.literal
                             SelectOption(
                                 label = label,
                                 value = option.value
@@ -335,7 +335,7 @@ class InteractiveFormViewModel(private val interactiveFormModel: InteractiveForm
                         _interactiveFormItems.add(
                             InteractiveFormItem.Select(
                                 key = field.name,
-                                label = field.label.value(),
+                                label = field.label.literal,
                                 selectOptions = selectOptions,
                                 selectedIndex = field.options.indexOfFirst { it.selected }
                             )
@@ -356,7 +356,7 @@ class InteractiveFormViewModel(private val interactiveFormModel: InteractiveForm
             _interactiveFormItems.add(
                 InteractiveFormItem.Button(
                     key = action.kind.toString(),
-                    label = action.model.actionTitle?.value() ?: "",
+                    label = action.model.actionTitle?.literal ?: "",
                     actionModelForm = action.model
                 )
             )
@@ -697,7 +697,7 @@ private fun ProblemRepresentation.problemBundle(): List<ProblemView.ProblemBundl
         }
         else -> {
             messages.forEach { userMessage ->
-                val text = userMessage.text.value()
+                val text = userMessage.text.literal
                 problemBundles.add(
                     ProblemView.ProblemBundle(
                         text = text,

@@ -145,7 +145,7 @@ class AuthenticatorSelectorFragment: Fragment() {
         override fun onBindViewHolder(holder: SelectorViewHolder, position: Int) {
             val item = getItem(position)
             holder.bind(
-                item.title.value(),
+                item.title.literal,
                 imageResourceId = holder.itemView.getImageResources(item.haapiImageName())
             ) {
                 clickHandler(item.action.model, it)

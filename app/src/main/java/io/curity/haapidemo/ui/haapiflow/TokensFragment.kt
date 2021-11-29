@@ -173,10 +173,7 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
 
         init {
             oAuthTokenManager = OAuthTokenManager(
-                clientId = haapiConfiguration.clientId,
-                tokenEndpointUri = haapiConfiguration.tokenEndpointUri,
-                appRedirect = haapiConfiguration.appRedirect,
-                httpURLConnectionProvider = haapiConfiguration.httpUrlConnectionProvider
+                oauthTokenConfiguration = haapiConfiguration
             )
             uriUserInfo = URI("${haapiConfiguration.baseUri}/dev/oauth/userinfo")
             updateDisclosureContents()

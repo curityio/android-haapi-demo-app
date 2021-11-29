@@ -135,9 +135,9 @@ class PollingFragment: Fragment(R.layout.fragment_polling) {
 
         val isLoading = haapiFlowViewModel.isLoading
         val mainActionTitle: String
-            get() = pollingStep.mainAction.model.actionTitle?.value() ?: pollingStep.mainAction.kind.discriminator.uppercase()
+            get() = pollingStep.mainAction.model.actionTitle?.literal ?: pollingStep.mainAction.kind.discriminator.uppercase()
         val cancelActionTitle: String?
-            get() = pollingStep.cancelAction?.model?.actionTitle?.value()
+            get() = pollingStep.cancelAction?.model?.actionTitle?.literal
         val status: String
             get() = pollingStep.properties.status.value
 

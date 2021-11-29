@@ -41,7 +41,7 @@ fun UserMessage.messageStyle(): MessageStyle {
 fun List<UserMessage>.toMessageViews(context: Context): List<MessageView> = map { userMessage ->
     MessageView.newInstance(
         context = context,
-        text = userMessage.text.value(),
+        text = userMessage.text.literal,
         style = userMessage.messageStyle()
     )
 }
@@ -49,7 +49,7 @@ fun List<UserMessage>.toMessageViews(context: Context): List<MessageView> = map 
 fun FormField.Checkbox.toInteractiveFormItemCheckbox(): InteractiveFormItem.Checkbox {
     return InteractiveFormItem.Checkbox(
         key = name,
-        label = label?.value() ?: "",
+        label = label?.literal ?: "",
         readonly = readonly,
         checked = checked,
         value = value ?: "on"

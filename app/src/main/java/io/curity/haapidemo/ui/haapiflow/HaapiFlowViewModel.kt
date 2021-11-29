@@ -25,6 +25,7 @@ import se.curity.haapi.models.android.sdk.models.HaapiResult
 import se.curity.haapi.models.android.sdk.models.Link
 import se.curity.haapi.models.android.sdk.models.OAuthAuthorizationResponseStep
 import se.curity.haapi.models.android.sdk.models.PollingStep
+import se.curity.haapi.models.android.sdk.models.actions.ActionKind
 import se.curity.haapi.models.android.sdk.models.actions.FormActionModel
 import se.curity.haapi.models.android.sdk.models.oauth.OAuthResponse
 import java.net.HttpURLConnection
@@ -53,10 +54,7 @@ class HaapiFlowViewModel(private val haapiFlowConfiguration: HaapiFlowConfigurat
     )
     private val haapiManager: HaapiManager = HaapiManager(haapiConfiguration = haapiConfiguration)
     private val oAuthTokenManager: OAuthTokenManager = OAuthTokenManager(
-        clientId = haapiConfiguration.clientId,
-        tokenEndpointUri = haapiConfiguration.tokenEndpointUri,
-        appRedirect = haapiConfiguration.appRedirect,
-        httpURLConnectionProvider = haapiConfiguration.httpUrlConnectionProvider
+        oauthTokenConfiguration = haapiConfiguration
     )
     private val coroutineExceptionHandler = CoroutineExceptionHandler { _, _ -> }
 
