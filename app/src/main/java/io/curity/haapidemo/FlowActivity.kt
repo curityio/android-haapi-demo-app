@@ -229,9 +229,6 @@ class FlowActivity : AppCompatActivity() {
                     representation = haapiRepresentation
                 )
             }
-            is RegistrationStep, is AuthenticationStep -> {
-                showAlert("RegistrationStep or AuthenticationStep are not implemented")
-            }
             is PollingStep -> {
                 if (haapiRepresentation.properties.status == PollingStatus.DONE &&
                     haapiRepresentation.actions.size == 1 &&
@@ -272,11 +269,12 @@ class FlowActivity : AppCompatActivity() {
                     representation = haapiRepresentation
                 )
             }
-            is ConsentorStep -> {
-                showAlert("Consentor step is not implemented")
-            }
             is GenericRepresentationStep -> {
-                showAlert("Generic representation step is not implemented")
+                updateTitle("GENERIC STEP")
+                commitNewFragment(
+                    fragment = GenericHaapiFragment.newInstance(haapiRepresentation),
+                    representation = haapiRepresentation
+                )
             }
             is ExternalBrowserOperationStep, is EncapClientOperationStep, is BankIdOperationStep -> {
                 throw IllegalStateException("These steps should be handled by another handler. See below")
@@ -341,6 +339,7 @@ class FlowActivity : AppCompatActivity() {
                             "BankID operation"
                         }
                         updateTitle(title)
+                        @Suppress("UNCHECKED_CAST")
                         commitNewFragment(
                             fragment = InteractiveFormFragment.newInstance(
                                 model = InteractiveFormModel(

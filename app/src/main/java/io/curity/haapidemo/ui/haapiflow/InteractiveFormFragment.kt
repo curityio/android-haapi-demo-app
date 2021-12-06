@@ -356,7 +356,7 @@ class InteractiveFormViewModel(private val interactiveFormModel: InteractiveForm
             _interactiveFormItems.add(
                 InteractiveFormItem.Button(
                     key = action.kind.toString(),
-                    label = action.model.actionTitle?.literal ?: "",
+                    label = action.model.actionTitle?.literal ?: "Submit",
                     actionModelForm = action.model
                 )
             )
