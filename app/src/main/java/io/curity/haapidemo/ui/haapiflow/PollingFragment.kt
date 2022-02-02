@@ -30,8 +30,8 @@ import io.curity.haapidemo.R
 import io.curity.haapidemo.uicomponents.ProgressButton
 import io.curity.haapidemo.uicomponents.ViewStopLoadable
 import kotlinx.coroutines.*
-import se.curity.haapi.models.android.sdk.models.PollingStatus
-import se.curity.haapi.models.android.sdk.models.PollingStep
+import se.curity.identityserver.haapi.android.sdk.models.PollingStatus
+import se.curity.identityserver.haapi.android.sdk.models.PollingStep
 
 class PollingFragment: Fragment(R.layout.fragment_polling) {
 

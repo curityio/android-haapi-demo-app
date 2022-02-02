@@ -29,7 +29,7 @@ import androidx.lifecycle.ViewModelProvider
 import io.curity.haapidemo.*
 import io.curity.haapidemo.flow.HaapiFlowConfiguration
 import io.curity.haapidemo.uicomponents.ProgressButton
-import se.curity.haapi.models.android.sdk.models.oauth.TokenResponse
+import se.curity.identityserver.haapi.android.sdk.models.oauth.SuccessfulTokenResponse
 
 class HomeFragment : Fragment() {
 
@@ -61,7 +61,7 @@ class HomeFragment : Fragment() {
 
         launchActivity = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
             if (it.resultCode == Activity.RESULT_OK) {
-                val tokenResponse = it.data?.getParcelableExtra<TokenResponse>("TOKEN_RESPONSE")
+                val tokenResponse = it.data?.getParcelableExtra<SuccessfulTokenResponse>("TOKEN_RESPONSE")
                 startActivity(
                     AuthenticatedActivity.newIntent(
                         requireContext(),

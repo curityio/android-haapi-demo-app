@@ -47,10 +47,10 @@ import io.curity.haapidemo.utils.dismissKeyboard
 import io.curity.haapidemo.utils.messageStyle
 import io.curity.haapidemo.utils.toInteractiveFormItemCheckbox
 import kotlinx.android.parcel.Parcelize
-import se.curity.haapi.models.android.sdk.models.*
-import se.curity.haapi.models.android.sdk.models.actions.Action
-import se.curity.haapi.models.android.sdk.models.actions.FormActionModel
-import se.curity.haapi.models.android.sdk.models.actions.FormField
+import se.curity.identityserver.haapi.android.sdk.models.*
+import se.curity.identityserver.haapi.android.sdk.models.actions.Action
+import se.curity.identityserver.haapi.android.sdk.models.actions.FormActionModel
+import se.curity.identityserver.haapi.android.sdk.models.actions.FormField
 import java.lang.ref.WeakReference
 import java.util.*
 import kotlin.collections.HashMap
@@ -335,7 +335,7 @@ class InteractiveFormViewModel(private val interactiveFormModel: InteractiveForm
                         _interactiveFormItems.add(
                             InteractiveFormItem.Select(
                                 key = field.name,
-                                label = field.label.literal,
+                                label = field.label?.literal ?: "",
                                 selectOptions = selectOptions,
                                 selectedIndex = field.options.indexOfFirst { it.selected }
                             )
@@ -438,7 +438,7 @@ class InteractiveFormViewModel(private val interactiveFormModel: InteractiveForm
             Log.d(Constant.TAG, "After {$_interactiveFormItems}")
         }
         val problemContent = ProblemContent(
-            title = problem.title ?: "",
+            title = problem.title?.literal ?: "",
             problemBundles = problem.problemBundle()
         )
         _problemContentLiveData.postValue(problemContent)
@@ -681,7 +681,7 @@ private fun ProblemRepresentation.problemBundle(): List<ProblemView.ProblemBundl
                 val detail = invalidField.detail
                 problemBundles.add(
                     ProblemView.ProblemBundle(
-                        text = detail,
+                        text = detail.literal,
                         messageStyle = MessageStyle.Error()
                     )
                 )
@@ -690,7 +690,7 @@ private fun ProblemRepresentation.problemBundle(): List<ProblemView.ProblemBundl
         is AuthorizationProblem -> { // Should not happen here but let's do it in the worst case
             problemBundles.add(
                 ProblemView.ProblemBundle(
-                    text = errorDescription,
+                    text = errorDescription ?: error,
                     messageStyle = MessageStyle.Error()
                 )
             )

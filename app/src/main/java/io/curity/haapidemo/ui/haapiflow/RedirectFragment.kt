@@ -23,7 +23,7 @@ import androidx.lifecycle.ViewModelProvider
 import io.curity.haapidemo.R
 import io.curity.haapidemo.uicomponents.MessageView
 import io.curity.haapidemo.uicomponents.ProgressButton
-import se.curity.haapi.models.android.sdk.models.RedirectionStep
+import se.curity.identityserver.haapi.android.sdk.models.RedirectionStep
 import java.lang.IllegalArgumentException
 
 class RedirectFragment: Fragment(R.layout.fragment_redirect) {

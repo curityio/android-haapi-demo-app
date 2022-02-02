@@ -20,17 +20,22 @@ import androidx.lifecycle.*
 import io.curity.haapidemo.flow.HaapiFlowConfiguration
 import io.curity.haapidemo.utils.disableSslTrustVerification
 import kotlinx.coroutines.*
-import se.curity.haapi.models.android.sdk.*
-import se.curity.haapi.models.android.sdk.models.HaapiResult
-import se.curity.haapi.models.android.sdk.models.Link
-import se.curity.haapi.models.android.sdk.models.OAuthAuthorizationResponseStep
-import se.curity.haapi.models.android.sdk.models.PollingStep
-import se.curity.haapi.models.android.sdk.models.actions.ActionKind
-import se.curity.haapi.models.android.sdk.models.actions.FormActionModel
-import se.curity.haapi.models.android.sdk.models.oauth.OAuthResponse
+import se.curity.identityserver.haapi.android.sdk.HaapiConfiguration
+import se.curity.identityserver.haapi.android.sdk.HaapiManager
+import se.curity.identityserver.haapi.android.sdk.OAuthAuthorizationParameters
+import se.curity.identityserver.haapi.android.sdk.OAuthTokenManager
+import se.curity.identityserver.haapi.android.sdk.models.HaapiResponse
+import se.curity.identityserver.haapi.android.sdk.models.Link
+import se.curity.identityserver.haapi.android.sdk.models.OAuthAuthorizationResponseStep
+import se.curity.identityserver.haapi.android.sdk.models.PollingStep
+import se.curity.identityserver.haapi.android.sdk.models.actions.FormActionModel
+import se.curity.identityserver.haapi.android.sdk.models.oauth.TokenResponse
 import java.net.HttpURLConnection
 import java.net.URI
 import kotlin.coroutines.CoroutineContext
+
+typealias HaapiResult = Result<HaapiResponse>
+typealias OAuthResponse = Result<TokenResponse>
 
 class HaapiFlowViewModel(private val haapiFlowConfiguration: HaapiFlowConfiguration): ViewModel() {
 
@@ -64,15 +69,15 @@ class HaapiFlowViewModel(private val haapiFlowConfiguration: HaapiFlowConfigurat
     val liveStep: LiveData<HaapiResult?>
         get() = _liveStep
 
-    private var _liveOAuthResponse = MutableLiveData<Result<OAuthResponse>?>(null)
-    val liveOAuthResponse: LiveData<Result<OAuthResponse>?>
+    private var _liveOAuthResponse = MutableLiveData<OAuthResponse?>(null)
+    val liveOAuthResponse: LiveData<OAuthResponse?>
         get() = _liveOAuthResponse
 
     private val _isLoading = MutableLiveData(false)
     val isLoading: LiveData<Boolean>
         get() = _isLoading
 
-    private fun executeHaapi(haapiResultCommand: suspend (coroutineContext: CoroutineContext) -> HaapiResult) {
+    private fun executeHaapi(haapiResultCommand: suspend (coroutineContext: CoroutineContext) -> HaapiResponse) {
         _isLoading.postValue(true)
         viewModelScope.launch {
             try {
@@ -80,8 +85,8 @@ class HaapiFlowViewModel(private val haapiFlowConfiguration: HaapiFlowConfigurat
                 val result = haapiResultCommand(Dispatchers.IO + coroutineExceptionHandler)
                 ensureActive()
                 _isLoading.postValue(false)
-                processHaapiResult(result)
-            } catch (e: CancellationException) {
+                processHaapiResult(HaapiResult.success(result))
+            } catch (e: Exception) {
                 coroutineExceptionHandler.handleException(coroutineContext, e)
                 processHaapiResult(HaapiResult.failure(e))
             }
@@ -112,7 +117,7 @@ class HaapiFlowViewModel(private val haapiFlowConfiguration: HaapiFlowConfigurat
                 oAuthTokenManager.fetchAccessToken(authorizationCode, this.coroutineContext)
             }
             _isLoading.postValue(false)
-            _liveOAuthResponse.postValue(result)
+            _liveOAuthResponse.postValue(OAuthResponse.success(result))
         }
     }
 
@@ -126,7 +131,7 @@ class HaapiFlowViewModel(private val haapiFlowConfiguration: HaapiFlowConfigurat
                 )
             }
             _isLoading.postValue(false)
-            _liveOAuthResponse.postValue(result)
+            _liveOAuthResponse.postValue(OAuthResponse.success(result))
         }
     }
 
@@ -137,7 +142,7 @@ class HaapiFlowViewModel(private val haapiFlowConfiguration: HaapiFlowConfigurat
                 oAuthTokenManager.refreshAccessToken(refreshToken, this.coroutineContext)
             }
             _isLoading.postValue(false)
-            _liveOAuthResponse.postValue(result)
+            _liveOAuthResponse.postValue(OAuthResponse.success(result))
         }
     }
 

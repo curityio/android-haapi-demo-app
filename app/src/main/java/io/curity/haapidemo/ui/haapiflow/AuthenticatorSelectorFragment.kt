@@ -32,8 +32,8 @@ import io.curity.haapidemo.R
 import io.curity.haapidemo.uicomponents.SelectorViewHolder
 import io.curity.haapidemo.uicomponents.ViewStopLoadable
 import io.curity.haapidemo.utils.getImageResources
-import se.curity.haapi.models.android.sdk.models.AuthenticatorSelectorStep
-import se.curity.haapi.models.android.sdk.models.actions.FormActionModel
+import se.curity.identityserver.haapi.android.sdk.models.AuthenticatorSelectorStep
+import se.curity.identityserver.haapi.android.sdk.models.actions.FormActionModel
 import java.lang.ref.WeakReference
 
 class AuthenticatorSelectorFragment: Fragment() {

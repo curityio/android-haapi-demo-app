@@ -32,11 +32,11 @@ import io.curity.haapidemo.uicomponents.ViewStopLoadable
 import io.curity.haapidemo.utils.dismissKeyboard
 import io.curity.haapidemo.utils.toInteractiveFormItemCheckbox
 import io.curity.haapidemo.utils.toMessageViews
-import se.curity.haapi.models.android.sdk.models.UserConsentStep
-import se.curity.haapi.models.android.sdk.models.UserMessage
-import se.curity.haapi.models.android.sdk.models.actions.Action
-import se.curity.haapi.models.android.sdk.models.actions.FormActionModel
-import se.curity.haapi.models.android.sdk.models.actions.FormField
+import se.curity.identityserver.haapi.android.sdk.models.UserConsentStep
+import se.curity.identityserver.haapi.android.sdk.models.UserMessage
+import se.curity.identityserver.haapi.android.sdk.models.actions.Action
+import se.curity.identityserver.haapi.android.sdk.models.actions.FormActionModel
+import se.curity.identityserver.haapi.android.sdk.models.actions.FormField
 import java.lang.ref.WeakReference
 
 class UserConsentFragment: Fragment(R.layout.fragment_user_consent) {

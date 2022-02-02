@@ -83,7 +83,8 @@ dependencies {
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:$kotlin_version"
     implementation 'androidx.constraintlayout:constraintlayout:2.1.1'
     implementation 'androidx.appcompat:appcompat:1.3.1'
-    implementation 'se.curity.identityserver:identityserver.haapi.android.sdk:1.0.1'
+//    implementation 'se.curity.identityserver:identityserver.haapi.android.sdk:1.0.1'
+    implementation 'org.bitbucket.b_c:jose4j:0.6.5' // To remove when the external import for haapi.driver AND haapi.sdk work
     implementation 'com.squareup.okhttp3:okhttp:4.9.1'
     implementation 'com.google.android.material:material:1.4.0'
     implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.3.1'
@@ -97,7 +98,8 @@ dependencies {
     // Serialization
     implementation "org.jetbrains.kotlinx:kotlinx-serialization-core:1.2.2"
     implementation "org.jetbrains.kotlinx:kotlinx-serialization-json:1.2.2"
-    implementation files('../../android-cat/haapi-models-android-sdk/build/outputs/aar/haapi-models-android-sdk-debug.aar')
+    implementation files('../../android-cat/identityserver.haapi.android.driver/build/outputs/aar/identityserver.haapi.android.driver-debug.aar')
+    implementation files('../../android-cat/identityserver.haapi.android.sdk/build/outputs/aar/identityserver.haapi.android.sdk-debug.aar')
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'androidx.arch.core:core-testing:2.1.0'
 

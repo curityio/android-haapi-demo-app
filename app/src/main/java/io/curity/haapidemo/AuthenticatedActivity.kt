@@ -28,10 +28,10 @@ import io.curity.haapidemo.ui.haapiflow.TokensFragment
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import se.curity.haapi.models.android.sdk.models.oauth.TokenResponse
+import se.curity.identityserver.haapi.android.sdk.models.oauth.SuccessfulTokenResponse
 
 interface TokenStateChangeable {
-    fun setNewTokenResponse(tokenResponse: TokenResponse)
+    fun setNewTokenResponse(tokenResponse: SuccessfulTokenResponse)
     fun logout()
 }
 
@@ -43,7 +43,7 @@ class AuthenticatedActivity : AppCompatActivity(), TokenStateChangeable {
         setContentView(R.layout.activity_authenticated)
 
         val configString = intent.getStringExtra(EXTRA_AUTHENTICATED_ACTIVITY_HAAPI_CONFIG)
-        val tokenResponse = intent.getParcelableExtra<TokenResponse>(EXTRA_AUTHENTICATED_ACTIVITY_TOKEN_RESPONSE)
+        val tokenResponse = intent.getParcelableExtra<SuccessfulTokenResponse>(EXTRA_AUTHENTICATED_ACTIVITY_TOKEN_RESPONSE)
 
         if (configString == null || tokenResponse == null) {
             throw IllegalArgumentException("You need to use AuthenticatedActivity.newIntent(...)")
@@ -61,7 +61,7 @@ class AuthenticatedActivity : AppCompatActivity(), TokenStateChangeable {
         }
     }
 
-    override fun setNewTokenResponse(tokenResponse: TokenResponse) {
+    override fun setNewTokenResponse(tokenResponse: SuccessfulTokenResponse) {
         viewModel.tokenResponse = tokenResponse
     }
 
@@ -70,7 +70,7 @@ class AuthenticatedActivity : AppCompatActivity(), TokenStateChangeable {
     }
 
     class AuthenticatedActivityViewModel: ViewModel() {
-        var tokenResponse: TokenResponse? = null
+        var tokenResponse: SuccessfulTokenResponse? = null
     }
 
     companion object {
@@ -80,7 +80,7 @@ class AuthenticatedActivity : AppCompatActivity(), TokenStateChangeable {
 
         fun newIntent(context: Context,
                       haapiFlowConfiguration: HaapiFlowConfiguration,
-                      tokenResponse: TokenResponse
+                      tokenResponse: SuccessfulTokenResponse
         ): Intent {
             val intent = Intent(context, AuthenticatedActivity::class.java)
             intent.putExtra(EXTRA_AUTHENTICATED_ACTIVITY_HAAPI_CONFIG, Json.encodeToString(haapiFlowConfiguration))

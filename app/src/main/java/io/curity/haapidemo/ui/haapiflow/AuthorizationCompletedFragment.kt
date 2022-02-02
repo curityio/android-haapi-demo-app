@@ -25,7 +25,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import io.curity.haapidemo.R
 import io.curity.haapidemo.uicomponents.ProgressButton
-import se.curity.haapi.models.android.sdk.models.OAuthAuthorizationResponseStep
+import se.curity.identityserver.haapi.android.sdk.models.OAuthAuthorizationResponseStep
 
 class AuthorizationCompletedFragment: Fragment(R.layout.fragment_authorization_completed) {
 

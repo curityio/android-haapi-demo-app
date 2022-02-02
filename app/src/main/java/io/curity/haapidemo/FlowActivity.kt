@@ -38,12 +38,11 @@ import kotlinx.android.synthetic.main.activity_flow.*
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import se.curity.haapi.models.android.sdk.dataMap
-import se.curity.haapi.models.android.sdk.models.*
-import se.curity.haapi.models.android.sdk.models.actions.Action
-import se.curity.haapi.models.android.sdk.models.actions.ActionKind
-import se.curity.haapi.models.android.sdk.models.oauth.InvalidTokenResponse
-import se.curity.haapi.models.android.sdk.models.oauth.TokenResponse
+import se.curity.identityserver.haapi.android.sdk.models.*
+import se.curity.identityserver.haapi.android.sdk.models.actions.Action
+import se.curity.identityserver.haapi.android.sdk.models.actions.ActionKind
+import se.curity.identityserver.haapi.android.sdk.models.oauth.ErrorTokenResponse
+import se.curity.identityserver.haapi.android.sdk.models.oauth.SuccessfulTokenResponse
 import java.lang.IllegalArgumentException
 
 interface ProblemHandable {
@@ -62,7 +61,7 @@ class FlowActivity : AppCompatActivity() {
 
     private lateinit var resultLauncher: ActivityResultLauncher<Intent>
     private var expectedCallback: Int = NO_OPERATION_CALLBACK
-    private var externalBrowserOperationStep: ExternalBrowserOperationStep? = null
+    private var externalBrowserOperationStep: ExternalBrowserClientOperationStep? = null
 
     // UIs
     private val progressBar: ProgressBar by lazy { findViewById(R.id.loader) }
@@ -101,7 +100,7 @@ class FlowActivity : AppCompatActivity() {
                         return@observe
                     }
                     when (response) {
-                        is OperationStep -> { handle(response) }
+                        is ClientOperationStep -> { handle(response) }
                         is HaapiRepresentation -> { handle(response) }
                         is ProblemRepresentation -> { handle(response) }
                     }
@@ -118,13 +117,13 @@ class FlowActivity : AppCompatActivity() {
                         return@observe
                     }
                     when (response) {
-                        is TokenResponse -> {
+                        is SuccessfulTokenResponse -> {
                             val newIntent = Intent()
                             newIntent.putExtra("TOKEN_RESPONSE", response)
                             setResult(Activity.RESULT_OK, newIntent)
                             finish()
                         }
-                        is InvalidTokenResponse -> {
+                        is ErrorTokenResponse -> {
                             showAlert(
                                 message = response.errorDescription,
                                 title = response.error
@@ -158,12 +157,12 @@ class FlowActivity : AppCompatActivity() {
         Log.d(Constant.TAG_HAAPI_OPERATION, "Received an intent for deepLink: $intent")
         val extBrowserStep = externalBrowserOperationStep
         if (intent != null && extBrowserStep != null) {
-            try {
-                val params = extBrowserStep.formattedParametersFromIntentDataMap(intentDataMap = intent.dataMap())
-                haapiFlowViewModel.submit(extBrowserStep.continueFormActionModel, params)
-            } catch (exception: Exception) {
-                Log.w(Constant.TAG_HAAPI_OPERATION, "Something went wrong when getting the formatted params")
-            }
+//            try {
+//                val params = extBrowserStep.formattedParametersFromIntentDataMap(intentDataMap = intent.dataMap())
+//                haapiFlowViewModel.submit(extBrowserStep.continueFormActionModel, params)
+//            } catch (exception: Exception) {
+//                Log.w(Constant.TAG_HAAPI_OPERATION, "Something went wrong when getting the formatted params")
+//            }
         } else {
             Log.w(Constant.TAG_HAAPI_OPERATION, "Received an intent for deepLink but it is IGNORED: $intent")
         }
@@ -251,7 +250,7 @@ class FlowActivity : AppCompatActivity() {
                 }
             }
             is OAuthAuthorizationResponseStep -> {
-                if (haapiFlowViewModel.liveOAuthResponse.value?.getOrNull() !is TokenResponse) {
+                if (haapiFlowViewModel.liveOAuthResponse.value?.getOrNull() !is SuccessfulTokenResponse) {
                     updateTitle(getString(R.string.oauth_authorization_completed))
                     commitNewFragment(
                         fragment = AuthorizationCompletedFragment.newInstance(haapiRepresentation),
@@ -276,15 +275,15 @@ class FlowActivity : AppCompatActivity() {
                     representation = haapiRepresentation
                 )
             }
-            is ExternalBrowserOperationStep, is EncapClientOperationStep, is BankIdOperationStep -> {
+            is ExternalBrowserClientOperationStep, is EncapClientOperationStep, is BankIdClientOperationStep -> {
                 throw IllegalStateException("These steps should be handled by another handler. See below")
             }
         }
     }
 
-    private fun handle(operationStep: OperationStep) {
+    private fun handle(operationStep: ClientOperationStep) {
         when (operationStep) {
-            is ExternalBrowserOperationStep -> {
+            is ExternalBrowserClientOperationStep -> {
                 Log.d(Constant.TAG_HAAPI_OPERATION, "ExternalBrowserOP")
                 try {
                     val uriToLaunch = operationStep.uriToLaunch(
@@ -315,7 +314,7 @@ class FlowActivity : AppCompatActivity() {
                     )
                 }
             }
-            is BankIdOperationStep -> {
+            is BankIdClientOperationStep -> {
                 Log.d(Constant.TAG_HAAPI_OPERATION, operationStep.actionModel.href)
                 try {
                     expectedCallback = OPERATION_BANKID_CALLBACK
@@ -373,13 +372,13 @@ class FlowActivity : AppCompatActivity() {
         } else {
             // No fragment as ProblemHandable cannot handle it -> Display the problem as an alert and stop the flow
             val message = if (problemRepresentation is AuthorizationProblem) {
-                problemRepresentation.errorDescription
+                problemRepresentation.errorDescription ?: problemRepresentation.error
             } else {
                 problemRepresentation.messages.joinToString { it.text.literal }
             }
             showAlert(
                 message = message,
-                title = problemRepresentation.title
+                title = problemRepresentation.title?.literal
             )
         }
         // Restore the headerView title when there was a rotation

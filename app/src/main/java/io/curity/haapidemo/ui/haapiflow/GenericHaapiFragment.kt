@@ -25,8 +25,8 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import io.curity.haapidemo.R
-import se.curity.haapi.models.android.sdk.models.GenericRepresentationStep
-import se.curity.haapi.models.android.sdk.models.actions.Action
+import se.curity.identityserver.haapi.android.sdk.models.GenericRepresentationStep
+import se.curity.identityserver.haapi.android.sdk.models.actions.Action
 
 class GenericHaapiFragment: Fragment(R.layout.fragment_generic_haapi) {
 

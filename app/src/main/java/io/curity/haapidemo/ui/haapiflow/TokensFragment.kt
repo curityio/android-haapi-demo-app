@@ -36,9 +36,9 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import se.curity.haapi.models.android.sdk.HaapiConfiguration
-import se.curity.haapi.models.android.sdk.OAuthTokenManager
-import se.curity.haapi.models.android.sdk.models.oauth.TokenResponse
+import se.curity.identityserver.haapi.android.sdk.HaapiConfiguration
+import se.curity.identityserver.haapi.android.sdk.OAuthTokenManager
+import se.curity.identityserver.haapi.android.sdk.models.oauth.SuccessfulTokenResponse
 import java.io.FileNotFoundException
 import java.net.HttpURLConnection
 import java.net.URI
@@ -61,7 +61,7 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val oAuthTokenResponse = requireArguments().getParcelable<TokenResponse>(EXTRA_OAUTH_TOKEN_RESPONSE) ?: throw IllegalStateException("Expecting a TokenResponse")
+        val oAuthTokenResponse = requireArguments().getParcelable<SuccessfulTokenResponse>(EXTRA_OAUTH_TOKEN_RESPONSE) ?: throw IllegalStateException("Expecting a TokenResponse")
         val config: HaapiFlowConfiguration = Json.decodeFromString(requireArguments().getString(EXTRA_CONFIG) ?: throw IllegalStateException("Expecting a configuration"))
         val haapiConfiguration = HaapiConfiguration(
             keyStoreAlias = config.keyStoreAlias,
@@ -143,12 +143,12 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
     }
 
     class TokensViewModel(
-        private var tokenResponse: TokenResponse,
+        private var tokenResponse: SuccessfulTokenResponse,
         haapiConfiguration: HaapiConfiguration
     ): ViewModel() {
 
-        private var _tokenResponse: MutableLiveData<TokenResponse> = MutableLiveData(tokenResponse)
-        val liveTokenResponse: LiveData<TokenResponse>
+        private var _tokenResponse: MutableLiveData<SuccessfulTokenResponse> = MutableLiveData(tokenResponse)
+        val liveTokenResponse: LiveData<SuccessfulTokenResponse>
             get() = _tokenResponse
 
         private var _liveUserInfo: MutableLiveData<String?> = MutableLiveData(null)
@@ -213,9 +213,8 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
                 viewModelScope.launch {
                     val result = withContext(Dispatchers.IO) {
                         oAuthTokenManager.refreshAccessToken(refreshToken, this.coroutineContext)
-                            .getOrNull()
                     }
-                    if (result is TokenResponse) {
+                    if (result is SuccessfulTokenResponse) {
                         tokenResponse = result
                         updateDisclosureContents()
                         fetchUserInfo()
@@ -252,7 +251,7 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
     }
 
     class TokensViewModelFactory(
-        private val tokenResponse: TokenResponse,
+        private val tokenResponse: SuccessfulTokenResponse,
         private val haapiConfiguration: HaapiConfiguration
     ): ViewModelProvider.Factory {
 
@@ -270,7 +269,7 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
         private const val EXTRA_OAUTH_TOKEN_RESPONSE = "io.curity.fragment_tokens.extra_oauth_token_response"
         private const val EXTRA_CONFIG = "io.curity.fragment_tokens.extra_config"
 
-        fun newInstance(tokenResponse: TokenResponse,
+        fun newInstance(tokenResponse: SuccessfulTokenResponse,
                         haapiFlowConfiguration: HaapiFlowConfiguration
         ): TokensFragment {
             val fragment = TokensFragment()
