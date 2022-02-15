@@ -19,13 +19,13 @@ apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlinx-serialization'
 
 android {
-    compileSdkVersion 30
+    compileSdkVersion 31
     buildToolsVersion "30.0.3"
 
     defaultConfig {
         applicationId "io.curity.haapidemo"
         minSdkVersion 26
-        targetSdkVersion 30
+        targetSdkVersion 31
         versionCode 1
         versionName "1.0"
 
@@ -56,11 +56,6 @@ android {
         targetCompatibility JavaVersion.VERSION_1_8
     }
 
-    lintOptions {
-        // App icons or density or config images are not important at the moment.
-        disable 'IconLauncherShape', 'IconDipSize', 'IconDuplicatesConfig', 'IconMissingDensityFolder', 'GradleDependency'
-        warningsAsErrors true
-    }
 
     testOptions {
         unitTests.returnDefaultValues = true
@@ -69,9 +64,13 @@ android {
         jvmTarget = '1.8'
     }
     packagingOptions {
-        exclude 'META-INF/DEPENDENCIES'
-        exclude 'META-INF/AL2.0'
-        exclude 'META-INF/LGPL2.1'
+        resources {
+            excludes += ['META-INF/DEPENDENCIES', 'META-INF/AL2.0', 'META-INF/LGPL2.1']
+        }
+    }
+    lint {
+        disable 'IconLauncherShape', 'IconDipSize', 'IconDuplicatesConfig', 'IconMissingDensityFolder', 'GradleDependency'
+        warningsAsErrors true
     }
 }
 
