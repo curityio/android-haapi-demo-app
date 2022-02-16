@@ -18,7 +18,7 @@ package io.curity.haapidemo.ui.settings.profile
 import android.accounts.NetworkErrorException
 import androidx.lifecycle.*
 import io.curity.haapidemo.ProfileIndex
-import io.curity.haapidemo.flow.HaapiFlowConfiguration
+import io.curity.haapidemo.Configuration
 import io.curity.haapidemo.ui.settings.HaapiFlowConfigurationRepository
 import io.curity.haapidemo.utils.disableSslTrustVerification
 import kotlinx.coroutines.*
@@ -30,12 +30,12 @@ import kotlin.IllegalArgumentException
 
 class ProfileViewModel(
     private val repository: HaapiFlowConfigurationRepository,
-    private var configuration: HaapiFlowConfiguration,
+    private var configuration: Configuration,
     private val isActiveConfiguration: Boolean,
     private val scopesAdapter: ScopesAdapter
 ): ViewModel() {
 
-    private var editableConfiguration: HaapiFlowConfiguration
+    private var editableConfiguration: Configuration
 
     private var _list: MutableLiveData<MutableList<ProfileItem>> = MutableLiveData()
     val listLiveData: LiveData<List<ProfileItem>>
@@ -192,7 +192,7 @@ class ProfileViewModel(
     }
 
     /**
-     * Fetches the metaData from [HaapiFlowConfiguration.metaDataBaseURLString]
+     * Fetches the metaData from [Configuration.metaDataBaseURLString]
      *
      * If it succeeds then [listLiveData] and [scopesLiveData] will be triggered.
      * If it fails then an [Exception] will be thrown.
@@ -311,7 +311,7 @@ class ProfileViewModel(
 
 class ProfileViewModelFactory(
     private val repository: HaapiFlowConfigurationRepository,
-    private val configuration: HaapiFlowConfiguration,
+    private val configuration: Configuration,
     private val isActiveConfiguration: Boolean,
     private val scopesAdapter: ScopesAdapter
     ): ViewModelProvider.Factory {

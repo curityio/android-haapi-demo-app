@@ -27,7 +27,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import io.curity.haapidemo.ProfileActivity
 import io.curity.haapidemo.R
-import io.curity.haapidemo.flow.HaapiFlowConfiguration
+import io.curity.haapidemo.Configuration
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -99,7 +99,7 @@ class SettingsListFragment : Fragment() {
         }
     }
 
-    private fun select(config: HaapiFlowConfiguration) {
+    private fun select(config: Configuration) {
         val newIntent = ProfileActivity.newIntent(
             context = requireContext(),
             haapiConfiguration = config,

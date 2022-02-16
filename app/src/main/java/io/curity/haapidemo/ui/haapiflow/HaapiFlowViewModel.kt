@@ -17,7 +17,7 @@
 package io.curity.haapidemo.ui.haapiflow
 
 import androidx.lifecycle.*
-import io.curity.haapidemo.flow.HaapiFlowConfiguration
+import io.curity.haapidemo.Configuration
 import io.curity.haapidemo.utils.disableSslTrustVerification
 import kotlinx.coroutines.*
 import se.curity.identityserver.haapi.android.sdk.HaapiConfiguration
@@ -37,20 +37,20 @@ import kotlin.coroutines.CoroutineContext
 typealias HaapiResult = Result<HaapiResponse>
 typealias OAuthResponse = Result<TokenResponse>
 
-class HaapiFlowViewModel(private val haapiFlowConfiguration: HaapiFlowConfiguration): ViewModel() {
+class HaapiFlowViewModel(private val configuration: Configuration): ViewModel() {
 
     val haapiConfiguration: HaapiConfiguration = HaapiConfiguration(
-        keyStoreAlias = haapiFlowConfiguration.keyStoreAlias,
-        clientId = haapiFlowConfiguration.clientId,
-        baseUri = URI.create(haapiFlowConfiguration.baseURLString),
-        tokenEndpointUri = URI.create(haapiFlowConfiguration.tokenEndpointURI),
-        authorizationEndpointUri = URI.create(haapiFlowConfiguration.authorizationEndpointURI),
-        appRedirect = haapiFlowConfiguration.redirectURI,
-        isAutoRedirect = haapiFlowConfiguration.followRedirect,
+        keyStoreAlias = configuration.keyStoreAlias,
+        clientId = configuration.clientId,
+        baseUri = URI.create(configuration.baseURLString),
+        tokenEndpointUri = URI.create(configuration.tokenEndpointURI),
+        authorizationEndpointUri = URI.create(configuration.authorizationEndpointURI),
+        appRedirect = configuration.redirectURI,
+        isAutoRedirect = configuration.followRedirect,
         httpUrlConnectionProvider = { url ->
             val urlConnection = url.openConnection()
             urlConnection.connectTimeout = 8000
-            if (!haapiFlowConfiguration.isSSLTrustVerificationEnabled) {
+            if (!configuration.isSSLTrustVerificationEnabled) {
                 urlConnection.disableSslTrustVerification() as HttpURLConnection
             } else {
                 urlConnection as HttpURLConnection
@@ -63,7 +63,7 @@ class HaapiFlowViewModel(private val haapiFlowConfiguration: HaapiFlowConfigurat
     )
     private val coroutineExceptionHandler = CoroutineExceptionHandler { _, _ -> }
 
-    val isAutoPolling = haapiFlowConfiguration.isAutoPollingEnabled
+    val isAutoPolling = configuration.isAutoPollingEnabled
 
     private var _liveStep = MutableLiveData<HaapiResult?>(null)
     val liveStep: LiveData<HaapiResult?>
@@ -97,7 +97,7 @@ class HaapiFlowViewModel(private val haapiFlowConfiguration: HaapiFlowConfigurat
         executeHaapi {
             haapiManager.start(
                 authorizationParameters = OAuthAuthorizationParameters(
-                    scope = haapiFlowConfiguration.selectedScopes
+                    scope = configuration.selectedScopes
                 ),
                 it
             )
@@ -162,7 +162,7 @@ class HaapiFlowViewModel(private val haapiFlowConfiguration: HaapiFlowConfigurat
 
         // Handle automatic fetchAccessToken
         if (latestResponse is OAuthAuthorizationResponseStep &&
-            haapiFlowConfiguration.isAutoAuthorizationChallengedEnabled) {
+            configuration.isAutoAuthorizationChallengedEnabled) {
             fetchAccessToken(latestResponse)
         } else {
             _liveStep.postValue(haapiResult)
@@ -176,12 +176,12 @@ class HaapiFlowViewModel(private val haapiFlowConfiguration: HaapiFlowConfigurat
     }
 }
 
-class HaapiFlowViewModelFactory(val haapiFlowConfiguration: HaapiFlowConfiguration): ViewModelProvider.Factory {
+class HaapiFlowViewModelFactory(val configuration: Configuration): ViewModelProvider.Factory {
 
     override fun <T : ViewModel?> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(HaapiFlowViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return HaapiFlowViewModel(haapiFlowConfiguration) as T
+            return HaapiFlowViewModel(configuration) as T
         }
 
         throw IllegalArgumentException("Unknown ViewModel class HaapiFlowViewModel")

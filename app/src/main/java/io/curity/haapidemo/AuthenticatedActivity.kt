@@ -23,7 +23,6 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.commit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
-import io.curity.haapidemo.flow.HaapiFlowConfiguration
 import io.curity.haapidemo.ui.haapiflow.TokensFragment
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
@@ -49,7 +48,7 @@ class AuthenticatedActivity : AppCompatActivity(), TokenStateChangeable {
             throw IllegalArgumentException("You need to use AuthenticatedActivity.newIntent(...)")
         }
 
-        val configuration: HaapiFlowConfiguration = Json.decodeFromString(configString)
+        val configuration: Configuration = Json.decodeFromString(configString)
         val tokensFragment = TokensFragment.newInstance(tokenResponse, configuration)
         tokensFragment.tokenStateChangeable = this
 
@@ -79,11 +78,11 @@ class AuthenticatedActivity : AppCompatActivity(), TokenStateChangeable {
         private const val EXTRA_AUTHENTICATED_ACTIVITY_TOKEN_RESPONSE = "io.curity.haapidemo.authenticatedActivity.extra_token_response"
 
         fun newIntent(context: Context,
-                      haapiFlowConfiguration: HaapiFlowConfiguration,
+                      configuration: Configuration,
                       tokenResponse: SuccessfulTokenResponse
         ): Intent {
             val intent = Intent(context, AuthenticatedActivity::class.java)
-            intent.putExtra(EXTRA_AUTHENTICATED_ACTIVITY_HAAPI_CONFIG, Json.encodeToString(haapiFlowConfiguration))
+            intent.putExtra(EXTRA_AUTHENTICATED_ACTIVITY_HAAPI_CONFIG, Json.encodeToString(configuration))
             intent.putExtra(EXTRA_AUTHENTICATED_ACTIVITY_TOKEN_RESPONSE, tokenResponse)
             return intent
         }

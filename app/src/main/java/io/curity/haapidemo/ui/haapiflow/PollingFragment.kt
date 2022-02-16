@@ -79,13 +79,13 @@ class PollingFragment: Fragment(R.layout.fragment_polling) {
             mainButton.visibility = View.VISIBLE
         }
 
-        pollingViewModel.isLoading.observe(viewLifecycleOwner, { isLoading ->
+        pollingViewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
 
             if (!isLoading) {
                 selectedButton?.stopLoading()
                 selectedButton = null
             }
-        })
+        }
 
         mainButton.setOnClickListener {
             mainButton.setLoading(true)

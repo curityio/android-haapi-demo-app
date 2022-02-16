@@ -31,10 +31,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
 import androidx.lifecycle.ViewModelProvider
-import io.curity.haapidemo.flow.HaapiFlowConfiguration
 import io.curity.haapidemo.ui.haapiflow.*
 import io.curity.haapidemo.uicomponents.HeaderView
-import kotlinx.android.synthetic.main.activity_flow.*
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
@@ -85,10 +83,10 @@ class FlowActivity : AppCompatActivity() {
         haapiBundleHash = savedInstanceState?.getInt(HAAPI_BUNDLE_HASH) ?: INVALID_HAAPI_BUNDLE_HASH
         title = savedInstanceState?.getString(TITLE)
 
-        val configuration: HaapiFlowConfiguration = Json.decodeFromString(configString)
+        val configuration: Configuration = Json.decodeFromString(configString)
 
         haapiFlowViewModel = ViewModelProvider(this,
-            HaapiFlowViewModelFactory(haapiFlowConfiguration = configuration))
+            HaapiFlowViewModelFactory(configuration = configuration))
             .get(HaapiFlowViewModel::class.java)
 
         haapiFlowViewModel.liveStep.observe(this) { newResult ->
@@ -431,9 +429,9 @@ class FlowActivity : AppCompatActivity() {
 
         private const val NO_OPERATION_CALLBACK = 0
         private const val OPERATION_BANKID_CALLBACK = 1
-        fun newIntent(context: Context, haapiFlowConfiguration: HaapiFlowConfiguration): Intent {
+        fun newIntent(context: Context, configuration: Configuration): Intent {
             val intent = Intent(context, FlowActivity::class.java)
-            intent.putExtra(EXTRA_FLOW_ACTIVITY_HAAPI_CONFIG, Json.encodeToString(haapiFlowConfiguration))
+            intent.putExtra(EXTRA_FLOW_ACTIVITY_HAAPI_CONFIG, Json.encodeToString(configuration))
             return intent
         }
     }
