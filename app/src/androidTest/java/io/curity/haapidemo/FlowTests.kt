@@ -16,8 +16,8 @@ import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import org.junit.Test
-import se.curity.identityserver.haapi.android.sdk.HaapiTokenManager
-import se.curity.identityserver.haapi.android.sdk.okhttp.OkHttpUtils.addHaapiInterceptor
+import se.curity.identityserver.haapi.android.driver.HaapiTokenManager
+import se.curity.identityserver.haapi.android.driver.okhttp.OkHttpUtils.addHaapiInterceptor
 import java.net.URI
 import java.time.Duration
 import io.curity.haapidemo.models.*

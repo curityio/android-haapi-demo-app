@@ -34,15 +34,16 @@ import kotlinx.coroutines.*
 import okhttp3.*
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import org.json.JSONObject
-import se.curity.identityserver.haapi.android.sdk.HaapiTokenManager
-import se.curity.identityserver.haapi.android.sdk.HttpURLConnectionProvider
-import se.curity.identityserver.haapi.android.sdk.UnexpectedTokenAccessException
-import se.curity.identityserver.haapi.android.sdk.okhttp.OkHttpUtils.addHaapiInterceptor
+import se.curity.identityserver.haapi.android.driver.HaapiTokenManager
+import se.curity.identityserver.haapi.android.driver.HttpURLConnectionProvider
+import se.curity.identityserver.haapi.android.driver.UnexpectedTokenAccessException
+import se.curity.identityserver.haapi.android.driver.okhttp.OkHttpUtils.addHaapiInterceptor
 import java.io.Closeable
 import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URLConnection
 import java.security.cert.X509Certificate
+import java.util.*
 import javax.net.ssl.HttpsURLConnection
 import javax.net.ssl.SSLContext
 import javax.net.ssl.X509TrustManager
@@ -143,7 +144,7 @@ class HaapiFlowManager (
         val request: Request
 
         when {
-            form.method.toUpperCase() == "GET" -> {
+            form.method.uppercase() == "GET" -> {
                 for (field in form.fields) {
                     if (field.value == null) {
                         Log.d("Missing", "$field has no values")
@@ -154,7 +155,7 @@ class HaapiFlowManager (
                 }
                 request = requestBuilder.url(urlBuilder.build()).get().build()
             }
-            form.method.toUpperCase() == "POST" -> {
+            form.method.uppercase() == "POST" -> {
                 val requestBody = FormBody.Builder().also {
                     form.fields.forEach { field ->
                         it.tryAdd(field.name, parameters[field.name] ?: field.value)

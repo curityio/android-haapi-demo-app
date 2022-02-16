@@ -442,7 +442,7 @@ class InteractiveFormViewModel(private val interactiveFormStep: InteractiveForm,
 
 class InteractiveFormViewModelFactory(private val step: InteractiveForm, private val haapiFlowViewModel: HaapiFlowViewModel): ViewModelProvider.Factory {
 
-    override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(InteractiveFormViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
             return InteractiveFormViewModel(step, haapiFlowViewModel) as T
