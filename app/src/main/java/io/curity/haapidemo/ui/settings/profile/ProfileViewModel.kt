@@ -104,6 +104,12 @@ class ProfileViewModel(
                         text = configuration.authorizationEndpointURI
                     )
                 ) }
+                ProfileIndex.ItemUserinfoEndpointURI -> { newList.add(
+                    ProfileItem.Content(
+                        header = "User info endpoint URI",
+                        text = configuration.userInfoEndpointURI
+                    )
+                ) }
 
                 ProfileIndex.SectionSupportedScopes -> { newList.add(ProfileItem.Header(title = "Supported scopes")) }
                 ProfileIndex.ItemScopes -> {
@@ -153,6 +159,7 @@ class ProfileViewModel(
                 ProfileIndex.ItemMetaDataURL -> { editableConfiguration.metaDataBaseURLString = value }
                 ProfileIndex.ItemTokenEndpointURI -> { editableConfiguration.tokenEndpointURI = value }
                 ProfileIndex.ItemAuthorizationEndpointURI -> { editableConfiguration.authorizationEndpointURI = value }
+                ProfileIndex.ItemUserinfoEndpointURI -> { editableConfiguration.userInfoEndpointURI = value }
 
                 else -> throw IllegalArgumentException("Invalid index $atIndex for updating a String to configuration")
             }
@@ -234,10 +241,20 @@ class ProfileViewModel(
                     jsonObject.getString("authorization_endpoint").let {
                         editableConfiguration.authorizationEndpointURI = it
 
-                        val index = ProfileIndex.ItemTokenEndpointURI.ordinal
+                        val index = ProfileIndex.ItemAuthorizationEndpointURI.ordinal
                         val oldItem = _list.value!![index] as ProfileItem.Content
                         val newItem =
                             ProfileItem.Content(header = oldItem.header, text = editableConfiguration.authorizationEndpointURI)
+                        _list.value!![index] = newItem
+                    }
+
+                    jsonObject.getString("userinfo_endpoint").let {
+                        editableConfiguration.userInfoEndpointURI = it
+
+                        val index = ProfileIndex.ItemUserinfoEndpointURI.ordinal
+                        val oldItem = _list.value!![index] as ProfileItem.Content
+                        val newItem =
+                            ProfileItem.Content(header = oldItem.header, text = editableConfiguration.userInfoEndpointURI)
                         _list.value!![index] = newItem
                     }
 

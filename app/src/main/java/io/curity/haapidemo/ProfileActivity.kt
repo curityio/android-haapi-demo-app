@@ -159,6 +159,7 @@ enum class ProfileIndex {
     SectionEndpoints,
     ItemTokenEndpointURI,
     ItemAuthorizationEndpointURI,
+    ItemUserinfoEndpointURI,
     SectionSupportedScopes,
     ItemScopes,
     SectionToggles,

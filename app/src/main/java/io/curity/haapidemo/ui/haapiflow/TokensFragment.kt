@@ -145,7 +145,7 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
     class TokensViewModel(
         private var tokenResponse: SuccessfulTokenResponse,
         haapiConfiguration: HaapiConfiguration,
-        private var userInfoEndpointUri: String
+        userInfoEndpointUri: String
     ): ViewModel() {
 
         private var _tokenResponse: MutableLiveData<SuccessfulTokenResponse> = MutableLiveData(tokenResponse)
