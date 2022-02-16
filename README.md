@@ -3,8 +3,15 @@
 [![Quality](https://img.shields.io/badge/quality-demo-red)](https://curity.io/resources/code-examples/status/)
 [![Availability](https://img.shields.io/badge/availability-source-blue)](https://curity.io/resources/code-examples/status/)
 
-This is an example Android app which uses the Curity Identity Server's Hypermedia API to perform an
+This is an example Android app which uses the Curity Identity Server's Hypermedia Authentication API to perform an
 OAuth2 flow with authentication done completely from the app, without the need of an external browser.
+
+**Note:** The implementation in this branch uses only the [driver SDK](https://curity.io/docs/haapi-android-driver/latest/),
+which handles the low-level security features of communication with the Authentication API. Response models
+and User Interface elements are implemented directly in this demo. This can serve as an example of using
+the driver directly, though normally you should rather use the full [SDK](https://curity.io/docs/haapi-android-sdk/latest/),
+which also includes model representations of HAAPI responses. You can check the implementation which uses
+the full SDK in the main branch of this repository.
 
 Note: The app needs at least Android 8.0 (*Oreo*, API level 26) to properly use the attestation features.
 You will need the Curity Identity Server at least in version 5.4. to work with this app.

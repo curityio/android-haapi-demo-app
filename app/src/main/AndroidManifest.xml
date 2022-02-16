@@ -32,7 +32,8 @@
         <activity android:name=".ShowcaseActivity" android:label="@string/title_activity_showcase"/>
         <activity android:name=".ProfileActivity"></activity>
         <activity android:name=".FlowActivity"
-            android:launchMode="singleTop">
+            android:launchMode="singleTop"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
@@ -44,7 +45,8 @@
             </intent-filter>
         </activity>
         <activity android:name=".MainActivity"
-            android:screenOrientation="portrait">
+            android:screenOrientation="portrait"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

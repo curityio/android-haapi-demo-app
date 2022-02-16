@@ -107,7 +107,7 @@ class HaapiFlowViewModel(haapiFlowConfiguration: HaapiFlowConfiguration): ViewMo
 
 class HaapiFlowViewModelFactory(val haapiFlowConfiguration: HaapiFlowConfiguration): ViewModelProvider.Factory {
 
-    override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(HaapiFlowViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
             return HaapiFlowViewModel(haapiFlowConfiguration) as T

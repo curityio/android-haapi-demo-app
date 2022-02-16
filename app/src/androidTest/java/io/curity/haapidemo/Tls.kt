@@ -12,7 +12,7 @@
 package io.curity.haapidemo
 
 import okhttp3.OkHttpClient
-import se.curity.identityserver.haapi.android.sdk.HttpURLConnectionProvider
+import se.curity.identityserver.haapi.android.driver.HttpURLConnectionProvider
 import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLConnection

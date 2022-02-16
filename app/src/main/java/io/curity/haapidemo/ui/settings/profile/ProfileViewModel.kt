@@ -316,7 +316,7 @@ class ProfileViewModelFactory(
     private val scopesAdapter: ScopesAdapter
     ): ViewModelProvider.Factory {
 
-    override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(ProfileViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
             return ProfileViewModel(repository, configuration, isActiveConfiguration, scopesAdapter) as T
