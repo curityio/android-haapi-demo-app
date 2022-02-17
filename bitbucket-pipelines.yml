@@ -1,0 +1,19 @@
+image: atlassian/default-image:2
+
+pipelines:
+    branches:
+      driver-sdk:
+        - step:
+           script:
+             - git remote add sync git@github.com:curityio/android-haapi-demo-app.git
+             - git checkout driver-sdk
+             - git pull
+             - git push sync driver-sdk
+      sdk:
+        - step:
+           script:
+             - git remote add sync git@github.com:curityio/android-haapi-demo-app.git
+             - git checkout sdk
+             - git pull
+             - git push sync sdk
+
