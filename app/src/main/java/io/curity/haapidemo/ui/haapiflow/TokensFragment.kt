@@ -255,7 +255,7 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
         private val userInfoEndpointUri: String
     ): ViewModelProvider.Factory {
 
-        override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(TokensViewModel::class.java)) {
                 @Suppress("UNCHECKED_CAST")
                 return TokensViewModel(tokenResponse, haapiConfiguration, userInfoEndpointUri) as T

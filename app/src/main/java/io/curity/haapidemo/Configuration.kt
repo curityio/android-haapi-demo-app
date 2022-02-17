@@ -67,10 +67,11 @@ data class Configuration(
 ) {
 
     companion object {
-            private const val DEV_MODE = false
+        // A convenience flag for Curity developers.
+        private const val CURITY_DEV_MODE = false
 
         fun newInstance(name: String = "haapi-android-client"): Configuration =
-            if (DEV_MODE) newDevInstance(name) else Configuration(
+            if (CURITY_DEV_MODE) newDevInstance(name) else Configuration(
                 name = name,
                 clientId = "haapi-android-client",
                 baseURLString = "https://10.0.2.2:8443",
@@ -99,6 +100,7 @@ data class Configuration(
                 redirectURI = "app://haapi",
                 followRedirect = true,
                 isSSLTrustVerificationEnabled = false,
-                selectedScopes = listOf("openid", "profile"))
+                selectedScopes = listOf("openid", "profile")
+            )
     }
 }

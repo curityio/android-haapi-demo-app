@@ -24,11 +24,14 @@
 
     <application
         android:allowBackup="false"
+        android:fullBackupContent="false"
+        android:dataExtractionRules="@xml/backup_dev_config"
         android:icon="@mipmap/curity_logo_symbol"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/curity_logo_symbol"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme">
+        android:theme="@style/AppTheme"
+        tools:targetApi="s">
         <activity android:name=".ShowcaseActivity" android:label="@string/title_activity_showcase"/>
         <activity android:name=".ProfileActivity"></activity>
         <activity android:name=".FlowActivity"

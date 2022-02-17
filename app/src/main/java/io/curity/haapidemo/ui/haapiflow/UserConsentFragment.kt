@@ -219,7 +219,7 @@ class UserConsentFragment: Fragment(R.layout.fragment_user_consent) {
 
     class UserConsentViewModelFactory(private val step: UserConsentStep, private val haapiFlowViewModel: HaapiFlowViewModel): ViewModelProvider.Factory {
 
-        override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(UserConsentViewModel::class.java)) {
                 @Suppress("UNCHECKED_CAST")
                 return UserConsentViewModel(step, haapiFlowViewModel) as T

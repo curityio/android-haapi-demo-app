@@ -85,7 +85,7 @@ class SettingsListViewModelFactory(
     private val repository: HaapiFlowConfigurationRepository
 ): ViewModelProvider.Factory {
 
-    override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(SettingsListViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
             return SettingsListViewModel(repository) as T

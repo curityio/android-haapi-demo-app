@@ -50,7 +50,7 @@
     <string name="warning_content_description">A warning icon</string>
     <string name="logo_content_description">A header logo</string>
     <string name="toggle_password_visibilty_content_description">Toggle password visibility</string>
-    <string name="error_icon_content_description">An error icon</string>
+    <string name="app_error_icon_content_description">An error icon</string>
     <string name="start_auth_content_description">A Curity illustration for starting the authentication</string>
     <string name="add_content_description">An add logo</string>
     <string name="progress_btn_content_description">An image that illustrates the progress button</string>

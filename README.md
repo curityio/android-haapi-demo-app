@@ -11,6 +11,9 @@ You will need the Curity Identity Server at least in version 5.4. to work with t
 
 ## Getting started
 
+Note that gradle tasks require at least Java 11 to run properly. Make sure to have the proper Java SDK
+version set in `Preferences / Build,Execution,Deployment / Build Tools / Gradle / Gradle JDK` in Android Studio.
+
 ### Docker Automated Setup
 
 The required Curity Identity Server setup and connectivity from devices can be automated via a bash script:
@@ -72,11 +75,27 @@ starting the application, in Logcat, you should the APK Signature printed in DEB
 
 `2021-07-14 12:22:37.952 9631-9631/io.curity.haapidemo D/AppInfo: APK signatures $RESULT$`
 
+## Configuring the App
+
+The application needs a few configuration options set to be able to call the instance of the Curity Identity Server.
+Default configuration is set to work with the dockerized version of the Curity Identity Server which
+is run with the `start-idsvr.sh` script. Should you need to make the app work with a different environment
+(e.g. you have your instance of the Curity Identity Server already working online), then you can adjust
+the configuration in two ways:
+
+1. You can edit the default settings in the `src/main/java/io/curity/haapidemo/Configuration.kt` file.
+   The default settings are returned by the static `newInstance` method, and this is the one that should
+   be modified.
+
+2. You can update settings directly in the running app. When on the home screen of the app you can tap
+   the settings icon. There you will be able to create and edit configuration profiles. You can then
+   switch the active profile to quickly test between different environments of the Curity Identity Server.
+
 ## Resources
 
-- [Introduction](https://curity.io/resources/architect/haapi/what-is-hypermedia-authentication-api/)
+- [Introduction](https://curity.io/resources/learn/what-is-hypermedia-authentication-api/)
   to the Hypermedia Authentication API.
 
-- [An article](https://curity.io/resources/tutorials/howtos/haapi/authentication-api-android-sdk)
+- [An article](https://curity.io/resources/learn/authentication-api-android-sdk)
   showing how to properly configure the Curity Identity Server and a client to use the Hypermedia
   API from an Android app.

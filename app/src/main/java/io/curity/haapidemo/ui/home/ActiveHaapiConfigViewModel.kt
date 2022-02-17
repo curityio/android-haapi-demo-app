@@ -31,7 +31,7 @@ class ActiveHaapiConfigViewModelFactory(
     private val repository: HaapiFlowConfigurationRepository
 ): ViewModelProvider.Factory {
 
-    override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(ActiveHaapiConfigViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
             return ActiveHaapiConfigViewModel(repository) as T
