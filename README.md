@@ -69,10 +69,10 @@ Follow the instructions in this page: https://curity.io/docs/idsvr/latest/develo
 
 ## Resources
 
-- [Introduction](https://curity.io/resources/architect/haapi/what-is-hypermedia-authentication-api/)
+- [Introduction](https://curity.io/resources/learn/what-is-hypermedia-authentication-api/)
   to the Hypermedia Authentication API.
 
-- [An article](https://curity.io/resources/tutorials/howtos/haapi/authentication-api-android-sdk)
+- [An article](https://curity.io/resources/learn/authentication-api-android-sdk)
   showing how to properly configure the Curity Identity Server and a client to use the Hypermedia
   API from an Android app.
 
