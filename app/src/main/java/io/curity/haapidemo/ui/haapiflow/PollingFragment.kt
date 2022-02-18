@@ -79,13 +79,13 @@ class PollingFragment: Fragment(R.layout.fragment_polling) {
             mainButton.visibility = View.VISIBLE
         }
 
-        pollingViewModel.isLoading.observe(viewLifecycleOwner, { isLoading ->
+        pollingViewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
 
             if (!isLoading) {
                 selectedButton?.stopLoading()
                 selectedButton = null
             }
-        })
+        }
 
         mainButton.setOnClickListener {
             mainButton.setLoading(true)
@@ -180,7 +180,7 @@ class PollingFragment: Fragment(R.layout.fragment_polling) {
     }
 
     class PollingViewModelFactory(private val step: PollingStep, private val haapiFlowViewModel: HaapiFlowViewModel): ViewModelProvider.Factory {
-        override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(PollingViewModel::class.java)) {
                 @Suppress("UNCHECKED_CAST")
                 return PollingViewModel(step, haapiFlowViewModel) as T

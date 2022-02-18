@@ -93,7 +93,7 @@ class UserConsentFragment: Fragment(R.layout.fragment_user_consent) {
             messagesLayout.addView(it)
         }
 
-        userConsentViewModel.isLoading.observe(viewLifecycleOwner, { isLoading ->
+        userConsentViewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
             isInterceptingTouch = isLoading
             buttonList.forEach { it.isClickable = !isLoading }
 
@@ -101,7 +101,7 @@ class UserConsentFragment: Fragment(R.layout.fragment_user_consent) {
                 weakButton?.get()?.stopLoading()
                 weakButton = null
             }
-        })
+        }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -219,7 +219,7 @@ class UserConsentFragment: Fragment(R.layout.fragment_user_consent) {
 
     class UserConsentViewModelFactory(private val step: UserConsentStep, private val haapiFlowViewModel: HaapiFlowViewModel): ViewModelProvider.Factory {
 
-        override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(UserConsentViewModel::class.java)) {
                 @Suppress("UNCHECKED_CAST")
                 return UserConsentViewModel(step, haapiFlowViewModel) as T

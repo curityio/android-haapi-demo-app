@@ -79,7 +79,7 @@ class AuthorizationCompletedFragment: Fragment(R.layout.fragment_authorization_c
         private val haapiFlowViewModel: HaapiFlowViewModel
     ): ViewModelProvider.Factory {
 
-        override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(AuthorizationCompletedViewModel::class.java)) {
                 @Suppress("UNCHECKED_CAST")
                 return AuthorizationCompletedViewModel(step, haapiFlowViewModel) as T

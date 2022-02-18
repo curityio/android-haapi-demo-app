@@ -59,10 +59,10 @@
             android:id="@+id/image_view"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:src="@drawable/ic_warningrounded"
             android:layout_weight="0"
-            android:visibility="visible"
-            android:contentDescription="@string/error_icon_content_description"/>
+            android:contentDescription="@string/app_error_icon_content_description"
+            android:src="@drawable/ic_warningrounded"
+            android:visibility="visible" />
 
         <ImageButton
             android:id="@+id/image_button"

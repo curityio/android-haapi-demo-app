@@ -27,7 +27,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import io.curity.haapidemo.*
-import io.curity.haapidemo.flow.HaapiFlowConfiguration
+import io.curity.haapidemo.Configuration
 import io.curity.haapidemo.uicomponents.ProgressButton
 import se.curity.identityserver.haapi.android.sdk.models.oauth.SuccessfulTokenResponse
 
@@ -35,7 +35,7 @@ class HomeFragment : Fragment() {
 
     private lateinit var activeHaapiConfigViewModel: ActiveHaapiConfigViewModel
     private lateinit var launchActivity: ActivityResultLauncher<Intent>
-    private var haapiFlowConfiguration: HaapiFlowConfiguration? = null
+    private var configuration: Configuration? = null
 
     private lateinit var button: ProgressButton
     private lateinit var imageView: ImageView
@@ -56,7 +56,7 @@ class HomeFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
 
         activeHaapiConfigViewModel.haapiFlowConfiguration.observe(viewLifecycleOwner) { config ->
-            haapiFlowConfiguration = config
+            configuration = config
         }
 
         launchActivity = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) {
@@ -65,7 +65,7 @@ class HomeFragment : Fragment() {
                 startActivity(
                     AuthenticatedActivity.newIntent(
                         requireContext(),
-                        haapiFlowConfiguration!!,
+                        configuration!!,
                         tokenResponse!!
                     )
                 )
@@ -73,7 +73,7 @@ class HomeFragment : Fragment() {
         }
 
         button.setOnClickListener {
-            val config = haapiFlowConfiguration
+            val config = configuration
             if (config != null) {
                 val intent = FlowActivity.newIntent(requireContext(), config)
                 launchActivity.launch(intent)

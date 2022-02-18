@@ -24,7 +24,7 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.*
 import io.curity.haapidemo.R
 import io.curity.haapidemo.TokenStateChangeable
-import io.curity.haapidemo.flow.HaapiFlowConfiguration
+import io.curity.haapidemo.Configuration
 import io.curity.haapidemo.uicomponents.DisclosureContent
 import io.curity.haapidemo.uicomponents.DisclosureView
 import io.curity.haapidemo.uicomponents.HeaderView
@@ -62,7 +62,7 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
         super.onCreate(savedInstanceState)
 
         val oAuthTokenResponse = requireArguments().getParcelable<SuccessfulTokenResponse>(EXTRA_OAUTH_TOKEN_RESPONSE) ?: throw IllegalStateException("Expecting a TokenResponse")
-        val config: HaapiFlowConfiguration = Json.decodeFromString(requireArguments().getString(EXTRA_CONFIG) ?: throw IllegalStateException("Expecting a configuration"))
+        val config: Configuration = Json.decodeFromString(requireArguments().getString(EXTRA_CONFIG) ?: throw IllegalStateException("Expecting a configuration"))
         val haapiConfiguration = HaapiConfiguration(
             keyStoreAlias = config.keyStoreAlias,
             clientId = config.clientId,
@@ -81,7 +81,7 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
                 }
             }
         )
-        tokensViewModel = ViewModelProvider(this, TokensViewModelFactory(oAuthTokenResponse, haapiConfiguration))
+        tokensViewModel = ViewModelProvider(this, TokensViewModelFactory(oAuthTokenResponse, haapiConfiguration, config.userInfoEndpointURI))
             .get(TokensViewModel::class.java)
         tokensViewModel.tokenStateChangeable = tokenStateChangeable
     }
@@ -144,7 +144,8 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
 
     class TokensViewModel(
         private var tokenResponse: SuccessfulTokenResponse,
-        haapiConfiguration: HaapiConfiguration
+        haapiConfiguration: HaapiConfiguration,
+        userInfoEndpointUri: String
     ): ViewModel() {
 
         private var _tokenResponse: MutableLiveData<SuccessfulTokenResponse> = MutableLiveData(tokenResponse)
@@ -168,14 +169,12 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
         val disclosureContents: List<DisclosureContent>
             get() = _disclosureContents
 
-        private val oAuthTokenManager: OAuthTokenManager
-        private val uriUserInfo: URI
+        private val oAuthTokenManager: OAuthTokenManager = OAuthTokenManager(
+            oauthTokenConfiguration = haapiConfiguration
+        )
+        private val uriUserInfo: URI = URI(userInfoEndpointUri)
 
         init {
-            oAuthTokenManager = OAuthTokenManager(
-                oauthTokenConfiguration = haapiConfiguration
-            )
-            uriUserInfo = URI("${haapiConfiguration.baseUri}/dev/oauth/userinfo")
             updateDisclosureContents()
             fetchUserInfo()
         }
@@ -252,13 +251,14 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
 
     class TokensViewModelFactory(
         private val tokenResponse: SuccessfulTokenResponse,
-        private val haapiConfiguration: HaapiConfiguration
+        private val haapiConfiguration: HaapiConfiguration,
+        private val userInfoEndpointUri: String
     ): ViewModelProvider.Factory {
 
-        override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(TokensViewModel::class.java)) {
                 @Suppress("UNCHECKED_CAST")
-                return TokensViewModel(tokenResponse, haapiConfiguration) as T
+                return TokensViewModel(tokenResponse, haapiConfiguration, userInfoEndpointUri) as T
             }
 
             throw IllegalArgumentException("Unknown ViewModel class TokensViewModel")
@@ -270,12 +270,12 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
         private const val EXTRA_CONFIG = "io.curity.fragment_tokens.extra_config"
 
         fun newInstance(tokenResponse: SuccessfulTokenResponse,
-                        haapiFlowConfiguration: HaapiFlowConfiguration
+                        configuration: Configuration
         ): TokensFragment {
             val fragment = TokensFragment()
             fragment.arguments = Bundle().apply {
                 putParcelable(EXTRA_OAUTH_TOKEN_RESPONSE, tokenResponse)
-                putString(EXTRA_CONFIG, Json.encodeToString(haapiFlowConfiguration))
+                putString(EXTRA_CONFIG, Json.encodeToString(configuration))
             }
             return fragment
         }

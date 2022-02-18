@@ -124,7 +124,7 @@ class AuthenticatorSelectorFragment: Fragment() {
         private val haapiFlowViewModel: HaapiFlowViewModel
     ): ViewModelProvider.Factory {
 
-        override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(AuthenticatorSelectorViewModel::class.java)) {
                 @Suppress("UNCHECKED_CAST")
                 return AuthenticatorSelectorViewModel(step, haapiFlowViewModel) as T

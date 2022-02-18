@@ -57,7 +57,7 @@ class GenericHaapiFragment: Fragment(R.layout.fragment_generic_haapi) {
             viewModel.followLink(bundle.getString(RESULT_INDEX) ?: throw IllegalStateException("Expecting a value for RESULT_INDEX"))
         }
 
-        viewModel.stateLiveData.observe(viewLifecycleOwner, {
+        viewModel.stateLiveData.observe(viewLifecycleOwner) {
             val fragment = when (it) {
                 null -> EmptyFragment()
                 else -> {
@@ -83,7 +83,7 @@ class GenericHaapiFragment: Fragment(R.layout.fragment_generic_haapi) {
             requireActivity().supportFragmentManager.commit {
                 replace(R.id.fragment_generic_container, fragment)
             }
-        })
+        }
     }
 
     companion object {
@@ -192,7 +192,7 @@ class GenericHaapiFragment: Fragment(R.layout.fragment_generic_haapi) {
         private val haapiFlowViewModel: HaapiFlowViewModel
     ): ViewModelProvider.Factory {
 
-        override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(GenericHaapiViewModel::class.java)) {
                 @Suppress("UNCHECKED_CAST")
                 return GenericHaapiViewModel(step = step, haapiFlowViewModel = haapiFlowViewModel) as T
