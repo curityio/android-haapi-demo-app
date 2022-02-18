@@ -7,6 +7,8 @@
 /captures
 .externalNativeBuild
 .cxx
-license.json
-/deployment
 .java-version
+
+### Deployment files ###
+deployment
+license.json

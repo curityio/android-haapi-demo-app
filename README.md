@@ -99,3 +99,22 @@ the configuration in two ways:
 - [An article](https://curity.io/resources/learn/authentication-api-android-sdk)
   showing how to properly configure the Curity Identity Server and a client to use the Hypermedia
   API from an Android app.
+
+## Docker Automated Setup
+
+The above Curity Identity Server setup and connectivity from devices can be automated via a bash script:
+
+- Copy a license.json file into the code example root folder
+- Edit the `./start-idsvr.sh` script to use either a local Docker URL on an ngrok internet URL
+- Run the script to deploy a preconfigured Curity Identity Server via Docker
+- Build and run the mobile app from Android Studio
+- Sign in with the preconfigured user account `demouser / Password1`
+- Edit the `./stop-idsvr.sh` script to use matching ngrok settings to the start script
+- Run the script to free Docker resources
+
+The [Mobile Setup](https://curity.io/resources/learn/mobile-setup-ngrok/) article provides further details on this setup.
+
+## More information
+
+For further details about this code example, see the [Tutorial Walkthrough](https://curity.io/resources/learn/kotlin-android-haapi/) on the Curity website.\
+Please visit [curity.io](https://curity.io/) for more information about the Curity Identity Server.
