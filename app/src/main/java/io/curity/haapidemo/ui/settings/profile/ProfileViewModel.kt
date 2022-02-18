@@ -80,13 +80,13 @@ class ProfileViewModel(
                 ProfileIndex.SectionMetaData -> { newList.add(ProfileItem.Header(title = "META DATA Configuration")) }
                 ProfileIndex.ItemMetaDataURL -> { newList.add(
                     ProfileItem.Content(
-                        header = "Meta Data URL",
+                        header = "Issuer URI",
                         text = configuration.metaDataBaseURLString
                     )
                 ) }
                 ProfileIndex.ItemLoadingMetaData -> { newList.add(
                     ProfileItem.LoadingAction(
-                        text = "Fetch latest configuration",
+                        text = "Fetch the latest configuration",
                         dateLong = System.currentTimeMillis()
                     )
                 ) }

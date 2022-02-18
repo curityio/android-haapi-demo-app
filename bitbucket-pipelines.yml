@@ -7,12 +7,14 @@ pipelines:
           script:
             - git remote add sync git@github.com:curityio/android-haapi-demo-app.git
             - git checkout driver-sdk
-            - git pull
-            - git push sync driver-sdk
+            - git rm bitbucket-pipelines.yml
+            - git commit --amend -C HEAD
+            - git push -f sync driver-sdk
     sdk:
       - step:
           script:
             - git remote add sync git@github.com:curityio/android-haapi-demo-app.git
             - git checkout sdk
-            - git pull
-            - git push sync sdk
+            - git rm bitbucket-pipelines.yml
+            - git commit --amend -C HEAD
+            - git push -f sync sdk
