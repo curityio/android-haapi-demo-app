@@ -16,11 +16,11 @@
 
 package io.curity.haapidemo
 
+import android.app.Activity
 import android.app.AlertDialog
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.View.*
@@ -31,21 +31,20 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.commit
 import androidx.lifecycle.ViewModelProvider
-import io.curity.haapidemo.flow.HaapiFlowConfiguration
-import io.curity.haapidemo.models.*
-import io.curity.haapidemo.models.haapi.actions.Action
-import io.curity.haapidemo.models.haapi.actions.ActionModel
-import io.curity.haapidemo.models.haapi.problems.AuthorizationProblem
-import io.curity.haapidemo.models.haapi.problems.HaapiProblem
 import io.curity.haapidemo.ui.haapiflow.*
 import io.curity.haapidemo.uicomponents.HeaderView
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import se.curity.identityserver.haapi.android.sdk.models.*
+import se.curity.identityserver.haapi.android.sdk.models.actions.Action
+import se.curity.identityserver.haapi.android.sdk.models.actions.ActionKind
+import se.curity.identityserver.haapi.android.sdk.models.oauth.ErrorTokenResponse
+import se.curity.identityserver.haapi.android.sdk.models.oauth.SuccessfulTokenResponse
 import java.lang.IllegalArgumentException
 
 interface ProblemHandable {
-    fun handleProblem(problem: HaapiProblem)
+    fun handleProblemRepresentation(problem: ProblemRepresentation)
 }
 
 class FlowActivity : AppCompatActivity() {
@@ -60,7 +59,7 @@ class FlowActivity : AppCompatActivity() {
 
     private lateinit var resultLauncher: ActivityResultLauncher<Intent>
     private var expectedCallback: Int = NO_OPERATION_CALLBACK
-    private var pendingContinueAction: ActionModel.Form? = null
+    private var externalBrowserOperationStep: ExternalBrowserClientOperationStep? = null
 
     // UIs
     private val progressBar: ProgressBar by lazy { findViewById(R.id.loader) }
@@ -72,7 +71,7 @@ class FlowActivity : AppCompatActivity() {
 
         val configString = intent.getStringExtra(EXTRA_FLOW_ACTIVITY_HAAPI_CONFIG)
         if (configString == null) {
-            if (intent.data != null && pendingContinueAction == null) {
+            if (intent.data != null && externalBrowserOperationStep == null) {
                 Log.w(Constant.TAG_HAAPI_OPERATION, "A deep link was triggered but FlowActivity did not exist. This Activity is discarded !")
                 finish()
                 return
@@ -84,119 +83,51 @@ class FlowActivity : AppCompatActivity() {
         haapiBundleHash = savedInstanceState?.getInt(HAAPI_BUNDLE_HASH) ?: INVALID_HAAPI_BUNDLE_HASH
         title = savedInstanceState?.getString(TITLE)
 
-        val configuration: HaapiFlowConfiguration = Json.decodeFromString(configString)
+        val configuration: Configuration = Json.decodeFromString(configString)
 
         haapiFlowViewModel = ViewModelProvider(this,
-            HaapiFlowViewModelFactory(haapiFlowConfiguration = configuration))
+            HaapiFlowViewModelFactory(configuration = configuration))
             .get(HaapiFlowViewModel::class.java)
 
-
-        haapiFlowViewModel.liveStep.observe(this) { step ->
-            Log.i(Constant.TAG, "Observed triggered in FlowActivity: ${step.toString()}")
-            progressBar.visibility = GONE
-            when (step) {
+        haapiFlowViewModel.liveStep.observe(this) { newResult ->
+            when (newResult) {
                 null -> { haapiFlowViewModel.start() }
-                is Redirect -> {
-                    title = step.action.kind
-                    headerView.setText(step.action.kind)
-                    commitNewFragment(RedirectFragment.newInstance(step), step)
-                }
-                is AuthenticatorSelector -> {
-                    val headerTitle = step.title.message ?: ""
-                    title = headerTitle
-                    headerView.setText(headerTitle)
-                    commitNewFragment(AuthenticatorSelectorFragment.newInstance(step), step)
-                }
-                is InteractiveForm -> {
-                    // If we have only one action then we use it for the title otherwise, we use the `type`
-                    val headerTitle = if (step.actions.size == 1) {
-                        step.actions.first().title?.value() ?: step.type.discriminator
-                    } else {
-                        step.type.discriminator
-                    }
-                    title = headerTitle
-                    headerView.setText(headerTitle)
-                    commitNewFragment(InteractiveFormFragment.newInstance(step), step)
-                }
-                is TokensStep -> {
-                    val headerTitle = "Success"
-                    title = headerTitle
-                    headerView.setText(headerTitle)
-                    commitNewFragment(TokensFragment.newInstance(step.oAuthTokenResponse), step)
-                }
-                is AuthorizationCompleted -> {
-                    val headerTitle = step.type.discriminator.uppercase()
-                    title = headerTitle
-                    headerView.setText(headerTitle)
-                    commitNewFragment(AuthorizationCompletedFragment.newInstance(step), step)
-                }
-                is PollingStep -> {
-                    val headerTitle = step.type.discriminator.uppercase()
-                    title = headerTitle
-                    headerView.setText(headerTitle)
-                    commitNewFragment(PollingFragment.newInstance(step), step)
-                }
-                is UserConsentStep -> {
-                    val headerTitle = step.type.discriminator.uppercase()
-                    title = headerTitle
-                    headerView.setText(headerTitle)
-                    commitNewFragment(UserConsentFragment.newInstance(step), step)
-                }
-                is SystemErrorStep -> {
-                    showAlert(step)
-                }
-                is ExternalBrowserClientOperation -> {
-                    val uri = step.completeUri(haapiFlowViewModel.redirectURI)
-                    Log.d(Constant.TAG_HAAPI_OPERATION, uri.toString())
-                    try {
-                        val intent = Intent(Intent.ACTION_VIEW, uri)
-                        startActivity(intent)
-                        pendingContinueAction = step.actionModel.continueActions.filterIsInstance<Action.Form>().first().model
-                        // If the browser can be opened then we apply the cancel step to the UI
-                        haapiFlowViewModel.applyActionForm(step.cancel!!)
-                    } catch (exception: ActivityNotFoundException) {
-                        haapiFlowViewModel.interrupt(
-                            title = resources.getString(R.string.no_action),
-                            description = resources.getString(R.string.cannot_open_browswer))
-                        Log.d(Constant.TAG_HAAPI_OPERATION, "Could not open activity : $exception")
-                    }
-                }
-                is BankIdClientOperation -> {
-                    Log.d(Constant.TAG_HAAPI_OPERATION, step.actionModel.arguments.href)
-                    val intent = Intent()
-                        .setAction(Intent.ACTION_VIEW)
-                        .setData(Uri.parse(step.actionModel.arguments.href))
-                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    try {
-                        expectedCallback = OPERATION_BANKID_CALLBACK
-                        resultLauncher.launch(intent)
-                        // If the BankID can be opened then we apply the first action to the UI
-                        haapiFlowViewModel.applyActionForm(step.actionModel.continueActions.filterIsInstance<Action.Form>().first())
-                    } catch (exception: ActivityNotFoundException) {
-                        expectedCallback = NO_OPERATION_CALLBACK
-                        haapiFlowViewModel.interrupt(
-                            title = resources.getString(R.string.no_action),
-                            description = resources.getString(R.string.bank_id_is_not_installed)
-                        )
-                        Log.d(Constant.TAG_HAAPI_OPERATION, "Could not open activity : $exception")
-                    }
-                }
-                is ProblemStep -> {
-                    val currentFragment = supportFragmentManager.findFragmentByTag(FRAGMENT_TAG) as? ProblemHandable
-                    if (currentFragment != null) {
-                        currentFragment.handleProblem(step.problem)
-                    } else {
-                        // No fragment as ProblemHandable cannot handle it -> Display the problem as an alert and stop the flow
-                        showAlert(step.problem.toSystemError())
-                    }
-                    // Restore the headerView title when there was a rotation
-                    val headerTitle = title
-                    if (headerTitle != null) {
-                        headerView.setText(headerTitle)
-                    }
-                }
                 else -> {
-                    Log.d(Constant.TAG_HAAPI_OPERATION, "This step was not handled: $step")
+                    val response = newResult.getOrElse {
+                        handle(it)
+                        return@observe
+                    }
+                    when (response) {
+                        is ClientOperationStep -> { handle(response) }
+                        is HaapiRepresentation -> { handle(response) }
+                        is ProblemRepresentation -> { handle(response) }
+                    }
+                }
+            }
+        }
+
+        haapiFlowViewModel.liveOAuthResponse.observe(this) { newOAuthResponse ->
+            when (newOAuthResponse) {
+                null -> { /* NOP */ }
+                else -> {
+                    val response = newOAuthResponse.getOrElse {
+                        handle(it)
+                        return@observe
+                    }
+                    when (response) {
+                        is SuccessfulTokenResponse -> {
+                            val newIntent = Intent()
+                            newIntent.putExtra("TOKEN_RESPONSE", response)
+                            setResult(Activity.RESULT_OK, newIntent)
+                            finish()
+                        }
+                        is ErrorTokenResponse -> {
+                            showAlert(
+                                message = response.errorDescription,
+                                title = response.error
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -210,6 +141,7 @@ class FlowActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         resultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            // BankID -> No action is needed
             if (expectedCallback == OPERATION_BANKID_CALLBACK) {
                 // Always return RESULT_CANCELED... when the new activity is opened
                 Log.d(Constant.TAG_HAAPI_OPERATION, "Callback received for BANKID: $result")
@@ -220,20 +152,15 @@ class FlowActivity : AppCompatActivity() {
 
     override fun onNewIntent(intent: Intent?) {
         super.onNewIntent(intent)
-        val continueAction = pendingContinueAction
-        if (continueAction != null) {
-            pendingContinueAction = null
-            Log.d(Constant.TAG_HAAPI_OPERATION, "Received an intent for deepLink: $intent")
-            val parameters: MutableMap<String, String> = mutableMapOf()
-            continueAction.fields.forEach { field ->
-                val value = intent?.data?.getQueryParameter(field.name)
-                if (value != null) {
-                    parameters[field.name] = value
-                } else {
-                    Log.w(Constant.TAG_HAAPI_OPERATION, "Cannot find field with name: ${field.name}")
-                }
-            }
-            haapiFlowViewModel.submit(continueAction, parameters)
+        Log.d(Constant.TAG_HAAPI_OPERATION, "Received an intent for deepLink: $intent")
+        val extBrowserStep = externalBrowserOperationStep
+        if (intent != null && extBrowserStep != null) {
+//            try {
+//                val params = extBrowserStep.formattedParametersFromIntentDataMap(intentDataMap = intent.dataMap())
+//                haapiFlowViewModel.submit(extBrowserStep.continueFormActionModel, params)
+//            } catch (exception: Exception) {
+//                Log.w(Constant.TAG_HAAPI_OPERATION, "Something went wrong when getting the formatted params")
+//            }
         } else {
             Log.w(Constant.TAG_HAAPI_OPERATION, "Received an intent for deepLink but it is IGNORED: $intent")
         }
@@ -251,22 +178,222 @@ class FlowActivity : AppCompatActivity() {
         outState.putString(TITLE, title)
     }
 
-    private fun commitNewFragment(fragment: Fragment, haapiStep: HaapiStep) {
-        if (haapiBundleHash != haapiStep.hashCode()) {
-            haapiBundleHash = haapiStep.hashCode()
-            supportFragmentManager.commit {
-                replace(R.id.fragment_container, fragment, FRAGMENT_TAG)
-            }
-        } else {
-            Log.d(Constant.TAG, "Avoid to commit the same fragment for this step : $haapiStep")
-        }
-        progressBar.visibility = GONE
+    private fun updateTitle(title: String?) {
+        this.title = title
+        headerView.setText(title ?: "")
     }
 
-    private fun showAlert(systemErrorStep: SystemErrorStep) {
+    private fun handle(haapiRepresentation: HaapiRepresentation) {
+        when (haapiRepresentation) {
+            is RedirectionStep -> {
+                updateTitle(getString(R.string.redirection))
+                commitNewFragment(
+                    fragment = RedirectFragment.newInstance(haapiRepresentation),
+                    representation = haapiRepresentation
+                )
+            }
+            is AuthenticatorSelectorStep -> {
+                updateTitle(haapiRepresentation.title.literal)
+                commitNewFragment(
+                    fragment = AuthenticatorSelectorFragment.newInstance(haapiRepresentation),
+                    representation = haapiRepresentation
+                )
+            }
+            is InteractiveFormStep -> {
+                val title = if (haapiRepresentation.actions.size == 1) {
+                    haapiRepresentation.actions.first().title?.literal
+                        ?: if (haapiRepresentation.type == RepresentationType.REGISTRATION_STEP) {
+                            "Registration"
+                        } else {
+                            "Authentication"
+                        }
+                } else {
+                    if (haapiRepresentation.type == RepresentationType.REGISTRATION_STEP) {
+                        "Registration"
+                    } else {
+                        "Authentication"
+                    }
+                }
+                updateTitle(title)
+                commitNewFragment(
+                    fragment = InteractiveFormFragment.newInstance(
+                        model = InteractiveFormModel(
+                            messages = haapiRepresentation.messages,
+                            actions = haapiRepresentation.actions,
+                            links = haapiRepresentation.links
+                        )
+                    ),
+                    representation = haapiRepresentation
+                )
+            }
+            is PollingStep -> {
+                if (haapiRepresentation.properties.status == PollingStatus.DONE &&
+                    haapiRepresentation.actions.size == 1 &&
+                    haapiFlowViewModel.haapiConfiguration.isAutoRedirect
+                ) {
+                    // Kill the PollingFragment to avoid polling and send the "redirect"
+                    updateTitle("")
+                    commitNewFragment(
+                        fragment = EmptyFragment(),
+                        representation = haapiRepresentation
+                    )
+                    progressBar.visibility = VISIBLE
+                    haapiFlowViewModel.submit(haapiRepresentation.mainAction.model, emptyMap())
+                } else {
+                    updateTitle(getString(R.string.polling))
+                    commitNewFragment(
+                        fragment = PollingFragment.newInstance(haapiRepresentation),
+                        representation = haapiRepresentation
+                    )
+                }
+            }
+            is OAuthAuthorizationResponseStep -> {
+                if (haapiFlowViewModel.liveOAuthResponse.value?.getOrNull() !is SuccessfulTokenResponse) {
+                    updateTitle(getString(R.string.oauth_authorization_completed))
+                    commitNewFragment(
+                        fragment = AuthorizationCompletedFragment.newInstance(haapiRepresentation),
+                        representation = haapiRepresentation
+                    )
+                }
+            }
+            is ContinueSameStep -> {
+                showAlert("Continue same step is not implemented")
+            }
+            is UserConsentStep -> {
+                updateTitle(getString(R.string.user_consent))
+                commitNewFragment(
+                    fragment = UserConsentFragment.newInstance(haapiRepresentation),
+                    representation = haapiRepresentation
+                )
+            }
+            is GenericRepresentationStep -> {
+                updateTitle("GENERIC STEP")
+                commitNewFragment(
+                    fragment = GenericHaapiFragment.newInstance(haapiRepresentation),
+                    representation = haapiRepresentation
+                )
+            }
+            is ExternalBrowserClientOperationStep, is EncapClientOperationStep, is BankIdClientOperationStep -> {
+                throw IllegalStateException("These steps should be handled by another handler. See below")
+            }
+        }
+    }
+
+    private fun handle(operationStep: ClientOperationStep) {
+        when (operationStep) {
+            is ExternalBrowserClientOperationStep -> {
+                Log.d(Constant.TAG_HAAPI_OPERATION, "ExternalBrowserOP")
+                try {
+                    val uriToLaunch = operationStep.uriToLaunch(
+                        redirectTo = haapiFlowViewModel.haapiConfiguration.appRedirect
+                    )
+
+                    val intent = Intent(Intent.ACTION_VIEW, uriToLaunch)
+                    startActivity(intent)
+                    externalBrowserOperationStep = operationStep
+                    // If the browser can be opened then we apply the cancel step to the UI
+                    val title = operationStep.actionsToPresent.first().title?.literal ?: "External browser operation"
+                    updateTitle(title)
+                    commitNewFragment(
+                        fragment = InteractiveFormFragment.newInstance(
+                            model = InteractiveFormModel(
+                                messages = operationStep.messages,
+                                actions = operationStep.actionsToPresent.filterIsInstance<Action.Form>(),
+                                links = operationStep.links
+                            )
+                        ),
+                        representation = operationStep
+                    )
+                } catch (exception: ActivityNotFoundException) {
+                    Log.d(Constant.TAG_HAAPI_OPERATION, "Could not open activity : $exception")
+                    showAlert(
+                        message = getString(R.string.cannot_open_browswer),
+                        title = getString(R.string.no_action)
+                    )
+                }
+            }
+            is BankIdClientOperationStep -> {
+                Log.d(Constant.TAG_HAAPI_OPERATION, operationStep.actionModel.href)
+                try {
+                    expectedCallback = OPERATION_BANKID_CALLBACK
+                    val intent = Intent(Intent.ACTION_VIEW, operationStep.uriToLaunch)
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+
+                    resultLauncher.launch(intent)
+                    // If the BankID can be opened then
+                    if (operationStep.continueActions.size == 1 &&
+                        operationStep.continueActions.first().kind == ActionKind.Redirect &&
+                        haapiFlowViewModel.haapiConfiguration.isAutoRedirect
+                    ) {
+                        // There is only one action and it is a redirect -> we just submit according to our app config
+                        val continueAction = operationStep.continueActions.first()
+                        haapiFlowViewModel.submit((continueAction as Action.Form).model, emptyMap())
+                    } else {
+                        // One or many actions - unfortunately if there is one action and it is a redirect, we cannot submit it
+                        val title = if (operationStep.continueActions.size == 1) {
+                            operationStep.continueActions.first().title?.literal ?: "BankID operation"
+                        } else {
+                            "BankID operation"
+                        }
+                        updateTitle(title)
+                        @Suppress("UNCHECKED_CAST")
+                        commitNewFragment(
+                            fragment = InteractiveFormFragment.newInstance(
+                                model = InteractiveFormModel(
+                                    messages = operationStep.messages,
+                                    actions = operationStep.continueActions as List<Action.Form>,
+                                    links = operationStep.links
+                                )
+                            ),
+                            representation = operationStep
+                        )
+                    }
+                } catch (exception: ActivityNotFoundException) {
+                    Log.d(Constant.TAG_HAAPI_OPERATION, "Could not open bankid activity : $exception")
+                    expectedCallback = NO_OPERATION_CALLBACK
+                    showAlert(
+                        message = getString(R.string.bank_id_is_not_installed),
+                        title = getString(R.string.no_action)
+                    )
+                }
+            }
+            is EncapClientOperationStep -> {
+                showAlert("Encap client operation step is not implemented")
+            }
+        }
+    }
+
+    private fun handle(problemRepresentation: ProblemRepresentation) {
+        val currentFragment = supportFragmentManager.findFragmentByTag(FRAGMENT_TAG) as? ProblemHandable
+        if (currentFragment != null) {
+            currentFragment.handleProblemRepresentation(problemRepresentation)
+        } else {
+            // No fragment as ProblemHandable cannot handle it -> Display the problem as an alert and stop the flow
+            val message = if (problemRepresentation is AuthorizationProblem) {
+                problemRepresentation.errorDescription ?: problemRepresentation.error
+            } else {
+                problemRepresentation.messages.joinToString { it.text.literal }
+            }
+            showAlert(
+                message = message,
+                title = problemRepresentation.title?.literal
+            )
+        }
+        // Restore the headerView title when there was a rotation
+        val currentTitle = title
+        if (currentTitle != null) {
+            updateTitle(currentTitle)
+        }
+    }
+
+    private fun handle(throwable: Throwable) {
+        showAlert(throwable.message ?: "Something bad happened")
+    }
+
+    private fun showAlert(message: String, title: String? = null) {
         val alertDialog = AlertDialog.Builder(this).apply {
-            setTitle(systemErrorStep.title)
-            setMessage(systemErrorStep.description)
+            setTitle(title ?: "Unexpected error")
+            setMessage(message)
         }
 
         alertDialog.setCancelable(false)
@@ -275,7 +402,21 @@ class FlowActivity : AppCompatActivity() {
             finish()
         }
 
-        alertDialog.show()
+        if (!isFinishing){
+            alertDialog.show()
+        }
+    }
+
+    private fun commitNewFragment(fragment: Fragment, representation: Any) {
+        if (haapiBundleHash != representation.hashCode()) {
+            haapiBundleHash = representation.hashCode()
+            supportFragmentManager.commit {
+                replace(R.id.fragment_container, fragment, FRAGMENT_TAG)
+            }
+        } else {
+            Log.d(Constant.TAG, "Avoid to commit the same fragment for this representation : $representation")
+        }
+        progressBar.visibility = GONE
     }
 
     companion object {
@@ -288,29 +429,10 @@ class FlowActivity : AppCompatActivity() {
 
         private const val NO_OPERATION_CALLBACK = 0
         private const val OPERATION_BANKID_CALLBACK = 1
-        fun newIntent(context: Context, haapiFlowConfiguration: HaapiFlowConfiguration): Intent {
+        fun newIntent(context: Context, configuration: Configuration): Intent {
             val intent = Intent(context, FlowActivity::class.java)
-            intent.putExtra(EXTRA_FLOW_ACTIVITY_HAAPI_CONFIG, Json.encodeToString(haapiFlowConfiguration))
+            intent.putExtra(EXTRA_FLOW_ACTIVITY_HAAPI_CONFIG, Json.encodeToString(configuration))
             return intent
         }
     }
-}
-
-private fun HaapiProblem.toSystemError() : SystemErrorStep {
-    val description = if (this is AuthorizationProblem) {
-        errorDescription
-    } else {
-        messages?.joinToString { it.text.message ?: it.text.key ?: "" } ?: ""
-    }
-    return SystemErrorStep(
-        title = title,
-        description = description
-    )
-}
-
-private fun ExternalBrowserClientOperation.completeUri(redirectUri: String): Uri {
-    return Uri.parse(actionModel.arguments.href)
-        .buildUpon()
-        .appendQueryParameter("redirect_uri", redirectUri)
-        .build()
 }

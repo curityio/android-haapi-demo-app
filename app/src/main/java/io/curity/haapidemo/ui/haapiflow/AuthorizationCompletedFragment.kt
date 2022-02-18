@@ -24,8 +24,8 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import io.curity.haapidemo.R
-import io.curity.haapidemo.models.AuthorizationCompleted
 import io.curity.haapidemo.uicomponents.ProgressButton
+import se.curity.identityserver.haapi.android.sdk.models.OAuthAuthorizationResponseStep
 
 class AuthorizationCompletedFragment: Fragment(R.layout.fragment_authorization_completed) {
 
@@ -37,7 +37,7 @@ class AuthorizationCompletedFragment: Fragment(R.layout.fragment_authorization_c
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val step = requireArguments().getParcelable<AuthorizationCompleted>(EXTRA_STEP) ?: throw IllegalStateException("Expecting an AuthorizationCompleted")
+        val step = requireArguments().getParcelable<OAuthAuthorizationResponseStep>(EXTRA_STEP) ?: throw IllegalStateException("Expecting an AuthorizationCompleted")
         val haapiFlowViewModel = ViewModelProvider(requireActivity()).get(HaapiFlowViewModel::class.java)
         authorizationCompletedViewModel = ViewModelProvider(this, AuthorizationCompletedViewModelFactory(step, haapiFlowViewModel))
             .get(AuthorizationCompletedViewModel::class.java)
@@ -60,12 +60,12 @@ class AuthorizationCompletedFragment: Fragment(R.layout.fragment_authorization_c
         }
     }
 
-    class AuthorizationCompletedViewModel(private val authorizationCompleted: AuthorizationCompleted, private val haapiFlowViewModel: HaapiFlowViewModel): ViewModel() {
+    class AuthorizationCompletedViewModel(private val step: OAuthAuthorizationResponseStep, private val haapiFlowViewModel: HaapiFlowViewModel): ViewModel() {
         val isLoading: LiveData<Boolean>
             get() = haapiFlowViewModel.isLoading
 
         val code: String?
-            get() = authorizationCompleted.responseParameters.code
+            get() = step.properties.code
 
         fun fetchAccessToken() {
             if (code != null) {
@@ -74,9 +74,12 @@ class AuthorizationCompletedFragment: Fragment(R.layout.fragment_authorization_c
         }
     }
 
-    class AuthorizationCompletedViewModelFactory(private val step: AuthorizationCompleted, private val haapiFlowViewModel: HaapiFlowViewModel): ViewModelProvider.Factory {
+    class AuthorizationCompletedViewModelFactory(
+        private val step: OAuthAuthorizationResponseStep,
+        private val haapiFlowViewModel: HaapiFlowViewModel
+    ): ViewModelProvider.Factory {
 
-        override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(AuthorizationCompletedViewModel::class.java)) {
                 @Suppress("UNCHECKED_CAST")
                 return AuthorizationCompletedViewModel(step, haapiFlowViewModel) as T
@@ -89,7 +92,7 @@ class AuthorizationCompletedFragment: Fragment(R.layout.fragment_authorization_c
     companion object {
         private const val EXTRA_STEP = "io.curity.haapidemo.authorizationCompletedFragment.extra_step"
 
-        fun newInstance(step: AuthorizationCompleted): AuthorizationCompletedFragment {
+        fun newInstance(step: OAuthAuthorizationResponseStep): AuthorizationCompletedFragment {
             val fragment = AuthorizationCompletedFragment()
             fragment.arguments = Bundle().apply {
                 putParcelable(EXTRA_STEP, step)

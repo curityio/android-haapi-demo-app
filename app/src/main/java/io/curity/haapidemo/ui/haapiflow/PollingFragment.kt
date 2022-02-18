@@ -27,12 +27,11 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import io.curity.haapidemo.Constant
 import io.curity.haapidemo.R
-import io.curity.haapidemo.models.PollingStep
-import io.curity.haapidemo.models.haapi.PollingStatus
 import io.curity.haapidemo.uicomponents.ProgressButton
 import io.curity.haapidemo.uicomponents.ViewStopLoadable
 import kotlinx.coroutines.*
-import java.util.*
+import se.curity.identityserver.haapi.android.sdk.models.PollingStatus
+import se.curity.identityserver.haapi.android.sdk.models.PollingStep
 
 class PollingFragment: Fragment(R.layout.fragment_polling) {
 
@@ -80,13 +79,13 @@ class PollingFragment: Fragment(R.layout.fragment_polling) {
             mainButton.visibility = View.VISIBLE
         }
 
-        pollingViewModel.isLoading.observe(viewLifecycleOwner, { isLoading ->
+        pollingViewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
 
             if (!isLoading) {
                 selectedButton?.stopLoading()
                 selectedButton = null
             }
-        })
+        }
 
         mainButton.setOnClickListener {
             mainButton.setLoading(true)
@@ -132,24 +131,24 @@ class PollingFragment: Fragment(R.layout.fragment_polling) {
             get() = shouldShowAutoPolling && shouldPoll
 
         val shouldShowAutoPolling: Boolean
-            get() = haapiFlowViewModel.isAutoPolling && pollingStep.properties.status == PollingStatus.Pending
+            get() = haapiFlowViewModel.isAutoPolling && pollingStep.properties.status == PollingStatus.PENDING
 
         val isLoading = haapiFlowViewModel.isLoading
         val mainActionTitle: String
-            get() = pollingStep.main.model.actionTitle?.message ?: pollingStep.main.kind.toUpperCase(Locale.getDefault())
+            get() = pollingStep.mainAction.model.actionTitle?.literal ?: pollingStep.mainAction.kind.discriminator.uppercase()
         val cancelActionTitle: String?
-            get() = pollingStep.cancel?.model?.actionTitle?.message
+            get() = pollingStep.cancelAction?.model?.actionTitle?.literal
         val status: String
-            get() = pollingStep.properties.status.discriminator
+            get() = pollingStep.properties.status.value
 
         fun submit() {
-            haapiFlowViewModel.submit(pollingStep.main.model, emptyMap())
+            haapiFlowViewModel.submit(pollingStep.mainAction.model, emptyMap())
         }
 
         fun cancel() {
             pollingJob?.cancel()
             shouldPoll = false
-            val cancelActionForm = pollingStep.cancel
+            val cancelActionForm = pollingStep.cancelAction
             if (cancelActionForm != null) {
                 haapiFlowViewModel.submit(cancelActionForm.model, emptyMap())
             }
@@ -181,7 +180,7 @@ class PollingFragment: Fragment(R.layout.fragment_polling) {
     }
 
     class PollingViewModelFactory(private val step: PollingStep, private val haapiFlowViewModel: HaapiFlowViewModel): ViewModelProvider.Factory {
-        override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(PollingViewModel::class.java)) {
                 @Suppress("UNCHECKED_CAST")
                 return PollingViewModel(step, haapiFlowViewModel) as T

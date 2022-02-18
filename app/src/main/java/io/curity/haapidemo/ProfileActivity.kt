@@ -28,7 +28,6 @@ import androidx.appcompat.app.AlertDialog
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.RecyclerView
-import io.curity.haapidemo.flow.HaapiFlowConfiguration
 import io.curity.haapidemo.ui.settings.*
 import io.curity.haapidemo.ui.settings.profile.*
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -61,7 +60,7 @@ class ProfileActivity : AppCompatActivity() {
         if (configString == null) {
             throw IllegalArgumentException("Missing extra arguments, use ProfileActivity.newIntent(...)")
         }
-        val configuration: HaapiFlowConfiguration = Json.decodeFromString(configString)
+        val configuration: Configuration = Json.decodeFromString(configString)
         val isActiveConfiguration = intent.getBooleanExtra(EXTRA_HAAPI_IS_ACTIVE_CONFIGURATION, false)
 
         viewModel = ViewModelProvider(
@@ -137,7 +136,7 @@ class ProfileActivity : AppCompatActivity() {
 
         fun newIntent(
             context: Context,
-            haapiConfiguration: HaapiFlowConfiguration,
+            haapiConfiguration: Configuration,
             isActiveConfiguration: Boolean): Intent
         {
             val intent = Intent(context, ProfileActivity::class.java)
@@ -160,6 +159,7 @@ enum class ProfileIndex {
     SectionEndpoints,
     ItemTokenEndpointURI,
     ItemAuthorizationEndpointURI,
+    ItemUserinfoEndpointURI,
     SectionSupportedScopes,
     ItemScopes,
     SectionToggles,

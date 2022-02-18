@@ -27,15 +27,16 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.recyclerview.widget.RecyclerView
 import io.curity.haapidemo.Constant
 import io.curity.haapidemo.R
-import io.curity.haapidemo.models.UserConsentStep
-import io.curity.haapidemo.models.haapi.Field
-import io.curity.haapidemo.models.haapi.UserMessage
-import io.curity.haapidemo.models.haapi.actions.ActionModel
-import io.curity.haapidemo.models.haapi.extensions.toInteractiveFormItemCheckbox
-import io.curity.haapidemo.models.haapi.extensions.toMessageViews
 import io.curity.haapidemo.uicomponents.ProgressButton
 import io.curity.haapidemo.uicomponents.ViewStopLoadable
 import io.curity.haapidemo.utils.dismissKeyboard
+import io.curity.haapidemo.utils.toInteractiveFormItemCheckbox
+import io.curity.haapidemo.utils.toMessageViews
+import se.curity.identityserver.haapi.android.sdk.models.UserConsentStep
+import se.curity.identityserver.haapi.android.sdk.models.UserMessage
+import se.curity.identityserver.haapi.android.sdk.models.actions.Action
+import se.curity.identityserver.haapi.android.sdk.models.actions.FormActionModel
+import se.curity.identityserver.haapi.android.sdk.models.actions.FormField
 import java.lang.ref.WeakReference
 
 class UserConsentFragment: Fragment(R.layout.fragment_user_consent) {
@@ -92,7 +93,7 @@ class UserConsentFragment: Fragment(R.layout.fragment_user_consent) {
             messagesLayout.addView(it)
         }
 
-        userConsentViewModel.isLoading.observe(viewLifecycleOwner, { isLoading ->
+        userConsentViewModel.isLoading.observe(viewLifecycleOwner) { isLoading ->
             isInterceptingTouch = isLoading
             buttonList.forEach { it.isClickable = !isLoading }
 
@@ -100,7 +101,7 @@ class UserConsentFragment: Fragment(R.layout.fragment_user_consent) {
                 weakButton?.get()?.stopLoading()
                 weakButton = null
             }
-        })
+        }
     }
 
     override fun onSaveInstanceState(outState: Bundle) {
@@ -140,21 +141,25 @@ class UserConsentFragment: Fragment(R.layout.fragment_user_consent) {
         private fun setupInteractiveFormItems() {
             _interactiveFormItems.clear()
             for (action in userConstentStep.actions) {
-                for (field in action.model.fields) {
-                    if (field is Field.Checkbox) {
-                        _interactiveFormItems.add(
-                            field.toInteractiveFormItemCheckbox()
-                        )
+                if (action is Action.Form) {
+                    for (field in action.model.fields) {
+                        if (field is FormField.Checkbox) {
+                            _interactiveFormItems.add(
+                                field.toInteractiveFormItemCheckbox()
+                            )
+                        }
                     }
-                }
 
-                _interactiveFormItems.add(
-                    InteractiveFormItem.Button(
-                        key = action.kind,
-                        label = action.model.actionTitle?.message ?: "",
-                        actionModelForm = action.model
+                    _interactiveFormItems.add(
+                        InteractiveFormItem.Button(
+                            key = action.kind.discriminator,
+                            label = action.model.actionTitle?.literal ?: "",
+                            actionModelForm = action.model
+                        )
                     )
-                )
+                } else {
+                    Log.d(Constant.TAG, "Actions that are not Action.Form are not handled")
+                }
             }
         }
 
@@ -184,7 +189,7 @@ class UserConsentFragment: Fragment(R.layout.fragment_user_consent) {
             _interactiveFormItems[position] = item
         }
 
-        fun submitActionModelForm(actionModelForm: ActionModel.Form) {
+        fun submitActionModelForm(actionModelForm: FormActionModel) {
             val indexAction = interactiveFormItems.indexOfFirst { it.id == actionModelForm.hashCode().toLong() }
             if (indexAction != -1) {
                 val parameters: MutableMap<String, String> = mutableMapOf()
@@ -214,7 +219,7 @@ class UserConsentFragment: Fragment(R.layout.fragment_user_consent) {
 
     class UserConsentViewModelFactory(private val step: UserConsentStep, private val haapiFlowViewModel: HaapiFlowViewModel): ViewModelProvider.Factory {
 
-        override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+        override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(UserConsentViewModel::class.java)) {
                 @Suppress("UNCHECKED_CAST")
                 return UserConsentViewModel(step, haapiFlowViewModel) as T

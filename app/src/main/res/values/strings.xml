@@ -44,14 +44,22 @@
     <string name="no_action">No action</string>
     <string name="cannot_open_browswer">Cannot open an external browser</string>
     <string name="bank_id_is_not_installed">Bank ID is not installed</string>
+    <string name="sign_out">Sign out</string>
 
 <!--    Content descriptions-->
     <string name="warning_content_description">A warning icon</string>
     <string name="logo_content_description">A header logo</string>
     <string name="toggle_password_visibilty_content_description">Toggle password visibility</string>
-    <string name="error_icon_content_description">An error icon</string>
+    <string name="app_error_icon_content_description">An error icon</string>
     <string name="start_auth_content_description">A Curity illustration for starting the authentication</string>
     <string name="add_content_description">An add logo</string>
     <string name="progress_btn_content_description">An image that illustrates the progress button</string>
     <string name="close_haapi_flow_content_description">Button to close the flow activity</string>
+
+<!--    Titles-->
+    <string name="redirection">Redirection</string>
+    <string name="polling">Polling</string>
+    <string name="oauth_authorization_completed">OAuth authorization completed</string>
+    <string name="user_consent">User consent</string>
+    <string name="success">Congrats, you have a token</string>
 </resources>

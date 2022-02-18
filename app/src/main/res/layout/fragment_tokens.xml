@@ -16,9 +16,25 @@
     -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
+
+    <io.curity.haapidemo.uicomponents.HeaderView
+        android:id="@+id/header"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/lorem_ipsum"
+        android:layout_margin="@dimen/padding"
+        />
+
+    <TextView
+        android:id="@+id/userInfo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        tools:text="A title is a long text that tells a story"/>
 
     <io.curity.haapidemo.uicomponents.DisclosureView
         android:id="@+id/access_disclosure_view"
@@ -54,5 +70,21 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:titleText="@string/refresh_token"/>
+
+    <io.curity.haapidemo.uicomponents.ProgressButton
+        android:id="@+id/refresh_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/padding"
+        android:text="@string/refresh_token"
+        style="@style/PrimaryProgressButton" />
+
+    <io.curity.haapidemo.uicomponents.ProgressButton
+        android:id="@+id/signout_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/padding"
+        android:text="@string/sign_out"
+        style="@style/PrimaryProgressButton" />
 
 </LinearLayout>

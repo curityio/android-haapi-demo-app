@@ -21,7 +21,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import io.curity.haapidemo.R
-import io.curity.haapidemo.flow.HaapiFlowConfiguration
+import io.curity.haapidemo.Configuration
 
 class ProfileViewHolder private constructor(itemView: View): RecyclerView.ViewHolder(itemView) {
 
@@ -29,7 +29,7 @@ class ProfileViewHolder private constructor(itemView: View): RecyclerView.ViewHo
     private val clientIdTextView: TextView = itemView.findViewById(R.id.client_id)
     private val baseURLTextView: TextView = itemView.findViewById(R.id.base_url)
 
-    fun bind(config: HaapiFlowConfiguration) {
+    fun bind(config: Configuration) {
         nameTextView.text = config.name
         clientIdTextView.text = config.clientId
         baseURLTextView.text = config.baseURLString

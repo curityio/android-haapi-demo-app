@@ -17,100 +17,171 @@
 package io.curity.haapidemo.ui.haapiflow
 
 import androidx.lifecycle.*
-import io.curity.haapidemo.flow.HaapiFlowConfiguration
-import io.curity.haapidemo.flow.HaapiFlowManager
-import io.curity.haapidemo.models.*
-import io.curity.haapidemo.models.haapi.Link
-import io.curity.haapidemo.models.haapi.actions.Action
-import io.curity.haapidemo.models.haapi.actions.ActionModel
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import io.curity.haapidemo.Configuration
+import io.curity.haapidemo.utils.disableSslTrustVerification
+import kotlinx.coroutines.*
+import se.curity.identityserver.haapi.android.sdk.HaapiConfiguration
+import se.curity.identityserver.haapi.android.sdk.HaapiManager
+import se.curity.identityserver.haapi.android.sdk.OAuthAuthorizationParameters
+import se.curity.identityserver.haapi.android.sdk.OAuthTokenManager
+import se.curity.identityserver.haapi.android.sdk.models.HaapiResponse
+import se.curity.identityserver.haapi.android.sdk.models.Link
+import se.curity.identityserver.haapi.android.sdk.models.OAuthAuthorizationResponseStep
+import se.curity.identityserver.haapi.android.sdk.models.PollingStep
+import se.curity.identityserver.haapi.android.sdk.models.actions.FormActionModel
+import se.curity.identityserver.haapi.android.sdk.models.oauth.TokenResponse
+import java.net.HttpURLConnection
+import java.net.URI
+import kotlin.coroutines.CoroutineContext
 
-class HaapiFlowViewModel(haapiFlowConfiguration: HaapiFlowConfiguration): ViewModel() {
+typealias HaapiResult = Result<HaapiResponse>
+typealias OAuthResponse = Result<TokenResponse>
 
-    private val haapiFlowManager = HaapiFlowManager(haapiFlowConfiguration = haapiFlowConfiguration)
-    val isAutoPolling = haapiFlowConfiguration.isAutoPollingEnabled
+class HaapiFlowViewModel(private val configuration: Configuration): ViewModel() {
 
-    private var _liveStep = MutableLiveData<HaapiStep?>(null)
-    val liveStep: LiveData<HaapiStep?>
+    val haapiConfiguration: HaapiConfiguration = HaapiConfiguration(
+        keyStoreAlias = configuration.keyStoreAlias,
+        clientId = configuration.clientId,
+        baseUri = URI.create(configuration.baseURLString),
+        tokenEndpointUri = URI.create(configuration.tokenEndpointURI),
+        authorizationEndpointUri = URI.create(configuration.authorizationEndpointURI),
+        appRedirect = configuration.redirectURI,
+        isAutoRedirect = configuration.followRedirect,
+        httpUrlConnectionProvider = { url ->
+            val urlConnection = url.openConnection()
+            urlConnection.connectTimeout = 8000
+            if (!configuration.isSSLTrustVerificationEnabled) {
+                urlConnection.disableSslTrustVerification() as HttpURLConnection
+            } else {
+                urlConnection as HttpURLConnection
+            }
+        }
+    )
+    private val haapiManager: HaapiManager = HaapiManager(haapiConfiguration = haapiConfiguration)
+    private val oAuthTokenManager: OAuthTokenManager = OAuthTokenManager(
+        oauthTokenConfiguration = haapiConfiguration
+    )
+    private val coroutineExceptionHandler = CoroutineExceptionHandler { _, _ -> }
+
+    val isAutoPolling = configuration.isAutoPollingEnabled
+
+    private var _liveStep = MutableLiveData<HaapiResult?>(null)
+    val liveStep: LiveData<HaapiResult?>
         get() = _liveStep
+
+    private var _liveOAuthResponse = MutableLiveData<OAuthResponse?>(null)
+    val liveOAuthResponse: LiveData<OAuthResponse?>
+        get() = _liveOAuthResponse
 
     private val _isLoading = MutableLiveData(false)
     val isLoading: LiveData<Boolean>
         get() = _isLoading
 
-    val redirectURI = haapiFlowConfiguration.redirectURI
-
-    private fun executeHaapi(haapiStepCommand: suspend () -> HaapiStep) {
+    private fun executeHaapi(haapiResultCommand: suspend (coroutineContext: CoroutineContext) -> HaapiResponse) {
         _isLoading.postValue(true)
-        viewModelScope.launch(Dispatchers.IO) {
-            val step = haapiStepCommand()
-            _isLoading.postValue(false)
-            processStep(step)
+        viewModelScope.launch {
+            try {
+                ensureActive()
+                val result = haapiResultCommand(Dispatchers.IO + coroutineExceptionHandler)
+                ensureActive()
+                _isLoading.postValue(false)
+                processHaapiResult(HaapiResult.success(result))
+            } catch (e: Exception) {
+                coroutineExceptionHandler.handleException(coroutineContext, e)
+                processHaapiResult(HaapiResult.failure(e))
+            }
         }
     }
 
     fun start() {
-        executeHaapi { haapiFlowManager.start() }
-    }
-
-    fun submit(form: ActionModel.Form, parameters: Map<String, String> = emptyMap()) {
         executeHaapi {
-            haapiFlowManager.submitForm(
-                form = form,
-                parameters = parameters
+            haapiManager.start(
+                authorizationParameters = OAuthAuthorizationParameters(
+                    scope = configuration.selectedScopes
+                ),
+                it
             )
         }
     }
 
-    fun fetchAccessToken(authorizationCode: String) {
+    fun submit(form: FormActionModel, parameters: Map<String, String> = emptyMap()) {
         executeHaapi {
-            haapiFlowManager.fetchAccessToken(authorizationCode)
+            haapiManager.submitForm(form, parameters, it)
+        }
+    }
+
+    fun fetchAccessToken(authorizationCode: String) {
+        _isLoading.postValue(true)
+        viewModelScope.launch {
+            val result = withContext(Dispatchers.IO) {
+                oAuthTokenManager.fetchAccessToken(authorizationCode, this.coroutineContext)
+            }
+            _isLoading.postValue(false)
+            _liveOAuthResponse.postValue(OAuthResponse.success(result))
+        }
+    }
+
+    fun fetchAccessToken(oAuthAuthorizationResponseStep: OAuthAuthorizationResponseStep) {
+        _isLoading.postValue(true)
+        viewModelScope.launch {
+            val result = withContext(Dispatchers.IO) {
+                oAuthTokenManager.fetchAccessToken(
+                    oAuthAuthorizationResponseStep.properties.code,
+                    this.coroutineContext
+                )
+            }
+            _isLoading.postValue(false)
+            _liveOAuthResponse.postValue(OAuthResponse.success(result))
+        }
+    }
+
+    fun refreshAccessToken(refreshToken: String) {
+        _isLoading.postValue(true)
+        viewModelScope.launch {
+            val result = withContext(Dispatchers.IO) {
+                oAuthTokenManager.refreshAccessToken(refreshToken, this.coroutineContext)
+            }
+            _isLoading.postValue(false)
+            _liveOAuthResponse.postValue(OAuthResponse.success(result))
         }
     }
 
     fun followLink(link: Link) {
         executeHaapi {
-            haapiFlowManager.followLink(link)
+            haapiManager.followLink(link, it)
         }
     }
 
-    fun applyActionForm(actionForm: Action.Form) {
-        executeHaapi {
-            haapiFlowManager.applyActionForm(actionForm = actionForm)
-        }
-    }
-
-    private fun processStep(haapiStep: HaapiStep) {
-        val currentStep = liveStep.value
-        if (haapiStep is PollingStep && currentStep is PollingStep && currentStep.isContentTheSame(haapiStep)) {
+    private fun processHaapiResult(haapiResult: HaapiResult) {
+        val currentResponse = liveStep.value?.getOrNull()
+        val latestResponse = haapiResult.getOrNull()
+        if (latestResponse is PollingStep && currentResponse is PollingStep && latestResponse.isContentTheSame(currentResponse)) {
             // We do not post a new value as the pollingStep is the same. Avoiding to have a flickering for the progressBar
             return
         }
-        _liveStep.postValue(haapiStep)
-    }
 
-    fun interrupt(title: String, description: String) {
-        processStep(
-            SystemErrorStep(
-                title,
-                description
-            )
-        )
+        // Handle automatic fetchAccessToken
+        if (latestResponse is OAuthAuthorizationResponseStep &&
+            configuration.isAutoAuthorizationChallengedEnabled) {
+            fetchAccessToken(latestResponse)
+        } else {
+            _liveStep.postValue(haapiResult)
+        }
     }
 
     override fun onCleared() {
         super.onCleared()
-        haapiFlowManager.close()
+        viewModelScope.cancel()
+        haapiManager.close()
     }
 }
 
-class HaapiFlowViewModelFactory(val haapiFlowConfiguration: HaapiFlowConfiguration): ViewModelProvider.Factory {
+class HaapiFlowViewModelFactory(val configuration: Configuration): ViewModelProvider.Factory {
 
-    override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(HaapiFlowViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return HaapiFlowViewModel(haapiFlowConfiguration) as T
+            return HaapiFlowViewModel(configuration) as T
         }
 
         throw IllegalArgumentException("Unknown ViewModel class HaapiFlowViewModel")
@@ -119,6 +190,6 @@ class HaapiFlowViewModelFactory(val haapiFlowConfiguration: HaapiFlowConfigurati
 
 private fun PollingStep.isContentTheSame(pollingStep: PollingStep): Boolean {
     return this.properties.status == pollingStep.properties.status
-            && this.type.discriminator == pollingStep.type.discriminator
-            && this.main.model.href == pollingStep.main.model.href
+            && this.type == pollingStep.type
+            && this.mainAction.model.href == pollingStep.mainAction.model.href
 }

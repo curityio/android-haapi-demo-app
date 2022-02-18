@@ -18,9 +18,9 @@ package io.curity.haapidemo.ui.settings.profile
 import android.accounts.NetworkErrorException
 import androidx.lifecycle.*
 import io.curity.haapidemo.ProfileIndex
-import io.curity.haapidemo.flow.HaapiFlowConfiguration
-import io.curity.haapidemo.flow.disableSslTrustVerification
+import io.curity.haapidemo.Configuration
 import io.curity.haapidemo.ui.settings.HaapiFlowConfigurationRepository
+import io.curity.haapidemo.utils.disableSslTrustVerification
 import kotlinx.coroutines.*
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -30,12 +30,12 @@ import kotlin.IllegalArgumentException
 
 class ProfileViewModel(
     private val repository: HaapiFlowConfigurationRepository,
-    private var configuration: HaapiFlowConfiguration,
+    private var configuration: Configuration,
     private val isActiveConfiguration: Boolean,
     private val scopesAdapter: ScopesAdapter
 ): ViewModel() {
 
-    private var editableConfiguration: HaapiFlowConfiguration
+    private var editableConfiguration: Configuration
 
     private var _list: MutableLiveData<MutableList<ProfileItem>> = MutableLiveData()
     val listLiveData: LiveData<List<ProfileItem>>
@@ -80,13 +80,13 @@ class ProfileViewModel(
                 ProfileIndex.SectionMetaData -> { newList.add(ProfileItem.Header(title = "META DATA Configuration")) }
                 ProfileIndex.ItemMetaDataURL -> { newList.add(
                     ProfileItem.Content(
-                        header = "Meta Data URL",
+                        header = "Issuer URI",
                         text = configuration.metaDataBaseURLString
                     )
                 ) }
                 ProfileIndex.ItemLoadingMetaData -> { newList.add(
                     ProfileItem.LoadingAction(
-                        text = "Fetch latest configuration",
+                        text = "Fetch the latest configuration",
                         dateLong = System.currentTimeMillis()
                     )
                 ) }
@@ -102,6 +102,12 @@ class ProfileViewModel(
                     ProfileItem.Content(
                         header = "Authorization endpoint URI",
                         text = configuration.authorizationEndpointURI
+                    )
+                ) }
+                ProfileIndex.ItemUserinfoEndpointURI -> { newList.add(
+                    ProfileItem.Content(
+                        header = "User info endpoint URI",
+                        text = configuration.userInfoEndpointURI
                     )
                 ) }
 
@@ -153,6 +159,7 @@ class ProfileViewModel(
                 ProfileIndex.ItemMetaDataURL -> { editableConfiguration.metaDataBaseURLString = value }
                 ProfileIndex.ItemTokenEndpointURI -> { editableConfiguration.tokenEndpointURI = value }
                 ProfileIndex.ItemAuthorizationEndpointURI -> { editableConfiguration.authorizationEndpointURI = value }
+                ProfileIndex.ItemUserinfoEndpointURI -> { editableConfiguration.userInfoEndpointURI = value }
 
                 else -> throw IllegalArgumentException("Invalid index $atIndex for updating a String to configuration")
             }
@@ -192,7 +199,7 @@ class ProfileViewModel(
     }
 
     /**
-     * Fetches the metaData from [HaapiFlowConfiguration.metaDataBaseURLString]
+     * Fetches the metaData from [Configuration.metaDataBaseURLString]
      *
      * If it succeeds then [listLiveData] and [scopesLiveData] will be triggered.
      * If it fails then an [Exception] will be thrown.
@@ -234,10 +241,20 @@ class ProfileViewModel(
                     jsonObject.getString("authorization_endpoint").let {
                         editableConfiguration.authorizationEndpointURI = it
 
-                        val index = ProfileIndex.ItemTokenEndpointURI.ordinal
+                        val index = ProfileIndex.ItemAuthorizationEndpointURI.ordinal
                         val oldItem = _list.value!![index] as ProfileItem.Content
                         val newItem =
                             ProfileItem.Content(header = oldItem.header, text = editableConfiguration.authorizationEndpointURI)
+                        _list.value!![index] = newItem
+                    }
+
+                    jsonObject.getString("userinfo_endpoint").let {
+                        editableConfiguration.userInfoEndpointURI = it
+
+                        val index = ProfileIndex.ItemUserinfoEndpointURI.ordinal
+                        val oldItem = _list.value!![index] as ProfileItem.Content
+                        val newItem =
+                            ProfileItem.Content(header = oldItem.header, text = editableConfiguration.userInfoEndpointURI)
                         _list.value!![index] = newItem
                     }
 
@@ -311,12 +328,12 @@ class ProfileViewModel(
 
 class ProfileViewModelFactory(
     private val repository: HaapiFlowConfigurationRepository,
-    private val configuration: HaapiFlowConfiguration,
+    private val configuration: Configuration,
     private val isActiveConfiguration: Boolean,
     private val scopesAdapter: ScopesAdapter
     ): ViewModelProvider.Factory {
 
-    override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(ProfileViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
             return ProfileViewModel(repository, configuration, isActiveConfiguration, scopesAdapter) as T

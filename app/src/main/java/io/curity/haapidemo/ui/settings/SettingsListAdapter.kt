@@ -19,11 +19,11 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
-import io.curity.haapidemo.flow.HaapiFlowConfiguration
+import io.curity.haapidemo.Configuration
 import io.curity.haapidemo.ui.settings.profile.ProfileViewHolder
 import io.curity.haapidemo.uicomponents.SettingsSectionViewHolder
 
-class SettingsListAdapter(private val clickHandler: (HaapiFlowConfiguration) -> Unit): ListAdapter<SettingsItem, RecyclerView.ViewHolder>(CONFIG_COMPARATOR) {
+class SettingsListAdapter(private val clickHandler: (Configuration) -> Unit): ListAdapter<SettingsItem, RecyclerView.ViewHolder>(CONFIG_COMPARATOR) {
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return when(viewType) {
@@ -82,7 +82,7 @@ sealed class SettingsItem {
         override val id: Long = title.hashCode().toLong()
     }
 
-    data class Configuration(val configuration: HaapiFlowConfiguration): SettingsItem() {
+    data class Configuration(val configuration: io.curity.haapidemo.Configuration): SettingsItem() {
         override val id: Long = configuration.hashCode().toLong()
     }
 }

@@ -4,15 +4,18 @@
 # Run the Curity Identity Server in Docker on the local computer, preconfigured for the code example
 # Please ensure that the following resources are installed before running this script:
 # - Docker Desktop
+#
+# If you want to expose the local instance of the Curity Identity Server via ngrok, then the following
+# need to also be installed:
 # - ngrok
-# - The jq tool (brew install jq)
+# - The jq tool (`brew install jq` on MacOS)
 ####################################################################################################
 
 #
-# By default the Curity Identity Server will use a dynamic NGROK base URL
-# Set USE_NGROK to false and provide an IP address based URL otherwise
+# By default the Curity Identity Server will use the Android emulator's default host IP.
+# Set USE_NGROK to true and a dynamic NGROK base URL will be used automatically.
 #
-USE_NGROK=true
+USE_NGROK=false
 BASE_URL=https://10.0.2.2:8443
 
 #
@@ -35,7 +38,7 @@ if [ ! -d 'deployment' ]; then
 fi
 
 #
-# Run the deployment script to get an NGROK URL and deploy the Curity Identity Server 
+# Run the deployment script to get an NGROK URL and deploy the Curity Identity Server
 #
 cp ./license.json deployment/resources/license.json
 ./deployment/start.sh "$USE_NGROK" "$BASE_URL" "haapi"

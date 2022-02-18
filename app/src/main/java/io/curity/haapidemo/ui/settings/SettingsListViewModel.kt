@@ -16,7 +16,7 @@
 package io.curity.haapidemo.ui.settings
 
 import androidx.lifecycle.*
-import io.curity.haapidemo.flow.HaapiFlowConfiguration
+import io.curity.haapidemo.Configuration
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -27,13 +27,13 @@ class SettingsListViewModel(
 ) : ViewModel() {
 
     //region Private references
-    private var activeConfiguration: HaapiFlowConfiguration? = null
-    private var configurations: List<HaapiFlowConfiguration> = emptyList()
+    private var activeConfiguration: Configuration? = null
+    private var configurations: List<Configuration> = emptyList()
 
     private val flowModels: Flow<List<SettingsItem>> = combine(
         repository.activeConfigurationFlow,
         repository.configurationsFlow)
-    { activeConfiguration: HaapiFlowConfiguration, list: List<HaapiFlowConfiguration> ->
+    { activeConfiguration: Configuration, list: List<Configuration> ->
 
         this.activeConfiguration = activeConfiguration
         configurations = list
@@ -53,8 +53,8 @@ class SettingsListViewModel(
 
     val models = flowModels.asLiveData(Dispatchers.IO)
 
-    suspend fun addNewConfiguration(): HaapiFlowConfiguration {
-        val result = HaapiFlowConfiguration.newInstance(configurations.size + 1)
+    suspend fun addNewConfiguration(): Configuration {
+        val result = Configuration.newInstance(configurations.size + 1)
         repository.appendNewConfiguration(result)
         return result
     }
@@ -76,7 +76,7 @@ class SettingsListViewModel(
         }
     }
 
-    fun isActiveConfiguration(config: HaapiFlowConfiguration): Boolean {
+    fun isActiveConfiguration(config: Configuration): Boolean {
         return activeConfiguration == config
     }
 }
@@ -85,7 +85,7 @@ class SettingsListViewModelFactory(
     private val repository: HaapiFlowConfigurationRepository
 ): ViewModelProvider.Factory {
 
-    override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(SettingsListViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
             return SettingsListViewModel(repository) as T

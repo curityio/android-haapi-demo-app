@@ -20,7 +20,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
-import io.curity.haapidemo.flow.HaapiFlowConfiguration
+import io.curity.haapidemo.Configuration
 import kotlinx.coroutines.flow.*
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
@@ -34,7 +34,7 @@ class HaapiFlowConfigurationRepository(private val dataStore: DataStore<Preferen
         val ACTIVE_CONFIG = stringPreferencesKey("io.curity.haapidemo.haapiflowconfigurationrepository.active_configuration")
     }
 
-    val configurationsFlow: Flow<List<HaapiFlowConfiguration>> = dataStore.data
+    val configurationsFlow: Flow<List<Configuration>> = dataStore.data
         .catch { exception ->
             if (exception is IOException) {
                 emit(emptyPreferences())
@@ -46,7 +46,7 @@ class HaapiFlowConfigurationRepository(private val dataStore: DataStore<Preferen
             preferences[PreferencesKeys.CONFIGS].toHaapiConfigurations()
         }
 
-    val activeConfigurationFlow: Flow<HaapiFlowConfiguration> = dataStore.data
+    val activeConfigurationFlow: Flow<Configuration> = dataStore.data
         .catch { exception ->
             if (exception is IOException) {
                 emit(emptyPreferences())
@@ -63,7 +63,7 @@ class HaapiFlowConfigurationRepository(private val dataStore: DataStore<Preferen
      *
      * @param config A HaapiFlowConfiguration
      */
-    suspend fun appendNewConfiguration(config: HaapiFlowConfiguration) {
+    suspend fun appendNewConfiguration(config: Configuration) {
         dataStore.edit {
             val list = it[PreferencesKeys.CONFIGS].toHaapiConfigurations()
             list.add(config)
@@ -76,7 +76,7 @@ class HaapiFlowConfigurationRepository(private val dataStore: DataStore<Preferen
      *
      * @param config A HaapiFlowConfiguration
      */
-    suspend fun updateActiveConfiguration(config: HaapiFlowConfiguration) {
+    suspend fun updateActiveConfiguration(config: Configuration) {
         dataStore.edit { preferences ->
             preferences[PreferencesKeys.ACTIVE_CONFIG] = Json.encodeToString(config)
         }
@@ -89,7 +89,7 @@ class HaapiFlowConfigurationRepository(private val dataStore: DataStore<Preferen
      * @param newConfig An updated HaapiFlowConfiguration
      * @param oldConfig An old HaapiFlowConfiguration to be replaced
      */
-    suspend fun updateConfiguration(newConfig: HaapiFlowConfiguration, oldConfig: HaapiFlowConfiguration) {
+    suspend fun updateConfiguration(newConfig: Configuration, oldConfig: Configuration) {
         dataStore.edit { preferences ->
             val list = preferences[PreferencesKeys.CONFIGS].toHaapiConfigurations()
             val idxConfig = list.indexOf(oldConfig)
@@ -105,7 +105,7 @@ class HaapiFlowConfigurationRepository(private val dataStore: DataStore<Preferen
      *
      * @param config A HaapiFlowConfiguration
      */
-    suspend fun removeConfiguration(config: HaapiFlowConfiguration) {
+    suspend fun removeConfiguration(config: Configuration) {
         dataStore.edit { preferences ->
             val list = preferences[PreferencesKeys.CONFIGS].toHaapiConfigurations()
             list.remove(config)
@@ -119,7 +119,7 @@ class HaapiFlowConfigurationRepository(private val dataStore: DataStore<Preferen
      *
      * @param config A HaapiFlowConfiguration
      */
-    suspend fun setActiveConfiguration(config: HaapiFlowConfiguration) {
+    suspend fun setActiveConfiguration(config: Configuration) {
         dataStore.edit { preferences ->
             val oldActiveConfig = preferences[PreferencesKeys.ACTIVE_CONFIG].toHaapiConfiguration()
             val list = preferences[PreferencesKeys.CONFIGS].toHaapiConfigurations()
@@ -133,7 +133,7 @@ class HaapiFlowConfigurationRepository(private val dataStore: DataStore<Preferen
 }
 
 //region Private extension for String
-private fun String?.toHaapiConfigurations(): MutableList<HaapiFlowConfiguration> {
+private fun String?.toHaapiConfigurations(): MutableList<Configuration> {
     return if (this != null) {
         Json.decodeFromString(this)
     } else {
@@ -141,11 +141,11 @@ private fun String?.toHaapiConfigurations(): MutableList<HaapiFlowConfiguration>
     }
 }
 
-private fun String?.toHaapiConfiguration(): HaapiFlowConfiguration {
+private fun String?.toHaapiConfiguration(): Configuration {
     return if (this != null) {
         Json.decodeFromString(this)
     } else {
-        HaapiFlowConfiguration.newInstance()
+        Configuration.newInstance()
     }
 }
 //endregion
