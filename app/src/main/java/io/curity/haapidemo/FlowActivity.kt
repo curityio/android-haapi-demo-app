@@ -36,6 +36,7 @@ import io.curity.haapidemo.uicomponents.HeaderView
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import se.curity.identityserver.haapi.android.driver.UnsupportedDeviceException
 import se.curity.identityserver.haapi.android.sdk.models.*
 import se.curity.identityserver.haapi.android.sdk.models.actions.Action
 import se.curity.identityserver.haapi.android.sdk.models.actions.ActionKind
@@ -387,7 +388,12 @@ class FlowActivity : AppCompatActivity() {
     }
 
     private fun handle(throwable: Throwable) {
-        showAlert(throwable.message ?: "Something bad happened")
+        when (throwable) {
+            is UnsupportedDeviceException -> showAlert( throwable.message ?: "Unsupported device",
+                "Unsupported Device"
+            )
+            else -> showAlert(throwable.message ?: "Something bad happened")
+        }
     }
 
     private fun showAlert(message: String, title: String? = null) {
