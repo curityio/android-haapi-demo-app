@@ -16,22 +16,21 @@
 
 package io.curity.haapidemo.ui.haapiflow
 
+import android.content.Context
 import androidx.lifecycle.*
 import io.curity.haapidemo.Configuration
-import io.curity.haapidemo.utils.disableSslTrustVerification
+import io.curity.haapidemo.utils.DynamicClientRepository
+import io.curity.haapidemo.utils.HaapiFactory
 import kotlinx.coroutines.*
-import se.curity.identityserver.haapi.android.sdk.HaapiConfiguration
-import se.curity.identityserver.haapi.android.sdk.HaapiManager
-import se.curity.identityserver.haapi.android.sdk.OAuthAuthorizationParameters
-import se.curity.identityserver.haapi.android.sdk.OAuthTokenManager
+import se.curity.identityserver.haapi.android.driver.ClientAuthenticationMethodConfiguration
+import se.curity.identityserver.haapi.android.sdk.*
 import se.curity.identityserver.haapi.android.sdk.models.HaapiResponse
 import se.curity.identityserver.haapi.android.sdk.models.Link
 import se.curity.identityserver.haapi.android.sdk.models.OAuthAuthorizationResponseStep
 import se.curity.identityserver.haapi.android.sdk.models.PollingStep
 import se.curity.identityserver.haapi.android.sdk.models.actions.FormActionModel
 import se.curity.identityserver.haapi.android.sdk.models.oauth.TokenResponse
-import java.net.HttpURLConnection
-import java.net.URI
+import java.lang.RuntimeException
 import kotlin.coroutines.CoroutineContext
 
 typealias HaapiResult = Result<HaapiResponse>
@@ -39,28 +38,11 @@ typealias OAuthResponse = Result<TokenResponse>
 
 class HaapiFlowViewModel(private val configuration: Configuration): ViewModel() {
 
-    val haapiConfiguration: HaapiConfiguration = HaapiConfiguration(
-        keyStoreAlias = configuration.keyStoreAlias,
-        clientId = configuration.clientId,
-        baseUri = URI.create(configuration.baseURLString),
-        tokenEndpointUri = URI.create(configuration.tokenEndpointURI),
-        authorizationEndpointUri = URI.create(configuration.authorizationEndpointURI),
-        appRedirect = configuration.redirectURI,
-        isAutoRedirect = configuration.followRedirect,
-        httpUrlConnectionProvider = { url ->
-            val urlConnection = url.openConnection()
-            urlConnection.connectTimeout = 8000
-            if (!configuration.isSSLTrustVerificationEnabled) {
-                urlConnection.disableSslTrustVerification() as HttpURLConnection
-            } else {
-                urlConnection as HttpURLConnection
-            }
-        }
-    )
-    private val haapiManager: HaapiManager = HaapiManager(haapiConfiguration = haapiConfiguration)
-    private val oAuthTokenManager: OAuthTokenManager = OAuthTokenManager(
-        oauthTokenConfiguration = haapiConfiguration
-    )
+    val haapiFactory = HaapiFactory(configuration)
+    val haapiConfiguration: HaapiConfiguration = haapiFactory.getHaapiConfiguration()
+    private var haapiManager: HaapiManager? = null
+    private var oAuthTokenManager: OAuthTokenManager? = null
+
     private val coroutineExceptionHandler = CoroutineExceptionHandler { _, _ -> }
 
     val isAutoPolling = configuration.isAutoPollingEnabled
@@ -93,9 +75,38 @@ class HaapiFlowViewModel(private val configuration: Configuration): ViewModel() 
         }
     }
 
-    fun start() {
+    fun start(context: Context) {
+
+        if (!haapiFactory.usesDcrFallback()) {
+
+            // The existing attestation way to initialize HAAPI objects
+            haapiManager = HaapiManager(haapiConfiguration)
+            oAuthTokenManager = OAuthTokenManager(oauthTokenConfiguration = haapiConfiguration)
+            startHaapi()
+
+        } else {
+
+            // The DCR fallback way to initialize HAAPI objects
+            viewModelScope.launch {
+
+                val accessor = withContext(Dispatchers.IO) {
+                    haapiFactory.registerDynamicClient(context, this.coroutineContext)
+                }
+
+                if (haapiManager == null || oAuthTokenManager == null) {
+                    haapiManager = accessor.haapiManager
+                    oAuthTokenManager = haapiFactory.createTokenManager()
+                }
+
+                startHaapi()
+            }
+        }
+    }
+
+    private fun startHaapi() {
+
         executeHaapi {
-            haapiManager.start(
+            haapiManager!!.start(
                 authorizationParameters = OAuthAuthorizationParameters(
                     scope = configuration.selectedScopes
                 ),
@@ -106,7 +117,7 @@ class HaapiFlowViewModel(private val configuration: Configuration): ViewModel() 
 
     fun submit(form: FormActionModel, parameters: Map<String, String> = emptyMap()) {
         executeHaapi {
-            haapiManager.submitForm(form, parameters, it)
+            haapiManager!!.submitForm(form, parameters, it)
         }
     }
 
@@ -114,7 +125,7 @@ class HaapiFlowViewModel(private val configuration: Configuration): ViewModel() 
         _isLoading.postValue(true)
         viewModelScope.launch {
             val result = withContext(Dispatchers.IO) {
-                oAuthTokenManager.fetchAccessToken(authorizationCode, this.coroutineContext)
+                oAuthTokenManager!!.fetchAccessToken(authorizationCode, this.coroutineContext)
             }
             _isLoading.postValue(false)
             _liveOAuthResponse.postValue(OAuthResponse.success(result))
@@ -125,7 +136,7 @@ class HaapiFlowViewModel(private val configuration: Configuration): ViewModel() 
         _isLoading.postValue(true)
         viewModelScope.launch {
             val result = withContext(Dispatchers.IO) {
-                oAuthTokenManager.fetchAccessToken(
+                oAuthTokenManager!!.fetchAccessToken(
                     oAuthAuthorizationResponseStep.properties.code,
                     this.coroutineContext
                 )
@@ -139,7 +150,7 @@ class HaapiFlowViewModel(private val configuration: Configuration): ViewModel() 
         _isLoading.postValue(true)
         viewModelScope.launch {
             val result = withContext(Dispatchers.IO) {
-                oAuthTokenManager.refreshAccessToken(refreshToken, this.coroutineContext)
+                oAuthTokenManager!!.refreshAccessToken(refreshToken, this.coroutineContext)
             }
             _isLoading.postValue(false)
             _liveOAuthResponse.postValue(OAuthResponse.success(result))
@@ -148,7 +159,7 @@ class HaapiFlowViewModel(private val configuration: Configuration): ViewModel() 
 
     fun followLink(link: Link) {
         executeHaapi {
-            haapiManager.followLink(link, it)
+            haapiManager!!.followLink(link, it)
         }
     }
 
@@ -172,7 +183,9 @@ class HaapiFlowViewModel(private val configuration: Configuration): ViewModel() 
     override fun onCleared() {
         super.onCleared()
         viewModelScope.cancel()
-        haapiManager.close()
+        if (haapiManager != null) {
+            haapiManager!!.close()
+        }
     }
 }
 

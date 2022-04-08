@@ -62,8 +62,13 @@ data class Configuration(
     var isAutoAuthorizationChallengedEnabled: Boolean = true,
     var isSSLTrustVerificationEnabled: Boolean = true,
     var selectedScopes: List<String> = emptyList(),
+    var supportedScopes: List<String> = emptyList(),
 
-    var supportedScopes: List<String> = emptyList()
+    // These are only initial settings, to enable an early end-to-end setup
+    // It will evolve to use reviewed naming and support multiple types of secret
+    var fallbackClientId: String? = null,
+    var clientRegistrationEndpointUri: String? = null,
+    var stringDcrSecret: String? = null
 ) {
 
     companion object {
@@ -71,7 +76,9 @@ data class Configuration(
         private const val CURITY_DEV_MODE = false
 
         fun newInstance(name: String = "haapi-android-client"): Configuration =
-            if (CURITY_DEV_MODE) newDevInstance(name) else Configuration(
+            if (CURITY_DEV_MODE) newDevInstance(name) else
+
+            Configuration(
                 name = name,
                 clientId = "haapi-android-client",
                 baseURLString = "https://10.0.2.2:8443",
@@ -82,7 +89,13 @@ data class Configuration(
                 redirectURI = "app://haapi",
                 followRedirect = true,
                 isSSLTrustVerificationEnabled = false,
-                selectedScopes = listOf("openid", "profile")
+                selectedScopes = listOf("openid", "profile"),
+
+                // These are only initial settings, to enable an early end-to-end setup
+                // It will evolve to use reviewed naming and support multiple types of secret
+                fallbackClientId = "haapi-template-client",
+                clientRegistrationEndpointUri = "https://10.0.2.2:8443/token-service/oauth-registration",
+                stringDcrSecret = "Password1"
             )
 
         fun newInstance(number: Int): Configuration {
@@ -100,7 +113,13 @@ data class Configuration(
                 redirectURI = "app://haapi",
                 followRedirect = true,
                 isSSLTrustVerificationEnabled = false,
-                selectedScopes = listOf("openid", "profile")
+                selectedScopes = listOf("openid", "profile"),
+
+                // These are only initial settings, to enable an early end-to-end setup
+                // It will evolve to use reviewed naming and support multiple types of secret
+                fallbackClientId = "haapi-template-client",
+                clientRegistrationEndpointUri = "https://10.0.2.2:8443/token-service/oauth-registration",
+                stringDcrSecret = "Password1"
             )
     }
 }
