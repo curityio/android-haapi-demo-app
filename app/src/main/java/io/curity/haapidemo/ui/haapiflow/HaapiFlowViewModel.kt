@@ -19,10 +19,8 @@ package io.curity.haapidemo.ui.haapiflow
 import android.content.Context
 import androidx.lifecycle.*
 import io.curity.haapidemo.Configuration
-import io.curity.haapidemo.utils.DynamicClientRepository
 import io.curity.haapidemo.utils.HaapiFactory
 import kotlinx.coroutines.*
-import se.curity.identityserver.haapi.android.driver.ClientAuthenticationMethodConfiguration
 import se.curity.identityserver.haapi.android.sdk.*
 import se.curity.identityserver.haapi.android.sdk.models.HaapiResponse
 import se.curity.identityserver.haapi.android.sdk.models.Link
@@ -30,7 +28,6 @@ import se.curity.identityserver.haapi.android.sdk.models.OAuthAuthorizationRespo
 import se.curity.identityserver.haapi.android.sdk.models.PollingStep
 import se.curity.identityserver.haapi.android.sdk.models.actions.FormActionModel
 import se.curity.identityserver.haapi.android.sdk.models.oauth.TokenResponse
-import java.lang.RuntimeException
 import kotlin.coroutines.CoroutineContext
 
 typealias HaapiResult = Result<HaapiResponse>
@@ -39,9 +36,9 @@ typealias OAuthResponse = Result<TokenResponse>
 class HaapiFlowViewModel(private val configuration: Configuration): ViewModel() {
 
     val haapiFactory = HaapiFactory(configuration)
-    val haapiConfiguration: HaapiConfiguration = haapiFactory.getHaapiConfiguration()
     private var haapiManager: HaapiManager? = null
     private var oAuthTokenManager: OAuthTokenManager? = null
+    var haapiConfiguration: HaapiConfiguration = haapiFactory.getHaapiConfiguration()
 
     private val coroutineExceptionHandler = CoroutineExceptionHandler { _, _ -> }
 
@@ -80,8 +77,9 @@ class HaapiFlowViewModel(private val configuration: Configuration): ViewModel() 
         if (!haapiFactory.usesDcrFallback()) {
 
             // The existing attestation way to initialize HAAPI objects
+            haapiConfiguration = haapiFactory.getHaapiConfiguration()
             haapiManager = HaapiManager(haapiConfiguration)
-            oAuthTokenManager = OAuthTokenManager(oauthTokenConfiguration = haapiConfiguration)
+            oAuthTokenManager = haapiFactory.createOAuthTokenManager()
             startHaapi()
 
         } else {
@@ -93,11 +91,9 @@ class HaapiFlowViewModel(private val configuration: Configuration): ViewModel() 
                     haapiFactory.registerDynamicClient(context, this.coroutineContext)
                 }
 
-                if (haapiManager == null || oAuthTokenManager == null) {
-                    haapiManager = accessor.haapiManager
-                    oAuthTokenManager = haapiFactory.createTokenManager()
-                }
-
+                haapiConfiguration = haapiFactory.getHaapiConfiguration()
+                haapiManager = accessor.haapiManager
+                oAuthTokenManager = haapiFactory.createOAuthTokenManager()
                 startHaapi()
             }
         }

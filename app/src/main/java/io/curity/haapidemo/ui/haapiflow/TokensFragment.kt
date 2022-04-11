@@ -29,6 +29,7 @@ import io.curity.haapidemo.uicomponents.DisclosureContent
 import io.curity.haapidemo.uicomponents.DisclosureView
 import io.curity.haapidemo.uicomponents.HeaderView
 import io.curity.haapidemo.uicomponents.ProgressButton
+import io.curity.haapidemo.utils.HaapiFactory
 import io.curity.haapidemo.utils.disableSslTrustVerification
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -36,7 +37,6 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import se.curity.identityserver.haapi.android.sdk.HaapiConfiguration
 import se.curity.identityserver.haapi.android.sdk.OAuthTokenManager
 import se.curity.identityserver.haapi.android.sdk.models.oauth.SuccessfulTokenResponse
 import java.io.FileNotFoundException
@@ -63,25 +63,8 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
 
         val oAuthTokenResponse = requireArguments().getParcelable<SuccessfulTokenResponse>(EXTRA_OAUTH_TOKEN_RESPONSE) ?: throw IllegalStateException("Expecting a TokenResponse")
         val config: Configuration = Json.decodeFromString(requireArguments().getString(EXTRA_CONFIG) ?: throw IllegalStateException("Expecting a configuration"))
-        val haapiConfiguration = HaapiConfiguration(
-            keyStoreAlias = config.keyStoreAlias,
-            clientId = config.clientId,
-            baseUri = URI.create(config.baseURLString),
-            tokenEndpointUri = URI.create(config.tokenEndpointURI),
-            authorizationEndpointUri = URI.create(config.authorizationEndpointURI),
-            appRedirect = config.redirectURI,
-            isAutoRedirect = config.followRedirect,
-            httpUrlConnectionProvider = { url ->
-                val urlConnection = url.openConnection()
-                urlConnection.connectTimeout = 8000
-                if (!config.isSSLTrustVerificationEnabled) {
-                    urlConnection.disableSslTrustVerification() as HttpURLConnection
-                } else {
-                    urlConnection as HttpURLConnection
-                }
-            }
-        )
-        tokensViewModel = ViewModelProvider(this, TokensViewModelFactory(oAuthTokenResponse, haapiConfiguration, config.userInfoEndpointURI))
+        val haapiFactory = HaapiFactory(config)
+        tokensViewModel = ViewModelProvider(this, TokensViewModelFactory(oAuthTokenResponse, haapiFactory, config.userInfoEndpointURI))
             .get(TokensViewModel::class.java)
         tokensViewModel.tokenStateChangeable = tokenStateChangeable
     }
@@ -144,7 +127,7 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
 
     class TokensViewModel(
         private var tokenResponse: SuccessfulTokenResponse,
-        haapiConfiguration: HaapiConfiguration,
+        haapiFactory: HaapiFactory,
         userInfoEndpointUri: String
     ): ViewModel() {
 
@@ -169,9 +152,7 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
         val disclosureContents: List<DisclosureContent>
             get() = _disclosureContents
 
-        private val oAuthTokenManager: OAuthTokenManager = OAuthTokenManager(
-            oauthTokenConfiguration = haapiConfiguration
-        )
+        private val oAuthTokenManager: OAuthTokenManager = haapiFactory.createOAuthTokenManager()
         private val uriUserInfo: URI = URI(userInfoEndpointUri)
 
         init {
@@ -251,14 +232,14 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
 
     class TokensViewModelFactory(
         private val tokenResponse: SuccessfulTokenResponse,
-        private val haapiConfiguration: HaapiConfiguration,
+        private val haapiFactory: HaapiFactory,
         private val userInfoEndpointUri: String
     ): ViewModelProvider.Factory {
 
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(TokensViewModel::class.java)) {
                 @Suppress("UNCHECKED_CAST")
-                return TokensViewModel(tokenResponse, haapiConfiguration, userInfoEndpointUri) as T
+                return TokensViewModel(tokenResponse, haapiFactory, userInfoEndpointUri) as T
             }
 
             throw IllegalArgumentException("Unknown ViewModel class TokensViewModel")
