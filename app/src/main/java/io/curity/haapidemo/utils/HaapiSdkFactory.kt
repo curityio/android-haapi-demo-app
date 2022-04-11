@@ -21,12 +21,12 @@ class HaapiSdkFactory(private val configuration: Configuration) {
 
         val accessorFactory = HaapiAccessorFactory(configuration.toHaapiConfiguration())
 
-        // This is what I have to call right now, but I would rather just call accessorFactory.load()
         if (!configuration.dcrSecret.isNullOrEmpty() &&
             !configuration.dcrTemplateClientId.isNullOrEmpty() &&
             !configuration.dcrClientRegistrationEndpointUri.isNullOrEmpty()
         ) {
 
+            // Customers using DCR fallback call these builder methods
             val dcrConfiguration = DcrConfiguration(
                 templateClientId = configuration.dcrTemplateClientId!!,
                 clientRegistrationEndpointUri = URI(configuration.dcrClientRegistrationEndpointUri),
@@ -40,6 +40,8 @@ class HaapiSdkFactory(private val configuration: Configuration) {
                 .setDcrConfiguration(dcrConfiguration)
                 .setClientAuthenticationMethodConfiguration(dcrClientCredentials)
         }
+
+        // All new customers use the accessor programming model
         val accessor = accessorFactory.create(coroutine)
 
         // These details should not need to be managed by the app

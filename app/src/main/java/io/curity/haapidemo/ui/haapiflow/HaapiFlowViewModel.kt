@@ -82,24 +82,32 @@ class HaapiFlowViewModel(private val configuration: Configuration): ViewModel() 
         viewModelScope.launch {
 
             // The app first asks the SDK to initialize, which will also load the client details if needed
-            // This may not require async processing, but the only way to do it currently is like this
+            /*
+                 accessorFactory.load()
+             */
             val accessor = withContext(Dispatchers.IO) {
                 sdkFactory.load(context, this.coroutineContext)
             }
 
             // The app should be able to ask the accessor for the token manager, so that it does not need to manage the dynamic client
-            // oAuthTokenManager = accessor.tokenManager
+            /*
+                oAuthTokenManager = accessor.tokenManager
+             */
             oAuthTokenManager = sdkFactory.createOAuthTokenManager()
 
             // The accessor should provide the HaapiConfiguration with the correct client ID
-            // haapiConfiguration = accessor.configuration
+            /*
+                 haapiConfiguration = accessor.configuration
+             */
             haapiConfiguration = configuration.toHaapiConfiguration(accessor.clientId)
 
             // If the app does not have an access token it will create a HAAPI manager
             // This will be async and use the SDK's current design
-            //      val haapiManager = withContext(Dispatchers.IO) {
-            //          sdkFactory.createHaapiManager(context, this.coroutineContext)
-            //      }
+            /*
+                val haapiManager = withContext(Dispatchers.IO) {
+                    accessor.createHaapiManager(context, this.coroutineContext)
+                }
+             */
             haapiManager = accessor.haapiManager
 
             // The code example can then start a HAAPI flow when required
