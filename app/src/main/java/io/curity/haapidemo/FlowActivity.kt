@@ -235,7 +235,7 @@ class FlowActivity : AppCompatActivity() {
             is PollingStep -> {
                 if (haapiRepresentation.properties.status == PollingStatus.DONE &&
                     haapiRepresentation.actions.size == 1 &&
-                    haapiFlowViewModel.haapiConfiguration.isAutoRedirect
+                    haapiFlowViewModel.getHaapiConfiguration().isAutoRedirect
                 ) {
                     // Kill the PollingFragment to avoid polling and send the "redirect"
                     updateTitle("")
@@ -291,7 +291,7 @@ class FlowActivity : AppCompatActivity() {
                 Log.d(Constant.TAG_HAAPI_OPERATION, "ExternalBrowserOP")
                 try {
                     val uriToLaunch = operationStep.uriToLaunch(
-                        redirectTo = haapiFlowViewModel.haapiConfiguration.appRedirect
+                        redirectTo = haapiFlowViewModel.getHaapiConfiguration().appRedirect
                     )
 
                     val intent = Intent(Intent.ACTION_VIEW, uriToLaunch)
@@ -329,7 +329,7 @@ class FlowActivity : AppCompatActivity() {
                     // If the BankID can be opened then
                     if (operationStep.continueActions.size == 1 &&
                         operationStep.continueActions.first().kind == ActionKind.Redirect &&
-                        haapiFlowViewModel.haapiConfiguration.isAutoRedirect
+                        haapiFlowViewModel.getHaapiConfiguration().isAutoRedirect
                     ) {
                         // There is only one action and it is a redirect -> we just submit according to our app config
                         val continueAction = operationStep.continueActions.first()

@@ -16,7 +16,11 @@
 
 package io.curity.haapidemo
 
+import io.curity.haapidemo.utils.disableSslTrustVerification
 import kotlinx.serialization.Serializable
+import se.curity.identityserver.haapi.android.sdk.HaapiConfiguration
+import java.net.HttpURLConnection
+import java.net.URI
 
 /**
  * Configuration for `HaapiFlowManager`
@@ -64,12 +68,32 @@ data class Configuration(
     var selectedScopes: List<String> = emptyList(),
     var supportedScopes: List<String> = emptyList(),
 
-    // These are only initial settings, to enable an early end-to-end setup
-    // It will evolve to use reviewed naming and support multiple types of secret
-    var fallbackClientId: String? = null,
-    var clientRegistrationEndpointUri: String? = null,
-    var stringDcrSecret: String? = null
+    // Customers add their own DCR related settings to their configuration object
+    var dcrTemplateClientId: String? = null,
+    var dcrClientRegistrationEndpointUri: String? = null,
+    var dcrSecret: String? = null
+
 ) {
+    fun toHaapiConfiguration(dynamicClientId: String? = null): HaapiConfiguration {
+        return HaapiConfiguration(
+            keyStoreAlias = keyStoreAlias,
+            clientId = dynamicClientId ?: clientId,
+            baseUri = URI.create(baseURLString),
+            tokenEndpointUri = URI.create(tokenEndpointURI),
+            authorizationEndpointUri = URI.create(authorizationEndpointURI),
+            appRedirect = redirectURI,
+            isAutoRedirect = followRedirect,
+            httpUrlConnectionProvider = { url ->
+                val urlConnection = url.openConnection()
+                urlConnection.connectTimeout = 8000
+                if (!isSSLTrustVerificationEnabled) {
+                    urlConnection.disableSslTrustVerification() as HttpURLConnection
+                } else {
+                    urlConnection as HttpURLConnection
+                }
+            }
+        )
+    }
 
     companion object {
         // A convenience flag for Curity developers.
@@ -91,11 +115,10 @@ data class Configuration(
                 isSSLTrustVerificationEnabled = false,
                 selectedScopes = listOf("openid", "profile"),
 
-                // These are only initial settings, to enable an early end-to-end setup
-                // It will evolve to use reviewed naming and support multiple types of secret
-                fallbackClientId = "haapi-template-client",
-                clientRegistrationEndpointUri = "https://10.0.2.2:8443/token-service/oauth-registration",
-                stringDcrSecret = "Password1"
+                // Customers add their own DCR related settings to their configuration object
+                dcrTemplateClientId = "haapi-template-client",
+                dcrClientRegistrationEndpointUri = "https://10.0.2.2:8443/token-service/oauth-registration",
+                dcrSecret = "Password1"
             )
 
         fun newInstance(number: Int): Configuration {
@@ -115,11 +138,10 @@ data class Configuration(
                 isSSLTrustVerificationEnabled = false,
                 selectedScopes = listOf("openid", "profile"),
 
-                // These are only initial settings, to enable an early end-to-end setup
-                // It will evolve to use reviewed naming and support multiple types of secret
-                fallbackClientId = "haapi-template-client",
-                clientRegistrationEndpointUri = "https://10.0.2.2:8443/token-service/oauth-registration",
-                stringDcrSecret = "Password1"
+                // Customers add their own DCR related settings to their configuration object
+                dcrTemplateClientId = "haapi-template-client",
+                dcrClientRegistrationEndpointUri = "https://10.0.2.2:8443/token-service/oauth-registration",
+                dcrSecret = "Password1"
             )
     }
 }

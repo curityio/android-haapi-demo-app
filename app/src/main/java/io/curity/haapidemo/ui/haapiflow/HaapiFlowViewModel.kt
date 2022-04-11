@@ -19,7 +19,7 @@ package io.curity.haapidemo.ui.haapiflow
 import android.content.Context
 import androidx.lifecycle.*
 import io.curity.haapidemo.Configuration
-import io.curity.haapidemo.utils.HaapiFactory
+import io.curity.haapidemo.utils.HaapiSdkFactory
 import kotlinx.coroutines.*
 import se.curity.identityserver.haapi.android.sdk.*
 import se.curity.identityserver.haapi.android.sdk.models.HaapiResponse
@@ -35,10 +35,12 @@ typealias OAuthResponse = Result<TokenResponse>
 
 class HaapiFlowViewModel(private val configuration: Configuration): ViewModel() {
 
-    val haapiFactory = HaapiFactory(configuration)
-    private var haapiManager: HaapiManager? = null
+    private val sdkFactory = HaapiSdkFactory(configuration)
+
+    // These now require async work to be created
     private var oAuthTokenManager: OAuthTokenManager? = null
-    var haapiConfiguration: HaapiConfiguration = haapiFactory.getHaapiConfiguration()
+    private var haapiManager: HaapiManager? = null
+    private var haapiConfiguration: HaapiConfiguration? = null
 
     private val coroutineExceptionHandler = CoroutineExceptionHandler { _, _ -> }
 
@@ -72,31 +74,44 @@ class HaapiFlowViewModel(private val configuration: Configuration): ViewModel() 
         }
     }
 
+    /*
+     * The view model must now do async processing before objects can be created
+     */
     fun start(context: Context) {
 
-        if (!haapiFactory.usesDcrFallback()) {
+        viewModelScope.launch {
 
-            // The existing attestation way to initialize HAAPI objects
-            haapiConfiguration = haapiFactory.getHaapiConfiguration()
-            haapiManager = HaapiManager(haapiConfiguration)
-            oAuthTokenManager = haapiFactory.createOAuthTokenManager()
-            startHaapi()
-
-        } else {
-
-            // The DCR fallback way to initialize HAAPI objects
-            viewModelScope.launch {
-
-                val accessor = withContext(Dispatchers.IO) {
-                    haapiFactory.registerDynamicClient(context, this.coroutineContext)
-                }
-
-                haapiConfiguration = haapiFactory.getHaapiConfiguration()
-                haapiManager = accessor.haapiManager
-                oAuthTokenManager = haapiFactory.createOAuthTokenManager()
-                startHaapi()
+            // The app first asks the SDK to initialize, which will also load the client details if needed
+            // This may not require async processing, but the only way to do it currently is like this
+            val accessor = withContext(Dispatchers.IO) {
+                sdkFactory.load(context, this.coroutineContext)
             }
+
+            // The app should be able to ask the accessor for the token manager, so that it does not need to manage the dynamic client
+            // oAuthTokenManager = accessor.tokenManager
+            oAuthTokenManager = sdkFactory.createOAuthTokenManager()
+
+            // The accessor should provide the HaapiConfiguration with the correct client ID
+            // haapiConfiguration = accessor.configuration
+            haapiConfiguration = configuration.toHaapiConfiguration(accessor.clientId)
+
+            // If the app does not have an access token it will create a HAAPI manager
+            // This will be async and use the SDK's current design
+            //      val haapiManager = withContext(Dispatchers.IO) {
+            //          sdkFactory.createHaapiManager(context, this.coroutineContext)
+            //      }
+            haapiManager = accessor.haapiManager
+
+            // The code example can then start a HAAPI flow when required
+            startHaapi()
         }
+    }
+
+    /*
+     * Return the configuration with the correct Client ID to the FlowActivity
+     */
+    fun getHaapiConfiguration(): HaapiConfiguration {
+        return this.haapiConfiguration!!
     }
 
     private fun startHaapi() {

@@ -29,7 +29,7 @@ import io.curity.haapidemo.uicomponents.DisclosureContent
 import io.curity.haapidemo.uicomponents.DisclosureView
 import io.curity.haapidemo.uicomponents.HeaderView
 import io.curity.haapidemo.uicomponents.ProgressButton
-import io.curity.haapidemo.utils.HaapiFactory
+import io.curity.haapidemo.utils.HaapiSdkFactory
 import io.curity.haapidemo.utils.disableSslTrustVerification
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -63,8 +63,8 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
 
         val oAuthTokenResponse = requireArguments().getParcelable<SuccessfulTokenResponse>(EXTRA_OAUTH_TOKEN_RESPONSE) ?: throw IllegalStateException("Expecting a TokenResponse")
         val config: Configuration = Json.decodeFromString(requireArguments().getString(EXTRA_CONFIG) ?: throw IllegalStateException("Expecting a configuration"))
-        val haapiFactory = HaapiFactory(config)
-        tokensViewModel = ViewModelProvider(this, TokensViewModelFactory(oAuthTokenResponse, haapiFactory, config.userInfoEndpointURI))
+        val sdkFactory = HaapiSdkFactory(config)
+        tokensViewModel = ViewModelProvider(this, TokensViewModelFactory(oAuthTokenResponse, sdkFactory, config.userInfoEndpointURI))
             .get(TokensViewModel::class.java)
         tokensViewModel.tokenStateChangeable = tokenStateChangeable
     }
@@ -127,7 +127,7 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
 
     class TokensViewModel(
         private var tokenResponse: SuccessfulTokenResponse,
-        haapiFactory: HaapiFactory,
+        sdkFactory: HaapiSdkFactory,
         userInfoEndpointUri: String
     ): ViewModel() {
 
@@ -152,7 +152,7 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
         val disclosureContents: List<DisclosureContent>
             get() = _disclosureContents
 
-        private val oAuthTokenManager: OAuthTokenManager = haapiFactory.createOAuthTokenManager()
+        private val oAuthTokenManager: OAuthTokenManager = sdkFactory.createOAuthTokenManager()
         private val uriUserInfo: URI = URI(userInfoEndpointUri)
 
         init {
@@ -232,7 +232,7 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
 
     class TokensViewModelFactory(
         private val tokenResponse: SuccessfulTokenResponse,
-        private val haapiFactory: HaapiFactory,
+        private val haapiFactory: HaapiSdkFactory,
         private val userInfoEndpointUri: String
     ): ViewModelProvider.Factory {
 
