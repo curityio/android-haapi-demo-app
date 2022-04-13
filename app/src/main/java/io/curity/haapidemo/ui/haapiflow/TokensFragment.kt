@@ -16,6 +16,7 @@
 
 package io.curity.haapidemo.ui.haapiflow
 
+import android.content.Context
 import android.os.Bundle
 import android.view.View
 import android.widget.LinearLayout
@@ -29,7 +30,7 @@ import io.curity.haapidemo.uicomponents.DisclosureContent
 import io.curity.haapidemo.uicomponents.DisclosureView
 import io.curity.haapidemo.uicomponents.HeaderView
 import io.curity.haapidemo.uicomponents.ProgressButton
-import io.curity.haapidemo.utils.HaapiSdkFactory
+import io.curity.haapidemo.utils.HaapiAccessorInstance
 import io.curity.haapidemo.utils.disableSslTrustVerification
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -63,9 +64,9 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
 
         val oAuthTokenResponse = requireArguments().getParcelable<SuccessfulTokenResponse>(EXTRA_OAUTH_TOKEN_RESPONSE) ?: throw IllegalStateException("Expecting a TokenResponse")
         val config: Configuration = Json.decodeFromString(requireArguments().getString(EXTRA_CONFIG) ?: throw IllegalStateException("Expecting a configuration"))
-        val sdkFactory = HaapiSdkFactory(config)
-        tokensViewModel = ViewModelProvider(this, TokensViewModelFactory(oAuthTokenResponse, sdkFactory, config.userInfoEndpointURI))
+        tokensViewModel = ViewModelProvider(this, TokensViewModelFactory(config, oAuthTokenResponse))
             .get(TokensViewModel::class.java)
+        tokensViewModel.start(requireContext())
         tokensViewModel.tokenStateChangeable = tokenStateChangeable
     }
 
@@ -122,13 +123,13 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
 
         signOutButton.setOnClickListener {
             tokenStateChangeable?.logout()
+            HaapiAccessorInstance.destroy()
         }
     }
 
     class TokensViewModel(
-        private var tokenResponse: SuccessfulTokenResponse,
-        sdkFactory: HaapiSdkFactory,
-        userInfoEndpointUri: String
+        private val configuration: Configuration,
+        private var tokenResponse: SuccessfulTokenResponse
     ): ViewModel() {
 
         private var _tokenResponse: MutableLiveData<SuccessfulTokenResponse> = MutableLiveData(tokenResponse)
@@ -152,12 +153,22 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
         val disclosureContents: List<DisclosureContent>
             get() = _disclosureContents
 
-        private val oAuthTokenManager: OAuthTokenManager = sdkFactory.createOAuthTokenManager()
-        private val uriUserInfo: URI = URI(userInfoEndpointUri)
+        private var oAuthTokenManager: OAuthTokenManager? = null
+        private val uriUserInfo: URI = URI(configuration.userInfoEndpointURI)
 
         init {
             updateDisclosureContents()
             fetchUserInfo()
+        }
+
+        fun start(context: Context) {
+            viewModelScope.launch {
+
+                val accessor = withContext(Dispatchers.IO) {
+                    HaapiAccessorInstance.create(configuration, context)
+                }
+                oAuthTokenManager = accessor.oAuthTokenManager
+            }
         }
 
         private fun updateDisclosureContents() {
@@ -192,7 +203,7 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
             if (refreshToken != null) {
                 viewModelScope.launch {
                     val result = withContext(Dispatchers.IO) {
-                        oAuthTokenManager.refreshAccessToken(refreshToken, this.coroutineContext)
+                        oAuthTokenManager!!.refreshAccessToken(refreshToken, this.coroutineContext)
                     }
                     if (result is SuccessfulTokenResponse) {
                         tokenResponse = result
@@ -231,15 +242,14 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
     }
 
     class TokensViewModelFactory(
-        private val tokenResponse: SuccessfulTokenResponse,
-        private val haapiFactory: HaapiSdkFactory,
-        private val userInfoEndpointUri: String
+        private val configuration: Configuration,
+        private val tokenResponse: SuccessfulTokenResponse
     ): ViewModelProvider.Factory {
 
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(TokensViewModel::class.java)) {
                 @Suppress("UNCHECKED_CAST")
-                return TokensViewModel(tokenResponse, haapiFactory, userInfoEndpointUri) as T
+                return TokensViewModel(configuration, tokenResponse) as T
             }
 
             throw IllegalArgumentException("Unknown ViewModel class TokensViewModel")

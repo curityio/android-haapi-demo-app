@@ -74,10 +74,10 @@ data class Configuration(
     var dcrSecret: String? = null
 
 ) {
-    fun toHaapiConfiguration(dynamicClientId: String? = null): HaapiConfiguration {
+    fun toHaapiConfiguration(): HaapiConfiguration {
         return HaapiConfiguration(
             keyStoreAlias = keyStoreAlias,
-            clientId = dynamicClientId ?: clientId,
+            clientId = clientId,
             baseUri = URI.create(baseURLString),
             tokenEndpointUri = URI.create(tokenEndpointURI),
             authorizationEndpointUri = URI.create(authorizationEndpointURI),

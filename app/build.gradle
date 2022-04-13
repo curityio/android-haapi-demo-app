@@ -75,7 +75,7 @@ android {
 }
 
 dependencies {
-//    implementation "se.curity.identityserver:identityserver.haapi.android.sdk:2.0.1"
+    // implementation "se.curity.identityserver:identityserver.haapi.android.sdk:2.0.1"
     implementation files('../../android-cat/identityserver.haapi.android.driver/build/outputs/aar/identityserver.haapi.android.driver-debug.aar')
     implementation files('../../android-cat/identityserver.haapi.android.sdk/build/outputs/aar/identityserver.haapi.android.sdk-debug.aar')
     implementation "org.jetbrains.kotlin:kotlin-stdlib:1.6.10"
