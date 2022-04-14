@@ -78,13 +78,22 @@ class HaapiFlowViewModel(private val configuration: Configuration): ViewModel() 
 
         viewModelScope.launch {
 
-            val accessor = withContext(Dispatchers.IO) {
-                HaapiAccessorInstance.create(configuration, context)
+            val result = withContext(Dispatchers.IO) {
+                try {
+                    HaapiAccessorInstance.create(configuration, context)
+                } catch (e: Throwable) {
+                    withContext(Dispatchers.Main) {
+                        coroutineExceptionHandler.handleException(coroutineContext, e)
+                        processHaapiResult(HaapiResult.failure(e))
+                    }
+                }
             }
-            haapiManager = accessor.haapiManager
-            oAuthTokenManager = accessor.oAuthTokenManager
 
-            startHaapi()
+            if (result is HaapiAccessor) {
+                haapiManager = result.haapiManager
+                oAuthTokenManager = result.oAuthTokenManager
+                startHaapi()
+            }
         }
     }
 

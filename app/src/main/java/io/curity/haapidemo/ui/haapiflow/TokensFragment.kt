@@ -38,6 +38,7 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
+import se.curity.identityserver.haapi.android.sdk.HaapiAccessor
 import se.curity.identityserver.haapi.android.sdk.OAuthTokenManager
 import se.curity.identityserver.haapi.android.sdk.models.oauth.SuccessfulTokenResponse
 import java.io.FileNotFoundException
@@ -162,12 +163,20 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
         }
 
         fun start(context: Context) {
+
             viewModelScope.launch {
 
-                val accessor = withContext(Dispatchers.IO) {
-                    HaapiAccessorInstance.create(configuration, context)
+                val result = withContext(Dispatchers.IO) {
+                    try {
+                        HaapiAccessorInstance.create(configuration, context)
+                    } catch (e: Throwable) {
+                        // Currently this view does not report errors
+                    }
                 }
-                oAuthTokenManager = accessor.oAuthTokenManager
+
+                if (result is HaapiAccessor) {
+                    oAuthTokenManager = result.oAuthTokenManager
+                }
             }
         }
 
