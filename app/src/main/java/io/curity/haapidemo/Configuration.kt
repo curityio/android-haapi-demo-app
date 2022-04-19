@@ -68,10 +68,12 @@ data class Configuration(
     var selectedScopes: List<String> = emptyList(),
     var supportedScopes: List<String> = emptyList(),
 
-    // Customers add their own DCR related settings to their configuration object
+    // Customers add their own DCR fallback settings to their configuration object
     var dcrTemplateClientId: String? = null,
     var dcrClientRegistrationEndpointUri: String? = null,
-    var dcrSecret: String? = null
+
+    // An initial DCR secret, to be replaced by a client assertion
+    var deviceSecret: String? = null
 
 ) {
     fun toHaapiConfiguration(): HaapiConfiguration {
@@ -118,7 +120,7 @@ data class Configuration(
                 // Customers add their own DCR related settings to their configuration object
                 dcrTemplateClientId = "haapi-template-client",
                 dcrClientRegistrationEndpointUri = "https://10.0.2.2:8443/token-service/oauth-registration",
-                dcrSecret = "Password1"
+                deviceSecret = "Password1"
             )
 
         fun newInstance(number: Int): Configuration {
@@ -141,7 +143,7 @@ data class Configuration(
                 // Customers add their own DCR related settings to their configuration object
                 dcrTemplateClientId = "haapi-template-client",
                 dcrClientRegistrationEndpointUri = "https://10.0.2.2:8443/token-service/oauth-registration",
-                dcrSecret = "Password1"
+                deviceSecret = "Password1"
             )
     }
 }
