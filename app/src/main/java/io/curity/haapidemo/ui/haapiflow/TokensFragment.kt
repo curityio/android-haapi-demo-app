@@ -30,7 +30,7 @@ import io.curity.haapidemo.uicomponents.DisclosureContent
 import io.curity.haapidemo.uicomponents.DisclosureView
 import io.curity.haapidemo.uicomponents.HeaderView
 import io.curity.haapidemo.uicomponents.ProgressButton
-import io.curity.haapidemo.utils.HaapiAccessorInstance
+import io.curity.haapidemo.utils.HaapiFactory
 import io.curity.haapidemo.utils.disableSslTrustVerification
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -39,7 +39,6 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import se.curity.identityserver.haapi.android.sdk.HaapiAccessor
-import se.curity.identityserver.haapi.android.sdk.OAuthTokenManager
 import se.curity.identityserver.haapi.android.sdk.models.oauth.SuccessfulTokenResponse
 import java.io.FileNotFoundException
 import java.net.HttpURLConnection
@@ -124,7 +123,7 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
 
         signOutButton.setOnClickListener {
             tokenStateChangeable?.logout()
-            HaapiAccessorInstance.destroy()
+            tokensViewModel.logout()
         }
     }
 
@@ -154,7 +153,7 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
         val disclosureContents: List<DisclosureContent>
             get() = _disclosureContents
 
-        private var oAuthTokenManager: OAuthTokenManager? = null
+        private var accessor: HaapiAccessor? = null
         private val uriUserInfo: URI = URI(configuration.userInfoEndpointURI)
 
         init {
@@ -168,14 +167,15 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
 
                 val result = withContext(Dispatchers.IO) {
                     try {
-                        HaapiAccessorInstance.create(configuration, context)
+                        HaapiFactory.create(configuration, context)
                     } catch (e: Throwable) {
-                        // Currently this view does not report errors
+                        // Currently this view does not report errors so only output to the console
+                        println(e)
                     }
                 }
 
                 if (result is HaapiAccessor) {
-                    oAuthTokenManager = result.oAuthTokenManager
+                    accessor = result
                 }
             }
         }
@@ -212,7 +212,7 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
             if (refreshToken != null) {
                 viewModelScope.launch {
                     val result = withContext(Dispatchers.IO) {
-                        oAuthTokenManager!!.refreshAccessToken(refreshToken, this.coroutineContext)
+                        accessor!!.oAuthTokenManager.refreshAccessToken(refreshToken, this.coroutineContext)
                     }
                     if (result is SuccessfulTokenResponse) {
                         tokenResponse = result
@@ -223,6 +223,10 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
                     }
                 }
             }
+        }
+
+        fun logout() {
+            closeAccessor()
         }
 
         private fun fetchUserInfo() {
@@ -246,6 +250,14 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
                     }
                 }
                 _liveUserInfo.postValue(response)
+            }
+        }
+
+        // Free accessor resources before returning to the Main Activity after logout
+        private fun closeAccessor() {
+            if (accessor != null) {
+                accessor!!.haapiManager.close()
+                accessor = null
             }
         }
     }

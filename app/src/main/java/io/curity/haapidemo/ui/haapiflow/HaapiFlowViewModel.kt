@@ -19,7 +19,7 @@ package io.curity.haapidemo.ui.haapiflow
 import android.content.Context
 import androidx.lifecycle.*
 import io.curity.haapidemo.Configuration
-import io.curity.haapidemo.utils.HaapiAccessorInstance
+import io.curity.haapidemo.utils.HaapiFactory
 import kotlinx.coroutines.*
 import se.curity.identityserver.haapi.android.sdk.*
 import se.curity.identityserver.haapi.android.sdk.models.HaapiResponse
@@ -35,8 +35,7 @@ typealias OAuthResponse = Result<TokenResponse>
 
 class HaapiFlowViewModel(private val configuration: Configuration): ViewModel() {
 
-    private var oAuthTokenManager: OAuthTokenManager? = null
-    private var haapiManager: HaapiManager? = null
+    private var accessor: HaapiAccessor? = null
     val haapiConfiguration: HaapiConfiguration = configuration.toHaapiConfiguration()
 
     private val coroutineExceptionHandler = CoroutineExceptionHandler { _, _ -> }
@@ -76,31 +75,30 @@ class HaapiFlowViewModel(private val configuration: Configuration): ViewModel() 
      */
     fun start(context: Context) {
 
-viewModelScope.launch {
+        viewModelScope.launch {
 
-    val result = withContext(Dispatchers.IO) {
-        try {
-            HaapiAccessorInstance.create(configuration, context)
-        } catch (e: Throwable) {
-            withContext(Dispatchers.Main) {
-                coroutineExceptionHandler.handleException(coroutineContext, e)
-                processHaapiResult(HaapiResult.failure(e))
+            val result = withContext(Dispatchers.IO) {
+                try {
+                    HaapiFactory.create(configuration, context)
+                } catch (e: Throwable) {
+                    withContext(Dispatchers.Main) {
+                        coroutineExceptionHandler.handleException(coroutineContext, e)
+                        processHaapiResult(HaapiResult.failure(e))
+                    }
+                }
+            }
+
+            if (result is HaapiAccessor) {
+                accessor = result
+                startHaapi()
             }
         }
-    }
-
-    if (result is HaapiAccessor) {
-        haapiManager = result.haapiManager
-        oAuthTokenManager = result.oAuthTokenManager
-        startHaapi()
-    }
-}
     }
 
     private fun startHaapi() {
 
         executeHaapi {
-            haapiManager!!.start(
+            accessor!!.haapiManager.start(
                 authorizationParameters = OAuthAuthorizationParameters(
                     scope = configuration.selectedScopes
                 ),
@@ -111,7 +109,7 @@ viewModelScope.launch {
 
     fun submit(form: FormActionModel, parameters: Map<String, String> = emptyMap()) {
         executeHaapi {
-            haapiManager!!.submitForm(form, parameters, it)
+            accessor!!.haapiManager.submitForm(form, parameters, it)
         }
     }
 
@@ -119,10 +117,11 @@ viewModelScope.launch {
         _isLoading.postValue(true)
         viewModelScope.launch {
             val result = withContext(Dispatchers.IO) {
-                oAuthTokenManager!!.fetchAccessToken(authorizationCode, this.coroutineContext)
+                accessor!!.oAuthTokenManager.fetchAccessToken(authorizationCode, this.coroutineContext)
             }
             _isLoading.postValue(false)
             _liveOAuthResponse.postValue(OAuthResponse.success(result))
+            closeAccessor()
         }
     }
 
@@ -130,13 +129,14 @@ viewModelScope.launch {
         _isLoading.postValue(true)
         viewModelScope.launch {
             val result = withContext(Dispatchers.IO) {
-                oAuthTokenManager!!.fetchAccessToken(
+                accessor!!.oAuthTokenManager.fetchAccessToken(
                     oAuthAuthorizationResponseStep.properties.code,
                     this.coroutineContext
                 )
             }
             _isLoading.postValue(false)
             _liveOAuthResponse.postValue(OAuthResponse.success(result))
+            closeAccessor()
         }
     }
 
@@ -144,7 +144,7 @@ viewModelScope.launch {
         _isLoading.postValue(true)
         viewModelScope.launch {
             val result = withContext(Dispatchers.IO) {
-                oAuthTokenManager!!.refreshAccessToken(refreshToken, this.coroutineContext)
+                accessor!!.oAuthTokenManager.refreshAccessToken(refreshToken, this.coroutineContext)
             }
             _isLoading.postValue(false)
             _liveOAuthResponse.postValue(OAuthResponse.success(result))
@@ -153,7 +153,7 @@ viewModelScope.launch {
 
     fun followLink(link: Link) {
         executeHaapi {
-            haapiManager!!.followLink(link, it)
+            accessor!!.haapiManager.followLink(link, it)
         }
     }
 
@@ -177,8 +177,14 @@ viewModelScope.launch {
     override fun onCleared() {
         super.onCleared()
         viewModelScope.cancel()
-        if (haapiManager != null) {
-            haapiManager!!.close()
+        closeAccessor()
+    }
+
+    // Free accessor resources when the view model is cleared or when navigating to the Authenticated Activity
+    private fun closeAccessor() {
+        if (accessor != null) {
+            accessor!!.haapiManager.close()
+            accessor = null
         }
     }
 }

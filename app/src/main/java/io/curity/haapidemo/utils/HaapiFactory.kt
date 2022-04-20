@@ -8,18 +8,11 @@ import se.curity.identityserver.haapi.android.sdk.DcrConfiguration
 import se.curity.identityserver.haapi.android.sdk.HaapiAccessor
 import se.curity.identityserver.haapi.android.sdk.HaapiAccessorFactory
 
-class HaapiAccessorInstance {
+class HaapiFactory {
 
     companion object {
 
-        @Volatile
-        private var instance: HaapiAccessor? = null
-
         suspend fun create(configuration: Configuration, context: Context): HaapiAccessor {
-
-            if (instance != null) {
-                return instance!!
-            }
 
             val accessorFactory = HaapiAccessorFactory(configuration.toHaapiConfiguration())
 
@@ -36,7 +29,15 @@ class HaapiAccessorInstance {
                     context = context
                 )
 
-                /* Use a JWT client assertion in the code example and mock a software attestation framework
+                // The simplest case is to use a fixed string secret, but this is not very secure
+                val dcrClientCredentials =
+                    ClientAuthenticationMethodConfiguration.Secret(configuration.deviceSecret!!)
+
+                /* The preferred option is to use a client certificate for the particular device
+                val dcrClientCredentials = ...
+                 */
+
+                /* Or a JWT client assertion for the particular device
                 val dcrClientCredentials =
                     ClientAuthenticationMethodConfiguration.SignedJwt.Asymmetric(
                         clientKeyStore = deviceKeyStore,
@@ -46,22 +47,12 @@ class HaapiAccessorInstance {
                     )
                  */
 
-                val dcrClientCredentials =
-                    ClientAuthenticationMethodConfiguration.Secret(configuration.deviceSecret!!)
-
                 accessorFactory
                     .setDcrConfiguration(dcrConfiguration)
                     .setClientAuthenticationMethodConfiguration(dcrClientCredentials)
             }
 
-            // Create the accessor via signing key attestation, or fallback to DCR if required
-            val accessor = accessorFactory.create()
-            instance = accessor
-            return accessor
-        }
-
-        fun destroy() {
-            instance = null
+            return accessorFactory.create()
         }
     }
 }
