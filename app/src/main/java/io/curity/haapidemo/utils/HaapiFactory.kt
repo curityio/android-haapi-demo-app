@@ -1,8 +1,9 @@
 package io.curity.haapidemo.utils
 
+import java.net.URI
+import java.security.KeyStore
 import android.content.Context
 import io.curity.haapidemo.Configuration
-import java.net.URI
 import se.curity.identityserver.haapi.android.driver.ClientAuthenticationMethodConfiguration
 import se.curity.identityserver.haapi.android.sdk.DcrConfiguration
 import se.curity.identityserver.haapi.android.sdk.HaapiAccessor
@@ -10,49 +11,64 @@ import se.curity.identityserver.haapi.android.sdk.HaapiAccessorFactory
 
 class HaapiFactory {
 
-    companion object {
+    suspend fun create(configuration: Configuration, context: Context): HaapiAccessor {
 
-        suspend fun create(configuration: Configuration, context: Context): HaapiAccessor {
+        val accessorFactory = HaapiAccessorFactory(configuration.toHaapiConfiguration())
 
-            val accessorFactory = HaapiAccessorFactory(configuration.toHaapiConfiguration())
+        if (!configuration.deviceSecret.isNullOrEmpty() &&
+            !configuration.dcrTemplateClientId.isNullOrEmpty() &&
+            !configuration.dcrClientRegistrationEndpointUri.isNullOrEmpty()
+        ) {
 
-            if (!configuration.deviceSecret.isNullOrEmpty() &&
-                !configuration.dcrTemplateClientId.isNullOrEmpty() &&
-                !configuration.dcrClientRegistrationEndpointUri.isNullOrEmpty()
-            ) {
+            // Register details which will be needed on some devices for fallback DCR attestation
+            // DCR is only be used on devices where signing key attestation fails
+            val dcrConfiguration = DcrConfiguration(
+                templateClientId = configuration.dcrTemplateClientId!!,
+                clientRegistrationEndpointUri = URI(configuration.dcrClientRegistrationEndpointUri),
+                context = context
+            )
 
-                // Register details which will be needed on some devices for fallback DCR attestation
-                // DCR is only be used on devices where signing key attestation fails
-                val dcrConfiguration = DcrConfiguration(
-                    templateClientId = configuration.dcrTemplateClientId!!,
-                    clientRegistrationEndpointUri = URI(configuration.dcrClientRegistrationEndpointUri),
-                    context = context
+            // The simplest case is to use a fixed string secret, but this is not very secure
+            val dcrClientCredentials =
+               ClientAuthenticationMethodConfiguration.Secret(configuration.deviceSecret!!)
+
+            /* For demo purposes, this code would present a client certificate embedded into the APK file
+            val deviceKeyStore = loadKeyStore(context, R.raw.devicekeystore, "android")
+            val serverTrustStore = loadKeyStore(context, R.raw.servertruststore, "android")
+            val dcrClientCredentials =
+                ClientAuthenticationMethodConfiguration.Mtls(
+                    clientKeyStore = deviceKeyStore,
+                    clientKeyStorePassword = "android".toCharArray(),
+                    serverTrustStore = serverTrustStore
                 )
+             */
 
-                // The simplest case is to use a fixed string secret, but this is not very secure
-                val dcrClientCredentials =
-                   ClientAuthenticationMethodConfiguration.Secret(configuration.deviceSecret!!)
+            /* For demo purposes, this code could present a client assertion from a key embedded into the APK file
+            val deviceKeyStore = loadKeyStore(context, R.raw.devicekeystore, "android")
+            val dcrClientCredentials =
+                ClientAuthenticationMethodConfiguration.SignedJwt.Asymmetric(
+                    clientKeyStore = deviceKeyStore,
+                    clientKeyStorePassword = "android".toCharArray(),
+                    alias = "deviceclientcert",
+                    algorithmIdentifier = ClientAuthenticationMethodConfiguration.SignedJwt.Asymmetric.AlgorithmIdentifier.RS256
+                )
+            */
 
-                /* The preferred option is to use a client certificate for the particular device
-                val dcrClientCredentials = ...
-                 */
+            accessorFactory
+                .setDcrConfiguration(dcrConfiguration)
+                .setClientAuthenticationMethodConfiguration(dcrClientCredentials)
+        }
 
-                /* Or a JWT client assertion for the particular device
-                val dcrClientCredentials =
-                    ClientAuthenticationMethodConfiguration.SignedJwt.Asymmetric(
-                        clientKeyStore = deviceKeyStore,
-                        clientKeyStorePassword = deviceKeyStorePassword,
-                        alias = "myRsaKey",
-                        algorithmIdentifier = ClientAuthenticationMethodConfiguration.SignedJwt.Asymmetric.AlgorithmIdentifier.RS256
-                    )
-                 */
+        return accessorFactory.create()
+    }
 
-                accessorFactory
-                    .setDcrConfiguration(dcrConfiguration)
-                    .setClientAuthenticationMethodConfiguration(dcrClientCredentials)
-            }
+    fun loadKeyStore(context: Context, resourceId: Int, password: String): KeyStore {
 
-            return accessorFactory.create()
+        val inputStream = context.resources.openRawResource(resourceId)
+        inputStream.use {
+            val keyStore = KeyStore.getInstance("BKS")
+            keyStore.load(inputStream, password.toCharArray())
+            return keyStore
         }
     }
 }

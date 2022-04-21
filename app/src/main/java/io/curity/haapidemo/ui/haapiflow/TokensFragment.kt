@@ -167,7 +167,7 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
 
                 val result = withContext(Dispatchers.IO) {
                     try {
-                        HaapiFactory.create(configuration, context)
+                        HaapiFactory().create(configuration, context)
                     } catch (e: Throwable) {
                         // Currently this view does not report errors so only output to the console
                         println(e)

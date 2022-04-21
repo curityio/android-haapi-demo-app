@@ -79,7 +79,7 @@ class HaapiFlowViewModel(private val configuration: Configuration): ViewModel() 
 
             val result = withContext(Dispatchers.IO) {
                 try {
-                    HaapiFactory.create(configuration, context)
+                    HaapiFactory().create(configuration, context)
                 } catch (e: Throwable) {
                     withContext(Dispatchers.Main) {
                         coroutineExceptionHandler.handleException(coroutineContext, e)
