@@ -5,6 +5,5 @@
 ###############################################################
 
 USE_NGROK=false
-#EXAMPLE_NAME='haapi'
-EXAMPLE_NAME='haapi-android-fallback'
+EXAMPLE_NAME='haapi'
 ./deployment/stop.sh "$USE_NGROK" "$EXAMPLE_NAME"

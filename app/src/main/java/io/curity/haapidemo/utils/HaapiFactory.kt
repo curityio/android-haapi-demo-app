@@ -31,7 +31,7 @@ class HaapiFactory {
 
                 // The simplest case is to use a fixed string secret, but this is not very secure
                 val dcrClientCredentials =
-                    ClientAuthenticationMethodConfiguration.Secret(configuration.deviceSecret!!)
+                   ClientAuthenticationMethodConfiguration.Secret(configuration.deviceSecret!!)
 
                 /* The preferred option is to use a client certificate for the particular device
                 val dcrClientCredentials = ...

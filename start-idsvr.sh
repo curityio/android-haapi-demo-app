@@ -16,8 +16,7 @@
 # Set USE_NGROK to true and a dynamic NGROK base URL will be used automatically.
 #
 USE_NGROK=false
-#EXAMPLE_NAME='haapi'
-EXAMPLE_NAME='haapi-android-fallback'
+EXAMPLE_NAME='haapi'
 BASE_URL=https://10.0.2.2:8443
 
 cd "$(dirname "${BASH_SOURCE[0]}")"
@@ -39,13 +38,6 @@ if [ $? -ne 0 ]; then
   echo 'Problem encountered downloading deployment resources'
   exit
 fi
-
-#
-# TODO: Delete this after merging
-#
-cd deployment
-git checkout feature/dcr-callback
-cd ..
 
 #
 # Run the deployment script to get an NGROK URL and deploy the Curity Identity Server

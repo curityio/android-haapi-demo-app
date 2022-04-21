@@ -68,11 +68,10 @@ data class Configuration(
     var selectedScopes: List<String> = emptyList(),
     var supportedScopes: List<String> = emptyList(),
 
-    // Customers add their own DCR fallback settings to their configuration object
+    // To implement HAAPI fallback, customers must define their own DCR related settings
+    // These will vary depending on the type of credential being used
     var dcrTemplateClientId: String? = null,
     var dcrClientRegistrationEndpointUri: String? = null,
-
-    // An initial DCR secret, to be replaced by a client assertion
     var deviceSecret: String? = null
 
 ) {
@@ -104,24 +103,24 @@ data class Configuration(
         fun newInstance(name: String = "haapi-android-client"): Configuration =
             if (CURITY_DEV_MODE) newDevInstance(name) else
 
-            Configuration(
-                name = name,
-                clientId = "haapi-android-client",
-                baseURLString = "https://10.0.2.2:8443",
-                tokenEndpointURI = "https://10.0.2.2:8443/oauth/v2/oauth-token",
-                authorizationEndpointURI = "https://10.0.2.2:8443/oauth/v2/oauth-authorize",
-                userInfoEndpointURI = "https://10.0.2.2:8443/oauth/v2/oauth-userinfo",
-                metaDataBaseURLString = "https://10.0.2.2:8443/oauth/v2/oauth-anonymous",
-                redirectURI = "app://haapi",
-                followRedirect = true,
-                isSSLTrustVerificationEnabled = false,
-                selectedScopes = listOf("openid", "profile"),
+        Configuration(
+            name = name,
+            clientId = "haapi-android-client",
+            baseURLString = "https://10.0.2.2:8443",
+            tokenEndpointURI = "https://10.0.2.2:8443/oauth/v2/oauth-token",
+            authorizationEndpointURI = "https://10.0.2.2:8443/oauth/v2/oauth-authorize",
+            userInfoEndpointURI = "https://10.0.2.2:8443/oauth/v2/oauth-userinfo",
+            metaDataBaseURLString = "https://10.0.2.2:8443/oauth/v2/oauth-anonymous",
+            redirectURI = "app://haapi",
+            followRedirect = true,
+            isSSLTrustVerificationEnabled = false,
+            selectedScopes = listOf("openid", "profile"),
 
-                // Customers add their own DCR related settings to their configuration object
-                dcrTemplateClientId = "haapi-template-client",
-                dcrClientRegistrationEndpointUri = "https://10.0.2.2:8443/token-service/oauth-registration",
-                deviceSecret = "Password1"
-            )
+            // Uncomment these fields to add support for HAAPI DCR fallback with a simple credential
+            //dcrTemplateClientId = "haapi-template-client",
+            //dcrClientRegistrationEndpointUri = "https://10.0.2.2:8443/token-service/oauth-registration",
+            //deviceSecret = "Password1"
+        )
 
         fun newInstance(number: Int): Configuration {
             return newInstance("New Profile ($number)")
@@ -140,10 +139,10 @@ data class Configuration(
                 isSSLTrustVerificationEnabled = false,
                 selectedScopes = listOf("openid", "profile"),
 
-                // Customers add their own DCR related settings to their configuration object
-                dcrTemplateClientId = "haapi-template-client",
-                dcrClientRegistrationEndpointUri = "https://10.0.2.2:8443/token-service/oauth-registration",
-                deviceSecret = "Password1"
+                // Uncomment these fields to add support for HAAPI DCR fallback with a simple credential
+                //dcrTemplateClientId = "haapi-template-client",
+                //dcrClientRegistrationEndpointUri = "https://10.0.2.2:8443/token-service/oauth-registration",
+                //deviceSecret = "Password1"
             )
     }
 }
