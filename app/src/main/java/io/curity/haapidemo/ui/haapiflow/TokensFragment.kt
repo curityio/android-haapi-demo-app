@@ -165,17 +165,13 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
 
             viewModelScope.launch {
 
-                val result = withContext(Dispatchers.IO) {
-                    try {
-                        HaapiFactory().create(configuration, context)
-                    } catch (e: Throwable) {
-                        // Currently this view does not report errors so only output to the console
-                        println(e)
+                try {
+                    accessor = withContext(Dispatchers.IO) {
+                        HaapiFactory.create(configuration, context)
                     }
-                }
-
-                if (result is HaapiAccessor) {
-                    accessor = result
+                } catch (e: Throwable) {
+                    // Currently this view does not report errors so only output to the console
+                    println(e)
                 }
             }
         }
@@ -212,7 +208,8 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
             if (refreshToken != null) {
                 viewModelScope.launch {
                     val result = withContext(Dispatchers.IO) {
-                        accessor!!.oAuthTokenManager.refreshAccessToken(refreshToken, this.coroutineContext)
+                        val haapiAccessor = accessor ?: throw IllegalStateException("Haapi Accessor is not initialised in refreshToken.")
+                        haapiAccessor.oAuthTokenManager.refreshAccessToken(refreshToken, this.coroutineContext)
                     }
                     if (result is SuccessfulTokenResponse) {
                         tokenResponse = result
@@ -255,10 +252,8 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
 
         // Free accessor resources before returning to the Main Activity after logout
         private fun closeAccessor() {
-            if (accessor != null) {
-                accessor!!.haapiManager.close()
-                accessor = null
-            }
+            accessor?.haapiManager?.close()
+            accessor = null
         }
     }
 

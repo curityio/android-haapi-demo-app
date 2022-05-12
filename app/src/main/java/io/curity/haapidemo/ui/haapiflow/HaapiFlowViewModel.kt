@@ -77,20 +77,15 @@ class HaapiFlowViewModel(private val configuration: Configuration): ViewModel() 
 
         viewModelScope.launch {
 
-            val result = withContext(Dispatchers.IO) {
-                try {
-                    HaapiFactory().create(configuration, context)
-                } catch (e: Throwable) {
-                    withContext(Dispatchers.Main) {
-                        coroutineExceptionHandler.handleException(coroutineContext, e)
-                        processHaapiResult(HaapiResult.failure(e))
-                    }
+            try {
+                accessor = withContext(Dispatchers.IO) {
+                    HaapiFactory.create(configuration, context)
                 }
-            }
-
-            if (result is HaapiAccessor) {
-                accessor = result
                 startHaapi()
+
+            } catch (e: Throwable) {
+                coroutineExceptionHandler.handleException(coroutineContext, e)
+                processHaapiResult(HaapiResult.failure(e))
             }
         }
     }
@@ -98,7 +93,8 @@ class HaapiFlowViewModel(private val configuration: Configuration): ViewModel() 
     private fun startHaapi() {
 
         executeHaapi {
-            accessor!!.haapiManager.start(
+            val haapiAccessor = accessor ?: throw IllegalStateException("Haapi Accessor is not initialised in startHaapi.")
+            haapiAccessor.haapiManager.start(
                 authorizationParameters = OAuthAuthorizationParameters(
                     scope = configuration.selectedScopes
                 ),
@@ -109,7 +105,8 @@ class HaapiFlowViewModel(private val configuration: Configuration): ViewModel() 
 
     fun submit(form: FormActionModel, parameters: Map<String, String> = emptyMap()) {
         executeHaapi {
-            accessor!!.haapiManager.submitForm(form, parameters, it)
+            val haapiAccessor = accessor ?: throw IllegalStateException("Haapi Accessor is not initialised in submit.")
+            haapiAccessor.haapiManager.submitForm(form, parameters, it)
         }
     }
 
@@ -117,7 +114,8 @@ class HaapiFlowViewModel(private val configuration: Configuration): ViewModel() 
         _isLoading.postValue(true)
         viewModelScope.launch {
             val result = withContext(Dispatchers.IO) {
-                accessor!!.oAuthTokenManager.fetchAccessToken(authorizationCode, this.coroutineContext)
+                val haapiAccessor = accessor ?: throw IllegalStateException("Haapi Accessor is not initialised in fetchAccessToken.")
+                haapiAccessor.oAuthTokenManager.fetchAccessToken(authorizationCode, this.coroutineContext)
             }
             _isLoading.postValue(false)
             _liveOAuthResponse.postValue(OAuthResponse.success(result))
@@ -129,7 +127,8 @@ class HaapiFlowViewModel(private val configuration: Configuration): ViewModel() 
         _isLoading.postValue(true)
         viewModelScope.launch {
             val result = withContext(Dispatchers.IO) {
-                accessor!!.oAuthTokenManager.fetchAccessToken(
+                val haapiAccessor = accessor ?: throw IllegalStateException("Haapi Accessor is not initialised in fetchAccessToken.")
+                haapiAccessor.oAuthTokenManager.fetchAccessToken(
                     oAuthAuthorizationResponseStep.properties.code,
                     this.coroutineContext
                 )
@@ -144,7 +143,8 @@ class HaapiFlowViewModel(private val configuration: Configuration): ViewModel() 
         _isLoading.postValue(true)
         viewModelScope.launch {
             val result = withContext(Dispatchers.IO) {
-                accessor!!.oAuthTokenManager.refreshAccessToken(refreshToken, this.coroutineContext)
+                val haapiAccessor = accessor ?: throw IllegalStateException("Haapi Accessor is not initialised in refreshAccessToken.")
+                haapiAccessor.oAuthTokenManager.refreshAccessToken(refreshToken, this.coroutineContext)
             }
             _isLoading.postValue(false)
             _liveOAuthResponse.postValue(OAuthResponse.success(result))
@@ -153,7 +153,8 @@ class HaapiFlowViewModel(private val configuration: Configuration): ViewModel() 
 
     fun followLink(link: Link) {
         executeHaapi {
-            accessor!!.haapiManager.followLink(link, it)
+            val haapiAccessor = accessor ?: throw IllegalStateException("Haapi Accessor is not initialised in followLink.")
+            haapiAccessor.haapiManager.followLink(link, it)
         }
     }
 
@@ -182,10 +183,8 @@ class HaapiFlowViewModel(private val configuration: Configuration): ViewModel() 
 
     // Free accessor resources when the view model is cleared or when navigating to the Authenticated Activity
     private fun closeAccessor() {
-        if (accessor != null) {
-            accessor!!.haapiManager.close()
-            accessor = null
-        }
+        accessor?.haapiManager?.close()
+        accessor = null
     }
 }
 

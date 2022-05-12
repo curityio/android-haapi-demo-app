@@ -96,7 +96,7 @@ class FlowActivity : AppCompatActivity() {
         haapiFlowViewModel.liveStep.observe(this) { newResult ->
             when (newResult) {
                 null -> {
-                    haapiFlowViewModel.start(this.baseContext)
+                    haapiFlowViewModel.start(applicationContext)
                 }
                 else -> {
                     val response = newResult.getOrElse {
