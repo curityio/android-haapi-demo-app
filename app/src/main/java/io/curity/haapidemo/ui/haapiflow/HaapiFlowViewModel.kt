@@ -16,7 +16,7 @@
 
 package io.curity.haapidemo.ui.haapiflow
 
-import android.content.Context
+import android.app.Application
 import androidx.lifecycle.*
 import io.curity.haapidemo.Configuration
 import io.curity.haapidemo.utils.HaapiFactory
@@ -33,7 +33,7 @@ import kotlin.coroutines.CoroutineContext
 typealias HaapiResult = Result<HaapiResponse>
 typealias OAuthResponse = Result<TokenResponse>
 
-class HaapiFlowViewModel(private val configuration: Configuration): ViewModel() {
+class HaapiFlowViewModel(private val app: Application, private val configuration: Configuration): AndroidViewModel(app) {
 
     private var accessor: HaapiAccessor? = null
     val haapiConfiguration: HaapiConfiguration = configuration.toHaapiConfiguration()
@@ -73,13 +73,13 @@ class HaapiFlowViewModel(private val configuration: Configuration): ViewModel() 
     /*
      * The view model must now do async processing before objects can be created
      */
-    fun start(context: Context) {
+    fun start() {
 
         viewModelScope.launch {
 
             try {
                 accessor = withContext(Dispatchers.IO) {
-                    HaapiFactory.create(configuration, context)
+                    HaapiFactory.create(configuration, app.applicationContext)
                 }
                 startHaapi()
 
@@ -188,12 +188,12 @@ class HaapiFlowViewModel(private val configuration: Configuration): ViewModel() 
     }
 }
 
-class HaapiFlowViewModelFactory(val configuration: Configuration): ViewModelProvider.Factory {
+class HaapiFlowViewModelFactory(val app: Application, val configuration: Configuration): ViewModelProvider.Factory {
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(HaapiFlowViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return HaapiFlowViewModel(configuration) as T
+            return HaapiFlowViewModel(app, configuration) as T
         }
 
         throw IllegalArgumentException("Unknown ViewModel class HaapiFlowViewModel")

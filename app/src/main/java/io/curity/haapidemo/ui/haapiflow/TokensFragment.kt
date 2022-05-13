@@ -16,6 +16,7 @@
 
 package io.curity.haapidemo.ui.haapiflow
 
+import android.app.Application
 import android.content.Context
 import android.os.Bundle
 import android.view.View
@@ -64,9 +65,9 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
 
         val oAuthTokenResponse = requireArguments().getParcelable<SuccessfulTokenResponse>(EXTRA_OAUTH_TOKEN_RESPONSE) ?: throw IllegalStateException("Expecting a TokenResponse")
         val config: Configuration = Json.decodeFromString(requireArguments().getString(EXTRA_CONFIG) ?: throw IllegalStateException("Expecting a configuration"))
-        tokensViewModel = ViewModelProvider(this, TokensViewModelFactory(config, oAuthTokenResponse))
+        tokensViewModel = ViewModelProvider(this, TokensViewModelFactory(this.requireActivity().application, config, oAuthTokenResponse))
             .get(TokensViewModel::class.java)
-        tokensViewModel.start(requireContext())
+        tokensViewModel.start()
         tokensViewModel.tokenStateChangeable = tokenStateChangeable
     }
 
@@ -128,9 +129,10 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
     }
 
     class TokensViewModel(
+        private val app: Application,
         private val configuration: Configuration,
         private var tokenResponse: SuccessfulTokenResponse
-    ): ViewModel() {
+    ): AndroidViewModel(app) {
 
         private var _tokenResponse: MutableLiveData<SuccessfulTokenResponse> = MutableLiveData(tokenResponse)
         val liveTokenResponse: LiveData<SuccessfulTokenResponse>
@@ -161,13 +163,13 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
             fetchUserInfo()
         }
 
-        fun start(context: Context) {
+        fun start() {
 
             viewModelScope.launch {
 
                 try {
                     accessor = withContext(Dispatchers.IO) {
-                        HaapiFactory.create(configuration, context)
+                        HaapiFactory.create(configuration, app.applicationContext)
                     }
                 } catch (e: Throwable) {
                     // Currently this view does not report errors so only output to the console
@@ -258,6 +260,7 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
     }
 
     class TokensViewModelFactory(
+        private val app: Application,
         private val configuration: Configuration,
         private val tokenResponse: SuccessfulTokenResponse
     ): ViewModelProvider.Factory {
@@ -265,7 +268,7 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
         override fun <T : ViewModel> create(modelClass: Class<T>): T {
             if (modelClass.isAssignableFrom(TokensViewModel::class.java)) {
                 @Suppress("UNCHECKED_CAST")
-                return TokensViewModel(configuration, tokenResponse) as T
+                return TokensViewModel(app, configuration, tokenResponse) as T
             }
 
             throw IllegalArgumentException("Unknown ViewModel class TokensViewModel")

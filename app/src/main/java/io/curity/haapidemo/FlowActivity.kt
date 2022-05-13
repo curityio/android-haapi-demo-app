@@ -85,13 +85,13 @@ class FlowActivity : AppCompatActivity() {
         val configuration: Configuration = Json.decodeFromString(configString)
 
         haapiFlowViewModel = ViewModelProvider(this,
-            HaapiFlowViewModelFactory(configuration = configuration))
+            HaapiFlowViewModelFactory(app = application, configuration = configuration))
             .get(HaapiFlowViewModel::class.java)
 
         haapiFlowViewModel.liveStep.observe(this) { newResult ->
             when (newResult) {
                 null -> {
-                    haapiFlowViewModel.start(applicationContext)
+                    haapiFlowViewModel.start()
                 }
                 else -> {
                     val response = newResult.getOrElse {
