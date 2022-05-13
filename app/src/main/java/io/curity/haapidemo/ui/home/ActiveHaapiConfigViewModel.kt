@@ -23,7 +23,6 @@ import io.curity.haapidemo.ui.settings.HaapiFlowConfigurationRepository
 import kotlinx.coroutines.Dispatchers
 
 class ActiveHaapiConfigViewModel(repository: HaapiFlowConfigurationRepository): ViewModel() {
-
     val haapiFlowConfiguration = repository.activeConfigurationFlow.asLiveData(Dispatchers.IO)
 }
 

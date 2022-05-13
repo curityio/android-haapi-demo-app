@@ -224,8 +224,10 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
             }
         }
 
+        // Destroy accessor resources on logout
         fun logout() {
-            closeAccessor()
+            HaapiFactory.destroy()
+            accessor = null
         }
 
         private fun fetchUserInfo() {
@@ -250,12 +252,6 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
                 }
                 _liveUserInfo.postValue(response)
             }
-        }
-
-        // Free accessor resources before returning to the Main Activity after logout
-        private fun closeAccessor() {
-            accessor?.haapiManager?.close()
-            accessor = null
         }
     }
 

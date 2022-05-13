@@ -117,9 +117,9 @@ data class Configuration(
             selectedScopes = listOf("openid", "profile"),
 
             // Uncomment these fields to add support for HAAPI DCR fallback with a simple credential
-            //dcrTemplateClientId = "haapi-template-client",
-            //dcrClientRegistrationEndpointUri = "https://10.0.2.2:8443/token-service/oauth-registration",
-            //deviceSecret = "Password1"
+            dcrTemplateClientId = "haapi-template-client",
+            dcrClientRegistrationEndpointUri = "https://10.0.2.2:8443/token-service/oauth-registration",
+            deviceSecret = "Password1"
         )
 
         fun newInstance(number: Int): Configuration {

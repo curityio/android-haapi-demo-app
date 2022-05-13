@@ -119,7 +119,6 @@ class HaapiFlowViewModel(private val app: Application, private val configuration
             }
             _isLoading.postValue(false)
             _liveOAuthResponse.postValue(OAuthResponse.success(result))
-            closeAccessor()
         }
     }
 
@@ -135,7 +134,6 @@ class HaapiFlowViewModel(private val app: Application, private val configuration
             }
             _isLoading.postValue(false)
             _liveOAuthResponse.postValue(OAuthResponse.success(result))
-            closeAccessor()
         }
     }
 
@@ -178,13 +176,6 @@ class HaapiFlowViewModel(private val app: Application, private val configuration
     override fun onCleared() {
         super.onCleared()
         viewModelScope.cancel()
-        closeAccessor()
-    }
-
-    // Free accessor resources when the view model is cleared or when navigating to the Authenticated Activity
-    private fun closeAccessor() {
-        accessor?.haapiManager?.close()
-        accessor = null
     }
 }
 
