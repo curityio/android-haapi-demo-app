@@ -40,13 +40,6 @@ if [ $? -ne 0 ]; then
 fi
 
 #
-# TODO: delete this after merging the mobile-deployments repo
-#
-cd deployment
-git checkout feature/dcr-callback
-cd ..
-
-#
 # Run the deployment script to get an NGROK URL and deploy the Curity Identity Server
 #
 cp ./license.json deployment/resources/license.json

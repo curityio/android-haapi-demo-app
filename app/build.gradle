@@ -89,7 +89,6 @@ dependencies {
     implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.4.1'
     implementation 'androidx.navigation:navigation-fragment-ktx:2.4.1'
     implementation 'androidx.navigation:navigation-ui-ktx:2.4.1'
-    implementation 'org.bitbucket.b_c:jose4j:0.6.5'
 
     // Persistence
     implementation "androidx.datastore:datastore-preferences:1.0.0"
