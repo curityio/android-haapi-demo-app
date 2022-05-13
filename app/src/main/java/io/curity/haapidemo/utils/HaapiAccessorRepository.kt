@@ -8,13 +8,13 @@ import se.curity.identityserver.haapi.android.sdk.DcrConfiguration
 import se.curity.identityserver.haapi.android.sdk.HaapiAccessor
 import se.curity.identityserver.haapi.android.sdk.HaapiAccessorFactory
 
-object HaapiFactory {
+// A utility object to create the accessor before login and close it after logout
+// The code example uses a global repository that can be accessed across multiple activities
+object HaapiAccessorRepository {
 
-    // The accessor must be created before login and destroyed after logging out
-    // The code example uses a singleton instance to pass it between activities
     var instance: HaapiAccessor? = null
 
-    suspend fun create(configuration: Configuration, context: Context): HaapiAccessor {
+    suspend fun get(configuration: Configuration, context: Context): HaapiAccessor {
 
         var accessor = instance
         if (accessor != null) {
@@ -51,7 +51,7 @@ object HaapiFactory {
         return accessor
     }
 
-    fun destroy() {
+    fun close() {
 
         val accessor = instance
         if (accessor != null) {
