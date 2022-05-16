@@ -19,7 +19,7 @@ package io.curity.haapidemo.ui.haapiflow
 import android.app.Application
 import androidx.lifecycle.*
 import io.curity.haapidemo.Configuration
-import io.curity.haapidemo.utils.HaapiAccessorRepository
+import io.curity.haapidemo.DemoApplication
 import kotlinx.coroutines.*
 import se.curity.identityserver.haapi.android.sdk.*
 import se.curity.identityserver.haapi.android.sdk.models.HaapiResponse
@@ -78,8 +78,9 @@ class HaapiFlowViewModel(private val app: Application, private val configuration
         viewModelScope.launch {
 
             try {
+                val demoApp = app as DemoApplication
                 accessor = withContext(Dispatchers.IO) {
-                    HaapiAccessorRepository.get(configuration, app.applicationContext)
+                    demoApp.haapiAccessorRepository.load(configuration, app.applicationContext)
                 }
                 startHaapi()
 
@@ -176,6 +177,8 @@ class HaapiFlowViewModel(private val app: Application, private val configuration
     override fun onCleared() {
         super.onCleared()
         viewModelScope.cancel()
+        (app as DemoApplication).haapiAccessorRepository.close()
+        accessor = null
     }
 }
 

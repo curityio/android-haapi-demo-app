@@ -26,11 +26,11 @@ import androidx.lifecycle.*
 import io.curity.haapidemo.R
 import io.curity.haapidemo.TokenStateChangeable
 import io.curity.haapidemo.Configuration
+import io.curity.haapidemo.DemoApplication
 import io.curity.haapidemo.uicomponents.DisclosureContent
 import io.curity.haapidemo.uicomponents.DisclosureView
 import io.curity.haapidemo.uicomponents.HeaderView
 import io.curity.haapidemo.uicomponents.ProgressButton
-import io.curity.haapidemo.utils.HaapiAccessorRepository
 import io.curity.haapidemo.utils.disableSslTrustVerification
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -168,7 +168,7 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
 
                 try {
                     accessor = withContext(Dispatchers.IO) {
-                        HaapiAccessorRepository.get(configuration, app.applicationContext)
+                        (app as DemoApplication).haapiAccessorRepository.load(configuration, app.applicationContext)
                     }
                 } catch (e: Throwable) {
                     // Currently this view does not report errors so only output to the console
@@ -225,7 +225,7 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
 
         // Destroy accessor resources on logout
         fun logout() {
-            HaapiAccessorRepository.close()
+            (app as DemoApplication).haapiAccessorRepository.close()
             accessor = null
         }
 
