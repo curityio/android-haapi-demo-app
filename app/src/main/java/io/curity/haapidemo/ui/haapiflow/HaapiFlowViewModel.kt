@@ -80,7 +80,7 @@ class HaapiFlowViewModel(private val app: Application, private val configuration
             try {
                 val demoApp = app as DemoApplication
                 accessor = withContext(Dispatchers.IO) {
-                    demoApp.haapiAccessorRepository.load(configuration, app.applicationContext)
+                    demoApp.haapiAccessorRepository.load(configuration, app.applicationContext, true)
                 }
                 startHaapi()
 
@@ -177,8 +177,6 @@ class HaapiFlowViewModel(private val app: Application, private val configuration
     override fun onCleared() {
         super.onCleared()
         viewModelScope.cancel()
-        (app as DemoApplication).haapiAccessorRepository.close()
-        accessor = null
     }
 }
 

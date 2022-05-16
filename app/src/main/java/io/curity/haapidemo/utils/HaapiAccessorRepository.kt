@@ -12,8 +12,15 @@ class HaapiAccessorRepository {
 
     private var accessor: HaapiAccessor? = null
 
-    suspend fun load(configuration: Configuration, context: Context): HaapiAccessor {
+    suspend fun load(configuration: Configuration, context: Context, force: Boolean = false): HaapiAccessor {
 
+        // When called from the unauthenticated view, ensure that the accessor is in a closed state
+        if (force) {
+            accessor?.haapiManager?.close()
+            accessor = null
+        }
+
+        // Reuse the existing accessor after login, rather than recreating it
         if (accessor != null) {
             return accessor!!
         }
