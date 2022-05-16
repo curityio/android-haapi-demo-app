@@ -16,7 +16,6 @@
 
 package io.curity.haapidemo
 
-import android.app.Activity
 import android.app.AlertDialog
 import android.content.ActivityNotFoundException
 import android.content.Context
@@ -86,12 +85,14 @@ class FlowActivity : AppCompatActivity() {
         val configuration: Configuration = Json.decodeFromString(configString)
 
         haapiFlowViewModel = ViewModelProvider(this,
-            HaapiFlowViewModelFactory(configuration = configuration))
+            HaapiFlowViewModelFactory(app = application, configuration = configuration))
             .get(HaapiFlowViewModel::class.java)
 
         haapiFlowViewModel.liveStep.observe(this) { newResult ->
             when (newResult) {
-                null -> { haapiFlowViewModel.start() }
+                null -> {
+                    haapiFlowViewModel.start()
+                }
                 else -> {
                     val response = newResult.getOrElse {
                         handle(it)
@@ -118,7 +119,7 @@ class FlowActivity : AppCompatActivity() {
                         is SuccessfulTokenResponse -> {
                             val newIntent = Intent()
                             newIntent.putExtra("TOKEN_RESPONSE", response)
-                            setResult(Activity.RESULT_OK, newIntent)
+                            setResult(RESULT_OK, newIntent)
                             finish()
                         }
                         is ErrorTokenResponse -> {

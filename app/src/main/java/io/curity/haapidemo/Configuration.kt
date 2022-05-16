@@ -16,7 +16,11 @@
 
 package io.curity.haapidemo
 
+import io.curity.haapidemo.utils.disableSslTrustVerification
 import kotlinx.serialization.Serializable
+import se.curity.identityserver.haapi.android.sdk.HaapiConfiguration
+import java.net.HttpURLConnection
+import java.net.URI
 
 /**
  * Configuration for `HaapiFlowManager`
@@ -62,28 +66,61 @@ data class Configuration(
     var isAutoAuthorizationChallengedEnabled: Boolean = true,
     var isSSLTrustVerificationEnabled: Boolean = true,
     var selectedScopes: List<String> = emptyList(),
+    var supportedScopes: List<String> = emptyList(),
 
-    var supportedScopes: List<String> = emptyList()
+    // To implement HAAPI fallback, customers must define their own DCR related settings
+    // These will vary depending on the type of credential being used
+    var dcrTemplateClientId: String? = null,
+    var dcrClientRegistrationEndpointUri: String? = null,
+    var deviceSecret: String? = null
+
 ) {
+    fun toHaapiConfiguration(): HaapiConfiguration {
+        return HaapiConfiguration(
+            keyStoreAlias = keyStoreAlias,
+            clientId = clientId,
+            baseUri = URI.create(baseURLString),
+            tokenEndpointUri = URI.create(tokenEndpointURI),
+            authorizationEndpointUri = URI.create(authorizationEndpointURI),
+            appRedirect = redirectURI,
+            isAutoRedirect = followRedirect,
+            httpUrlConnectionProvider = { url ->
+                val urlConnection = url.openConnection()
+                urlConnection.connectTimeout = 8000
+                if (!isSSLTrustVerificationEnabled) {
+                    urlConnection.disableSslTrustVerification() as HttpURLConnection
+                } else {
+                    urlConnection as HttpURLConnection
+                }
+            }
+        )
+    }
 
     companion object {
         // A convenience flag for Curity developers.
         private const val CURITY_DEV_MODE = false
 
         fun newInstance(name: String = "haapi-android-client"): Configuration =
-            if (CURITY_DEV_MODE) newDevInstance(name) else Configuration(
-                name = name,
-                clientId = "haapi-android-client",
-                baseURLString = "https://10.0.2.2:8443",
-                tokenEndpointURI = "https://10.0.2.2:8443/oauth/v2/oauth-token",
-                authorizationEndpointURI = "https://10.0.2.2:8443/oauth/v2/oauth-authorize",
-                userInfoEndpointURI = "https://10.0.2.2:8443/oauth/v2/oauth-userinfo",
-                metaDataBaseURLString = "https://10.0.2.2:8443/oauth/v2/oauth-anonymous",
-                redirectURI = "app://haapi",
-                followRedirect = true,
-                isSSLTrustVerificationEnabled = false,
-                selectedScopes = listOf("openid", "profile")
-            )
+            if (CURITY_DEV_MODE) newDevInstance(name) else
+
+        Configuration(
+            name = name,
+            clientId = "haapi-android-client",
+            baseURLString = "https://10.0.2.2:8443",
+            tokenEndpointURI = "https://10.0.2.2:8443/oauth/v2/oauth-token",
+            authorizationEndpointURI = "https://10.0.2.2:8443/oauth/v2/oauth-authorize",
+            userInfoEndpointURI = "https://10.0.2.2:8443/oauth/v2/oauth-userinfo",
+            metaDataBaseURLString = "https://10.0.2.2:8443/oauth/v2/oauth-anonymous",
+            redirectURI = "app://haapi",
+            followRedirect = true,
+            isSSLTrustVerificationEnabled = false,
+            selectedScopes = listOf("openid", "profile"),
+
+            // Uncomment these fields to add support for HAAPI DCR fallback with a simple credential
+            //dcrTemplateClientId = "haapi-template-client",
+            //dcrClientRegistrationEndpointUri = "https://10.0.2.2:8443/token-service/oauth-registration",
+            //deviceSecret = "Password1"
+        )
 
         fun newInstance(number: Int): Configuration {
             return newInstance("New Profile ($number)")
@@ -100,7 +137,12 @@ data class Configuration(
                 redirectURI = "app://haapi",
                 followRedirect = true,
                 isSSLTrustVerificationEnabled = false,
-                selectedScopes = listOf("openid", "profile")
+                selectedScopes = listOf("openid", "profile"),
+
+                // Uncomment these fields to add support for HAAPI DCR fallback with a simple credential
+                //dcrTemplateClientId = "haapi-template-client",
+                //dcrClientRegistrationEndpointUri = "https://10.0.2.2:8443/token-service/oauth-registration",
+                //deviceSecret = "Password1"
             )
     }
 }
