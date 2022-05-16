@@ -168,7 +168,8 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
 
                 try {
                     accessor = withContext(Dispatchers.IO) {
-                        (app as DemoApplication).loadAccessor(configuration)
+                        val demoApp = app as DemoApplication
+                        demoApp.loadAccessor(configuration)
                     }
                 } catch (e: Throwable) {
                     // Currently this view does not report errors so only output to the console
@@ -225,7 +226,8 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
 
         // Destroy accessor resources on logout
         fun logout() {
-            (app as DemoApplication).closeAccessor()
+            val demoApp = app as DemoApplication
+            demoApp.closeAccessor()
             accessor = null
         }
 
