@@ -8,9 +8,22 @@ import se.curity.identityserver.haapi.android.sdk.DcrConfiguration
 import se.curity.identityserver.haapi.android.sdk.HaapiAccessor
 import se.curity.identityserver.haapi.android.sdk.HaapiAccessorFactory
 
-object HaapiFactory {
+class HaapiAccessorRepository {
 
-    suspend fun create(configuration: Configuration, context: Context): HaapiAccessor {
+    private var accessor: HaapiAccessor? = null
+
+    suspend fun load(configuration: Configuration, context: Context, force: Boolean = false): HaapiAccessor {
+
+        // When called from the unauthenticated view, ensure that the accessor is in a closed state
+        if (force) {
+            accessor?.haapiManager?.close()
+            accessor = null
+        }
+
+        // Reuse the existing accessor after login, rather than recreating it
+        if (accessor != null) {
+            return accessor!!
+        }
 
         val accessorFactory = HaapiAccessorFactory(configuration.toHaapiConfiguration())
 
@@ -30,13 +43,19 @@ object HaapiFactory {
             // The simplest way to use HAAPI  is to use a fixed string client secret
             // More secure options of client certificates and JWT client assertions are also supported
             val dcrClientCredentials =
-               ClientAuthenticationMethodConfiguration.Secret(configuration.deviceSecret!!)
+                ClientAuthenticationMethodConfiguration.Secret(configuration.deviceSecret!!)
 
             accessorFactory
                 .setDcrConfiguration(dcrConfiguration)
                 .setClientAuthenticationMethodConfiguration(dcrClientCredentials)
         }
 
-        return accessorFactory.create()
+        accessor = accessorFactory.create()
+        return accessor!!
+    }
+
+    fun close() {
+        accessor?.haapiManager?.close()
+        accessor = null
     }
 }

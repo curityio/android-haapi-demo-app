@@ -19,7 +19,7 @@ package io.curity.haapidemo.ui.haapiflow
 import android.app.Application
 import androidx.lifecycle.*
 import io.curity.haapidemo.Configuration
-import io.curity.haapidemo.utils.HaapiFactory
+import io.curity.haapidemo.DemoApplication
 import kotlinx.coroutines.*
 import se.curity.identityserver.haapi.android.sdk.*
 import se.curity.identityserver.haapi.android.sdk.models.HaapiResponse
@@ -78,8 +78,9 @@ class HaapiFlowViewModel(private val app: Application, private val configuration
         viewModelScope.launch {
 
             try {
+                val demoApp = app as DemoApplication
                 accessor = withContext(Dispatchers.IO) {
-                    HaapiFactory.create(configuration, app.applicationContext)
+                    demoApp.loadAccessor(configuration, true)
                 }
                 startHaapi()
 
@@ -119,7 +120,6 @@ class HaapiFlowViewModel(private val app: Application, private val configuration
             }
             _isLoading.postValue(false)
             _liveOAuthResponse.postValue(OAuthResponse.success(result))
-            closeAccessor()
         }
     }
 
@@ -135,7 +135,6 @@ class HaapiFlowViewModel(private val app: Application, private val configuration
             }
             _isLoading.postValue(false)
             _liveOAuthResponse.postValue(OAuthResponse.success(result))
-            closeAccessor()
         }
     }
 
@@ -178,13 +177,6 @@ class HaapiFlowViewModel(private val app: Application, private val configuration
     override fun onCleared() {
         super.onCleared()
         viewModelScope.cancel()
-        closeAccessor()
-    }
-
-    // Free accessor resources when the view model is cleared or when navigating to the Authenticated Activity
-    private fun closeAccessor() {
-        accessor?.haapiManager?.close()
-        accessor = null
     }
 }
 

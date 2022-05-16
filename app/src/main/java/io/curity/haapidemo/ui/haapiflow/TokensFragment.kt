@@ -17,7 +17,6 @@
 package io.curity.haapidemo.ui.haapiflow
 
 import android.app.Application
-import android.content.Context
 import android.os.Bundle
 import android.view.View
 import android.widget.LinearLayout
@@ -27,11 +26,11 @@ import androidx.lifecycle.*
 import io.curity.haapidemo.R
 import io.curity.haapidemo.TokenStateChangeable
 import io.curity.haapidemo.Configuration
+import io.curity.haapidemo.DemoApplication
 import io.curity.haapidemo.uicomponents.DisclosureContent
 import io.curity.haapidemo.uicomponents.DisclosureView
 import io.curity.haapidemo.uicomponents.HeaderView
 import io.curity.haapidemo.uicomponents.ProgressButton
-import io.curity.haapidemo.utils.HaapiFactory
 import io.curity.haapidemo.utils.disableSslTrustVerification
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -169,7 +168,8 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
 
                 try {
                     accessor = withContext(Dispatchers.IO) {
-                        HaapiFactory.create(configuration, app.applicationContext)
+                        val demoApp = app as DemoApplication
+                        demoApp.loadAccessor(configuration)
                     }
                 } catch (e: Throwable) {
                     // Currently this view does not report errors so only output to the console
@@ -224,8 +224,11 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
             }
         }
 
+        // Destroy accessor resources on logout
         fun logout() {
-            closeAccessor()
+            val demoApp = app as DemoApplication
+            demoApp.closeAccessor()
+            accessor = null
         }
 
         private fun fetchUserInfo() {
@@ -250,12 +253,6 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
                 }
                 _liveUserInfo.postValue(response)
             }
-        }
-
-        // Free accessor resources before returning to the Main Activity after logout
-        private fun closeAccessor() {
-            accessor?.haapiManager?.close()
-            accessor = null
         }
     }
 
