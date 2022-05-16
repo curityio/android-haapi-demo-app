@@ -16,51 +16,28 @@
 
 package io.curity.haapidemo.ui.haapiflow
 
+import android.app.Application
 import androidx.lifecycle.*
 import io.curity.haapidemo.Configuration
-import io.curity.haapidemo.utils.disableSslTrustVerification
+import io.curity.haapidemo.DemoApplication
 import kotlinx.coroutines.*
-import se.curity.identityserver.haapi.android.sdk.HaapiConfiguration
-import se.curity.identityserver.haapi.android.sdk.HaapiManager
-import se.curity.identityserver.haapi.android.sdk.OAuthAuthorizationParameters
-import se.curity.identityserver.haapi.android.sdk.OAuthTokenManager
+import se.curity.identityserver.haapi.android.sdk.*
 import se.curity.identityserver.haapi.android.sdk.models.HaapiResponse
 import se.curity.identityserver.haapi.android.sdk.models.Link
 import se.curity.identityserver.haapi.android.sdk.models.OAuthAuthorizationResponseStep
 import se.curity.identityserver.haapi.android.sdk.models.PollingStep
 import se.curity.identityserver.haapi.android.sdk.models.actions.FormActionModel
 import se.curity.identityserver.haapi.android.sdk.models.oauth.TokenResponse
-import java.net.HttpURLConnection
-import java.net.URI
 import kotlin.coroutines.CoroutineContext
 
 typealias HaapiResult = Result<HaapiResponse>
 typealias OAuthResponse = Result<TokenResponse>
 
-class HaapiFlowViewModel(private val configuration: Configuration): ViewModel() {
+class HaapiFlowViewModel(private val app: Application, private val configuration: Configuration): AndroidViewModel(app) {
 
-    val haapiConfiguration: HaapiConfiguration = HaapiConfiguration(
-        keyStoreAlias = configuration.keyStoreAlias,
-        clientId = configuration.clientId,
-        baseUri = URI.create(configuration.baseURLString),
-        tokenEndpointUri = URI.create(configuration.tokenEndpointURI),
-        authorizationEndpointUri = URI.create(configuration.authorizationEndpointURI),
-        appRedirect = configuration.redirectURI,
-        isAutoRedirect = configuration.followRedirect,
-        httpUrlConnectionProvider = { url ->
-            val urlConnection = url.openConnection()
-            urlConnection.connectTimeout = 8000
-            if (!configuration.isSSLTrustVerificationEnabled) {
-                urlConnection.disableSslTrustVerification() as HttpURLConnection
-            } else {
-                urlConnection as HttpURLConnection
-            }
-        }
-    )
-    private val haapiManager: HaapiManager = HaapiManager(haapiConfiguration = haapiConfiguration)
-    private val oAuthTokenManager: OAuthTokenManager = OAuthTokenManager(
-        oauthTokenConfiguration = haapiConfiguration
-    )
+    private var accessor: HaapiAccessor? = null
+    val haapiConfiguration: HaapiConfiguration = configuration.toHaapiConfiguration()
+
     private val coroutineExceptionHandler = CoroutineExceptionHandler { _, _ -> }
 
     val isAutoPolling = configuration.isAutoPollingEnabled
@@ -93,9 +70,32 @@ class HaapiFlowViewModel(private val configuration: Configuration): ViewModel() 
         }
     }
 
+    /*
+     * The view model must now do async processing before objects can be created
+     */
     fun start() {
+
+        viewModelScope.launch {
+
+            try {
+                val demoApp = app as DemoApplication
+                accessor = withContext(Dispatchers.IO) {
+                    demoApp.loadAccessor(configuration, true)
+                }
+                startHaapi()
+
+            } catch (e: Throwable) {
+                coroutineExceptionHandler.handleException(coroutineContext, e)
+                processHaapiResult(HaapiResult.failure(e))
+            }
+        }
+    }
+
+    private fun startHaapi() {
+
         executeHaapi {
-            haapiManager.start(
+            val haapiAccessor = accessor ?: throw IllegalStateException("Haapi Accessor is not initialised in startHaapi.")
+            haapiAccessor.haapiManager.start(
                 authorizationParameters = OAuthAuthorizationParameters(
                     scope = configuration.selectedScopes
                 ),
@@ -106,7 +106,8 @@ class HaapiFlowViewModel(private val configuration: Configuration): ViewModel() 
 
     fun submit(form: FormActionModel, parameters: Map<String, String> = emptyMap()) {
         executeHaapi {
-            haapiManager.submitForm(form, parameters, it)
+            val haapiAccessor = accessor ?: throw IllegalStateException("Haapi Accessor is not initialised in submit.")
+            haapiAccessor.haapiManager.submitForm(form, parameters, it)
         }
     }
 
@@ -114,7 +115,8 @@ class HaapiFlowViewModel(private val configuration: Configuration): ViewModel() 
         _isLoading.postValue(true)
         viewModelScope.launch {
             val result = withContext(Dispatchers.IO) {
-                oAuthTokenManager.fetchAccessToken(authorizationCode, this.coroutineContext)
+                val haapiAccessor = accessor ?: throw IllegalStateException("Haapi Accessor is not initialised in fetchAccessToken.")
+                haapiAccessor.oAuthTokenManager.fetchAccessToken(authorizationCode, this.coroutineContext)
             }
             _isLoading.postValue(false)
             _liveOAuthResponse.postValue(OAuthResponse.success(result))
@@ -125,7 +127,8 @@ class HaapiFlowViewModel(private val configuration: Configuration): ViewModel() 
         _isLoading.postValue(true)
         viewModelScope.launch {
             val result = withContext(Dispatchers.IO) {
-                oAuthTokenManager.fetchAccessToken(
+                val haapiAccessor = accessor ?: throw IllegalStateException("Haapi Accessor is not initialised in fetchAccessToken.")
+                haapiAccessor.oAuthTokenManager.fetchAccessToken(
                     oAuthAuthorizationResponseStep.properties.code,
                     this.coroutineContext
                 )
@@ -139,7 +142,8 @@ class HaapiFlowViewModel(private val configuration: Configuration): ViewModel() 
         _isLoading.postValue(true)
         viewModelScope.launch {
             val result = withContext(Dispatchers.IO) {
-                oAuthTokenManager.refreshAccessToken(refreshToken, this.coroutineContext)
+                val haapiAccessor = accessor ?: throw IllegalStateException("Haapi Accessor is not initialised in refreshAccessToken.")
+                haapiAccessor.oAuthTokenManager.refreshAccessToken(refreshToken, this.coroutineContext)
             }
             _isLoading.postValue(false)
             _liveOAuthResponse.postValue(OAuthResponse.success(result))
@@ -148,7 +152,8 @@ class HaapiFlowViewModel(private val configuration: Configuration): ViewModel() 
 
     fun followLink(link: Link) {
         executeHaapi {
-            haapiManager.followLink(link, it)
+            val haapiAccessor = accessor ?: throw IllegalStateException("Haapi Accessor is not initialised in followLink.")
+            haapiAccessor.haapiManager.followLink(link, it)
         }
     }
 
@@ -172,16 +177,15 @@ class HaapiFlowViewModel(private val configuration: Configuration): ViewModel() 
     override fun onCleared() {
         super.onCleared()
         viewModelScope.cancel()
-        haapiManager.close()
     }
 }
 
-class HaapiFlowViewModelFactory(val configuration: Configuration): ViewModelProvider.Factory {
+class HaapiFlowViewModelFactory(val app: Application, val configuration: Configuration): ViewModelProvider.Factory {
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(HaapiFlowViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
-            return HaapiFlowViewModel(configuration) as T
+            return HaapiFlowViewModel(app, configuration) as T
         }
 
         throw IllegalArgumentException("Unknown ViewModel class HaapiFlowViewModel")
