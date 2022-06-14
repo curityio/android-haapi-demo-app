@@ -45,6 +45,10 @@
     <string name="cannot_open_browswer">Cannot open an external browser</string>
     <string name="bank_id_is_not_installed">Bank ID is not installed</string>
     <string name="sign_out">Sign out</string>
+    <string name="decoded_jwt_header">Header</string>
+    <string name="decoded_jwt_payload">Payload</string>
+    <string name="decoded_jwt_open_brace">\u007B</string>
+    <string name="decoded_jwt_close_brace">\u007D</string>
 
 <!--    Content descriptions-->
     <string name="warning_content_description">A warning icon</string>

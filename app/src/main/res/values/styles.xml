@@ -179,4 +179,15 @@
     <style name="HeaderView.Link" parent="">
         <item name="textAppearance">@style/TextAppearance.Links</item>
     </style>
+<!--    Decoded JWT View -->
+    <style name="KeyValueView.Key" parent="TextAppearance.Code18">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/info_text_color</item>
+    </style>
+
+    <style name="KeyValueView.Value" parent="TextAppearance.Code18">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/success</item>
+    </style>
+
 </resources>

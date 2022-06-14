@@ -17,11 +17,13 @@
 package io.curity.haapidemo.utils
 
 import android.content.Context
+import io.curity.haapidemo.models.DecodedJwtData
 import io.curity.haapidemo.ui.haapiflow.InteractiveFormItem
 import io.curity.haapidemo.uicomponents.MessageStyle
 import io.curity.haapidemo.uicomponents.MessageView
 import se.curity.identityserver.haapi.android.sdk.models.UserMessage
 import se.curity.identityserver.haapi.android.sdk.models.actions.FormField
+import se.curity.identityserver.haapi.android.sdk.models.oauth.SuccessfulTokenResponse
 
 fun UserMessage.messageStyle(): MessageStyle {
     val lowerCaseClassList = classList.map { it.lowercase() }
@@ -54,4 +56,8 @@ fun FormField.Checkbox.toInteractiveFormItemCheckbox(): InteractiveFormItem.Chec
         checked = checked,
         value = value ?: "on"
     )
+}
+
+fun SuccessfulTokenResponse.decodedIDToken(): DecodedJwtData? {
+    return JWTUtils.extractJwt(idToken)
 }

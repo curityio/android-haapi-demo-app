@@ -18,6 +18,7 @@ package io.curity.haapidemo.uicomponents
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.text.TextUtils
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
@@ -26,6 +27,8 @@ import android.widget.TextView
 import android.widget.ToggleButton
 import androidx.constraintlayout.widget.ConstraintLayout
 import io.curity.haapidemo.R
+import io.curity.haapidemo.models.DecodedJwtData
+import kotlinx.android.synthetic.main.disclosure_view.view.*
 
 class DisclosureView @JvmOverloads constructor(
     context: Context,
@@ -103,6 +106,34 @@ class DisclosureView @JvmOverloads constructor(
     @Suppress("Unused")
     fun setContentText(contentText: CharSequence) {
         contentTextView.text = contentText
+    }
+
+    @Suppress("Unused")
+    fun setDecodedContent(decodedContent: DecodedJwtData) {
+        verticalLinearLayout.removeAllViews()
+
+        verticalLinearLayout.addView(
+            DecodedTokenView(context).apply {
+                decodedContent.getHeaderObj()?.let {
+                    this.setContent(label = context.getString(R.string.decoded_jwt_header),
+                        contents = it
+                    )
+                }
+            }
+        )
+
+        verticalLinearLayout.addView(
+            DecodedTokenView(context).apply {
+                decodedContent.getPayloadObj()?.let {
+                    this.setContent(label = context.getString(R.string.decoded_jwt_payload),
+                        contents = it
+                    )
+                }
+            }
+        )
+
+        contentTextView.maxLines = 3
+        contentTextView.ellipsize = TextUtils.TruncateAt.END
     }
 
     @Suppress("Unused")
