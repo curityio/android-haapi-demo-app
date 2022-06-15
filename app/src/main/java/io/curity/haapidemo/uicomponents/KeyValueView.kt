@@ -13,33 +13,33 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package io.curity.haapidemo.uicomponents
 
 import android.annotation.SuppressLint
 import android.content.Context
 import android.util.AttributeSet
 import android.view.LayoutInflater
-import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import io.curity.haapidemo.R
-import org.json.JSONObject
 
-class DecodedTokenView @JvmOverloads constructor(
+class KeyValueView @JvmOverloads constructor(
     context: Context,
     attrs: AttributeSet? = null,
     defStyleAttr: Int = 0
 ): ConstraintLayout(context, attrs, defStyleAttr) {
 
     private val labelTextView: TextView
-    private val verticalLinearLayout: LinearLayout
+    private val valueTextView: TextView
+
+    private var valueTextColorString: Int? = null
+    private var valueTextColorOther: Int? = null
 
     init {
-        val root = LayoutInflater.from(context).inflate(R.layout.decoded_token_view, this, true)
+        val root = LayoutInflater.from(context).inflate(R.layout.key_value_view, this, true)
 
-        labelTextView = root.findViewById(R.id.header)
-        verticalLinearLayout = root.findViewById(R.id.vertical_linear_layout)
+        labelTextView = root.findViewById(R.id.key)
+        valueTextView = root.findViewById(R.id.value)
 
         loadAttrs(attrs, defStyleAttr)
     }
@@ -48,18 +48,30 @@ class DecodedTokenView @JvmOverloads constructor(
     private fun loadAttrs(attrs: AttributeSet?, defStyleAttr: Int) {
         context.obtainStyledAttributes(
             attrs,
-            R.styleable.DecodedTokenView,
+            R.styleable.KeyValueView,
             0,
             defStyleAttr
         ).apply {
             try {
-                getResourceId(R.styleable.DecodedTokenView_labelStyle,
-                    R.style.TextAppearance_BodyMedium).let {
+                getResourceId(R.styleable.KeyValueView_labelStyle, R.style.KeyValueView_Key).let {
                     labelTextView.setTextAppearance(it)
                 }
 
-                getText(R.styleable.DecodedTokenView_labelText).let {
+                getResourceId(R.styleable.KeyValueView_valueStyle, R.style.KeyValueView_Value_String).let {
+                    valueTextView.setTextAppearance(it)
+                    valueTextColorString = it
+                }
+
+                getResourceId(R.styleable.KeyValueView_valueStyle, R.style.KeyValueView_Value_Other).let {
+                    valueTextColorOther = it
+                }
+
+                getText(R.styleable.KeyValueView_labelText).let {
                     labelTextView.text = it
+                }
+
+                getText(R.styleable.KeyValueView_valueText).let {
+                    valueTextView.text = it
                 }
             } finally {
                 recycle()
@@ -67,17 +79,21 @@ class DecodedTokenView @JvmOverloads constructor(
         }
     }
 
-    //@Suppress("Unused")
-    fun setContent(label: CharSequence, contents: JSONObject) {
+    fun setKey(label: CharSequence) {
         labelTextView.text = label
-        verticalLinearLayout.removeAllViews()
-        contents.keys().forEach { key ->
-            val labelTextView = KeyValueView(context).apply {
-                this.setKey(key)
-                contents.getString(key)?.let { this.setValue(it) }
-                contents.get(key)?.let { this.setValueStyle(obj = it) }
-            }
-            verticalLinearLayout.addView(labelTextView)
+    }
+
+    fun setValue(value: CharSequence) {
+        valueTextView.text = value
+    }
+
+    fun setValueStyle(obj: Any) {
+        val stringColor = valueTextColorString
+        var otherColor = valueTextColorOther
+        if(stringColor == null || otherColor == null) return
+        when(obj) {
+            is String -> valueTextView.setTextAppearance(stringColor)
+            else -> valueTextView.setTextAppearance(otherColor)
         }
     }
 }

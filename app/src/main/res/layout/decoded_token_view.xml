@@ -31,6 +31,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:textColor="@color/text"
         android:text="@string/decoded_jwt_open_brace"/>
 
     <LinearLayout
@@ -44,5 +45,6 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:textColor="@color/text"
         android:text="@string/decoded_jwt_close_brace"/>
 </LinearLayout>

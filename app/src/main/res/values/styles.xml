@@ -182,12 +182,17 @@
 <!--    Decoded JWT View -->
     <style name="KeyValueView.Key" parent="TextAppearance.Code18">
         <item name="android:textSize">14sp</item>
-        <item name="android:textColor">@color/info_text_color</item>
+        <item name="android:textColor">@color/info</item>
     </style>
 
-    <style name="KeyValueView.Value" parent="TextAppearance.Code18">
+    <style name="KeyValueView.Value.String" parent="TextAppearance.Code18">
         <item name="android:textSize">14sp</item>
-        <item name="android:textColor">@color/success</item>
+        <item name="android:textColor">@color/warning</item>
+    </style>
+
+    <style name="KeyValueView.Value.Other" parent="TextAppearance.Code18">
+        <item name="android:textSize">14sp</item>
+        <item name="android:textColor">@color/spot_green</item>
     </style>
 
 </resources>
