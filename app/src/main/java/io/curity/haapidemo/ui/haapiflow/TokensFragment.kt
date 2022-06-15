@@ -19,6 +19,7 @@ package io.curity.haapidemo.ui.haapiflow
 import android.app.Application
 import android.os.Bundle
 import android.view.View
+import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.fragment.app.Fragment
@@ -31,6 +32,7 @@ import io.curity.haapidemo.uicomponents.DisclosureContent
 import io.curity.haapidemo.uicomponents.DisclosureView
 import io.curity.haapidemo.uicomponents.HeaderView
 import io.curity.haapidemo.uicomponents.ProgressButton
+import io.curity.haapidemo.utils.copyTextToClipboard
 import io.curity.haapidemo.utils.disableSslTrustVerification
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -44,6 +46,7 @@ import java.io.FileNotFoundException
 import java.net.HttpURLConnection
 import java.net.URI
 import io.curity.haapidemo.utils.decodedIDToken
+import io.curity.haapidemo.utils.toast
 
 class TokensFragment: Fragment(R.layout.fragment_tokens) {
 
@@ -100,6 +103,12 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
                 }
 
                 linearLayoutIDToken.visibility = View.VISIBLE
+
+                val copyIDTokenButton: ImageButton = linearLayoutIDToken.findViewById(R.id.copy_clipboard)
+                copyIDTokenButton.setOnClickListener { _ ->
+                    context?.copyTextToClipboard(idToken)
+                    context?.toast(message = context?.getString(R.string.copy_to_clipboard_message) ?: "")
+                }
             } else {
                 linearLayoutIDToken.visibility = View.GONE
             }

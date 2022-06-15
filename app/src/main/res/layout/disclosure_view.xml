@@ -36,20 +36,38 @@
 
         <TextView
             android:id="@+id/title"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
             android:layout_weight="1"
+            android:gravity="center_vertical"
             tools:text="A Text"
             />
 
-        <ToggleButton
-            android:id="@+id/toggle_button"
+        <LinearLayout
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:textOff=""
-            android:textOn=""
-            android:layout_weight="1"
-            android:background="@drawable/disclosure_view_toggle_background"/>
+            android:layout_height="wrap_content">
+
+            <ImageButton
+                android:id="@+id/copy_clipboard"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_weight="1"
+                android:backgroundTint="@android:color/transparent"
+                android:contentDescription="@string/copy_idtoken_clipboard_content_description"
+                android:foreground="?android:attr/selectableItemBackgroundBorderless"
+                app:srcCompat="@drawable/ic_copy"
+                android:visibility="gone"/>
+
+            <ToggleButton
+                android:id="@+id/toggle_button"
+                android:layout_width="50dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textOff=""
+                android:textOn=""
+                android:background="@drawable/disclosure_view_toggle_background"/>
+
+        </LinearLayout>
     </LinearLayout>
 
     <LinearLayout
