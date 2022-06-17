@@ -15,7 +15,6 @@
  */
 package io.curity.haapidemo.models
 
-//import io.curity.haapidemo.utils.toMap
 import org.json.JSONObject
 
 data class DecodedJwtData(val header: String?, val payload: String?) {
