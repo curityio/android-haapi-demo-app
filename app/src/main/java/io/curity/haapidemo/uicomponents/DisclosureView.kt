@@ -133,10 +133,6 @@ class DisclosureView @JvmOverloads constructor(
                 }
             }
         )
-
-        contentTextView.maxLines = 3
-        contentTextView.ellipsize = TextUtils.TruncateAt.END
-        copyButton.visibility = View.VISIBLE
     }
 
     @Suppress("Unused")

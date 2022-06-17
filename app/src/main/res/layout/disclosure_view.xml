@@ -55,8 +55,7 @@
                 android:backgroundTint="@android:color/transparent"
                 android:contentDescription="@string/copy_idtoken_clipboard_content_description"
                 android:foreground="?android:attr/selectableItemBackgroundBorderless"
-                app:srcCompat="@drawable/ic_copy"
-                android:visibility="gone"/>
+                app:srcCompat="@drawable/ic_copy"/>
 
             <ToggleButton
                 android:id="@+id/toggle_button"

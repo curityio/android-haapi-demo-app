@@ -104,21 +104,25 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
 
                 linearLayoutIDToken.visibility = View.VISIBLE
 
-                val copyIDTokenButton: ImageButton = linearLayoutIDToken.findViewById(R.id.copy_clipboard)
-                copyIDTokenButton.setOnClickListener { _ ->
-                    context?.copyTextToClipboard(idToken)
-                    context?.toast(message = context?.getString(R.string.copy_to_clipboard_message) ?: "")
-                }
+                configureCopyToClipboard(textToCopy = idToken, holderView = linearLayoutIDToken)
             } else {
                 linearLayoutIDToken.visibility = View.GONE
             }
 
             accessDisclosureView.setDisclosureContents(tokensViewModel.disclosureContents)
+            configureCopyToClipboard(
+                textToCopy = tokensViewModel.accessToken,
+                holderView = accessDisclosureView
+            )
 
             val refreshToken = tokensViewModel.refreshToken
             if (refreshToken != null) {
                 refreshDisclosureView.visibility = View.VISIBLE
                 refreshDisclosureView.setContentText(refreshToken)
+                configureCopyToClipboard(
+                    textToCopy = refreshToken,
+                    holderView = refreshDisclosureView
+                )
             } else {
                 refreshDisclosureView.visibility = View.GONE
             }
@@ -140,6 +144,14 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
         signOutButton.setOnClickListener {
             tokenStateChangeable?.logout()
             tokensViewModel.logout()
+        }
+    }
+
+    private fun configureCopyToClipboard(textToCopy: CharSequence?, holderView: View) {
+        val copyButton: ImageButton = holderView.findViewById(R.id.copy_clipboard)
+        copyButton.setOnClickListener { _ ->
+            context?.copyTextToClipboard(textToCopy ?: "")
+            context?.toast(message = context?.getString(R.string.copy_to_clipboard_message) ?: "")
         }
     }
 
