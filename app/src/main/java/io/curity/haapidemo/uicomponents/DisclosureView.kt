@@ -131,9 +131,6 @@ class DisclosureView @JvmOverloads constructor(
                 }
             }
         )
-
-        contentTextView.maxLines = 3
-        contentTextView.ellipsize = TextUtils.TruncateAt.END
     }
 
     @Suppress("Unused")
