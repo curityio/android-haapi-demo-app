@@ -43,6 +43,7 @@ import se.curity.identityserver.haapi.android.sdk.models.oauth.SuccessfulTokenRe
 import java.io.FileNotFoundException
 import java.net.HttpURLConnection
 import java.net.URI
+import io.curity.haapidemo.utils.decodedIDToken
 
 class TokensFragment: Fragment(R.layout.fragment_tokens) {
 
@@ -91,7 +92,13 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
 
             val idToken = tokensViewModel.idToken
             if (idToken != null) {
-                idTokenDisclosureView.setContentText(idToken)
+                tokensViewModel.liveTokenResponse.value?.decodedIDToken()?.let {
+                    idTokenDisclosureView.setContentText(idToken)
+                    idTokenDisclosureView.setDecodedContent(it)
+                } ?: run {
+                    idTokenDisclosureView.setContentText(idToken)
+                }
+
                 linearLayoutIDToken.visibility = View.VISIBLE
             } else {
                 linearLayoutIDToken.visibility = View.GONE
