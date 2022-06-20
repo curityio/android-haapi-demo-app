@@ -67,15 +67,19 @@ class DecodedTokenView @JvmOverloads constructor(
         }
     }
 
-    //@Suppress("Unused")
     fun setContent(label: CharSequence, contents: JSONObject) {
         labelTextView.text = label
         verticalLinearLayout.removeAllViews()
         contents.keys().forEach { key ->
             val labelTextView = KeyValueView(context).apply {
                 this.setKey(key)
-                contents.getString(key)?.let { this.setValue(it) }
-                contents.get(key)?.let { this.setValueStyle(obj = it) }
+                try {
+                    contents.getString(key).let { this.setValue(it) }
+                    contents[key].let { this.setValueStyle(obj = it) }
+                } catch (e: Throwable) {
+                    // Currently this view does not report errors so only output to the console
+                    println(e)
+                }
             }
             verticalLinearLayout.addView(labelTextView)
         }
