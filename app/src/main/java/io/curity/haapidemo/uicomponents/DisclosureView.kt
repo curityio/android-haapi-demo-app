@@ -18,14 +18,17 @@ package io.curity.haapidemo.uicomponents
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.text.TextUtils
 import android.util.AttributeSet
 import android.view.LayoutInflater
 import android.view.View
+import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.ToggleButton
 import androidx.constraintlayout.widget.ConstraintLayout
 import io.curity.haapidemo.R
+import io.curity.haapidemo.models.DecodedJwtData
 
 class DisclosureView @JvmOverloads constructor(
     context: Context,
@@ -34,6 +37,7 @@ class DisclosureView @JvmOverloads constructor(
 ): ConstraintLayout(context, attrs, defStyleAttr) {
 
     private val titleTextView: TextView
+    private val copyButton: ImageButton
     private val toggleButton: ToggleButton
 
     private val collapseLinearLayout: LinearLayout
@@ -49,6 +53,7 @@ class DisclosureView @JvmOverloads constructor(
         collapseLinearLayout = root.findViewById(R.id.collapse_linear_layout)
         contentTextView = root.findViewById(R.id.content_text)
         verticalLinearLayout = root.findViewById(R.id.vertical_linear_layout)
+        copyButton = root.findViewById(R.id.copy_clipboard)
 
         loadAttrs(attrs, defStyleAttr)
 
@@ -103,6 +108,31 @@ class DisclosureView @JvmOverloads constructor(
     @Suppress("Unused")
     fun setContentText(contentText: CharSequence) {
         contentTextView.text = contentText
+    }
+
+    @Suppress("Unused")
+    fun setDecodedContent(decodedContent: DecodedJwtData) {
+        verticalLinearLayout.removeAllViews()
+
+        verticalLinearLayout.addView(
+            DecodedTokenView(context).apply {
+                decodedContent.getHeaderObj()?.let {
+                    this.setContent(label = context.getString(R.string.decoded_jwt_header),
+                        contents = it
+                    )
+                }
+            }
+        )
+
+        verticalLinearLayout.addView(
+            DecodedTokenView(context).apply {
+                decodedContent.getPayloadObj()?.let {
+                    this.setContent(label = context.getString(R.string.decoded_jwt_payload),
+                        contents = it
+                    )
+                }
+            }
+        )
     }
 
     @Suppress("Unused")

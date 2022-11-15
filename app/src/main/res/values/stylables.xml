@@ -81,4 +81,16 @@
     <declare-styleable name="SelectView">
         <attr name="labelStyle" />
     </declare-styleable>
+
+    <declare-styleable name="KeyValueView">
+        <attr name="labelStyle" />
+        <attr name="valueStyle" />
+        <attr name="labelText" />
+        <attr name="valueText"  />
+    </declare-styleable>
+
+    <declare-styleable name="DecodedTokenView">
+        <attr name="labelStyle" />
+        <attr name="labelText" />
+    </declare-styleable>
 </resources>
