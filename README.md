@@ -3,6 +3,12 @@
 [![Quality](https://img.shields.io/badge/quality-demo-red)](https://curity.io/resources/code-examples/status/)
 [![Availability](https://img.shields.io/badge/availability-source-blue)](https://curity.io/resources/code-examples/status/)
 
+# NOTE
+
+This example uses the HAAPI model SDK to call HAAPI endpoints and process the received responses. This SDK gives developers a lot of freedom in the way HAAPI responses are handled and displayed to the end user, but require some work to implement all the components. There is an alternative, recommended way for integrating with HAAPI, using the UI SDK. You can check an Android demo app that uses the UI SDK in this repository: https://github.com/curityio/android-haapi-ui-sdk-demo. The UI SDK provides a much simpler way of utilising HAAPI in your mobile apps.
+
+---
+
 This is an example Android app which uses the Curity Identity Server's Hypermedia API to perform an
 OAuth2 flow with authentication done completely from the app, without the need of an external browser.
 
