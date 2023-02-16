@@ -16,9 +16,10 @@
 
 package io.curity.haapidemo
 
-import io.curity.haapidemo.utils.disableSslTrustVerification
+import  io.curity.haapidemo.utils.disableSslTrustVerification
 import kotlinx.serialization.Serializable
 import se.curity.identityserver.haapi.android.sdk.HaapiConfiguration
+import se.curity.identityserver.haapi.android.sdk.OAuthAuthorizationParameters
 import java.net.HttpURLConnection
 import java.net.URI
 
@@ -76,6 +77,7 @@ data class Configuration(
 
 ) {
     fun toHaapiConfiguration(): HaapiConfiguration {
+
         return HaapiConfiguration(
             keyStoreAlias = keyStoreAlias,
             clientId = clientId,
@@ -84,6 +86,14 @@ data class Configuration(
             authorizationEndpointUri = URI.create(authorizationEndpointURI),
             appRedirect = redirectURI,
             isAutoRedirect = followRedirect,
+            authorizationParametersProvider = {
+                OAuthAuthorizationParameters(
+                    scope = supportedScopes
+                )
+            },
+            httpHeadersProvider = {
+                mapOf()
+            },
             httpUrlConnectionProvider = { url ->
                 val urlConnection = url.openConnection()
                 urlConnection.connectTimeout = 8000

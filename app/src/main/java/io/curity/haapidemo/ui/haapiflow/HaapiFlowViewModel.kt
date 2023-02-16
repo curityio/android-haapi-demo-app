@@ -96,9 +96,6 @@ class HaapiFlowViewModel(private val app: Application, private val configuration
         executeHaapi {
             val haapiAccessor = accessor ?: throw IllegalStateException("Haapi Accessor is not initialised in startHaapi.")
             haapiAccessor.haapiManager.start(
-                authorizationParameters = OAuthAuthorizationParameters(
-                    scope = configuration.selectedScopes
-                ),
                 it
             )
         }
