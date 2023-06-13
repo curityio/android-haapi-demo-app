@@ -156,12 +156,13 @@ class FlowActivity : AppCompatActivity() {
         Log.d(Constant.TAG_HAAPI_OPERATION, "Received an intent for deepLink: $intent")
         val extBrowserStep = externalBrowserOperationStep
         if (intent != null && extBrowserStep != null) {
-//            try {
-//                val params = extBrowserStep.formattedParametersFromIntentDataMap(intentDataMap = intent.dataMap())
-//                haapiFlowViewModel.submit(extBrowserStep.continueFormActionModel, params)
-//            } catch (exception: Exception) {
-//                Log.w(Constant.TAG_HAAPI_OPERATION, "Something went wrong when getting the formatted params")
-//            }
+            try {
+                val params = extBrowserStep.buildParameters(intent)
+                val casted = params.map { e -> e.key to e.value.toString() }.toMap()
+                haapiFlowViewModel.submit(extBrowserStep.continueFormActionModel, casted)
+            } catch (exception: Exception) {
+                Log.w(Constant.TAG_HAAPI_OPERATION, "Something went wrong when getting the formatted params")
+            }
         } else {
             Log.w(Constant.TAG_HAAPI_OPERATION, "Received an intent for deepLink but it is IGNORED: $intent")
         }
