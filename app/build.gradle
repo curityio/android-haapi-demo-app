@@ -75,7 +75,7 @@ android {
 }
 
 dependencies {
-    implementation "se.curity.identityserver:identityserver.haapi.android.sdk:3.0.0"
+    implementation "se.curity.identityserver:identityserver.haapi.android.sdk:3.1.0"
     implementation "org.jetbrains.kotlin:kotlin-stdlib:1.6.10"
     implementation "org.jetbrains.kotlin:kotlin-stdlib:1.6.10"
     implementation "org.jetbrains.kotlin:kotlin-reflect:1.6.10"

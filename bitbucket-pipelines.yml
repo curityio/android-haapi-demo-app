@@ -17,4 +17,4 @@ pipelines:
             - git checkout sdk
             - git rm bitbucket-pipelines.yml
             - git commit --amend -C HEAD
-            - git push -f sync sdk
+            - git push -f sync sdk:master
