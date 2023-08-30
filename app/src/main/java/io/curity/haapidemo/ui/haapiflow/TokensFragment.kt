@@ -24,10 +24,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.*
-import io.curity.haapidemo.R
-import io.curity.haapidemo.TokenStateChangeable
-import io.curity.haapidemo.Configuration
-import io.curity.haapidemo.DemoApplication
+import io.curity.haapidemo.*
 import io.curity.haapidemo.uicomponents.DisclosureContent
 import io.curity.haapidemo.uicomponents.DisclosureView
 import io.curity.haapidemo.uicomponents.HeaderView
@@ -63,12 +60,14 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
     private lateinit var tokensViewModel: TokensViewModel
     var tokenStateChangeable: TokenStateChangeable? = null
 
+    private lateinit var configuration: Configuration
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         val oAuthTokenResponse = requireArguments().getParcelable<SuccessfulTokenResponse>(EXTRA_OAUTH_TOKEN_RESPONSE) ?: throw IllegalStateException("Expecting a TokenResponse")
-        val config: Configuration = Json.decodeFromString(requireArguments().getString(EXTRA_CONFIG) ?: throw IllegalStateException("Expecting a configuration"))
-        tokensViewModel = ViewModelProvider(this, TokensViewModelFactory(this.requireActivity().application, config, oAuthTokenResponse))
+        configuration= Json.decodeFromString(requireArguments().getString(EXTRA_CONFIG) ?: throw IllegalStateException("Expecting a configuration"))
+        tokensViewModel = ViewModelProvider(this, TokensViewModelFactory(this.requireActivity().application, configuration, oAuthTokenResponse))
             .get(TokensViewModel::class.java)
         tokensViewModel.start()
         tokensViewModel.tokenStateChangeable = tokenStateChangeable
@@ -139,6 +138,17 @@ class TokensFragment: Fragment(R.layout.fragment_tokens) {
 
         refreshTokenButton.setOnClickListener {
             tokensViewModel.refreshToken()
+            // Comment out the following block and comment the previous line to refresh the token via an activity.
+            /*
+            tokensViewModel.refreshToken?.let {
+                val intent = RefreshActivity.newIntent(
+                    requireContext(),
+                    refreshToken = it,
+                    configuration = configuration
+                )
+                startActivity(intent)
+            }
+             */
         }
 
         signOutButton.setOnClickListener {
