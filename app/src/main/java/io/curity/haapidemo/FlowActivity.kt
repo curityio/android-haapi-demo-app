@@ -66,6 +66,8 @@ class FlowActivity : AppCompatActivity() {
     private val progressBar: ProgressBar by lazy { findViewById(R.id.loader) }
     private val headerView: HeaderView by lazy { findViewById(R.id.header) }
 
+    private var storedPollingStep: PollingStep? = null
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_flow)
@@ -251,12 +253,8 @@ class FlowActivity : AppCompatActivity() {
                     )
                 }
 
-                // BankID logic in versions greater than 8.0 of the Curity Identity Server
-                val clientOperation = haapiRepresentation.actions.filterIsInstance<Action.ClientOperation>().firstOrNull()
-                val bankIdActionModel = clientOperation?.model as ClientOperationActionModel.BankId?
-                if (bankIdActionModel != null) {
-                    handle(haapiRepresentation, bankIdActionModel.href, bankIdActionModel.continueActions)
-                }
+                startBankIdIfRequired(haapiRepresentation)
+                endBankIdIfRequired(haapiRepresentation)
             }
             is OAuthAuthorizationResponseStep -> {
                 if (haapiFlowViewModel.liveOAuthResponse.value?.getOrNull() !is SuccessfulTokenResponse) {
@@ -333,6 +331,39 @@ class FlowActivity : AppCompatActivity() {
         }
     }
 
+
+
+    // Logic to start interaction with BankID in version 8.0 or later of the Curity Identity Server
+    private fun startBankIdIfRequired(pollingStep: PollingStep) {
+
+        if (storedPollingStep != null || pollingStep.properties.status != PollingStatus.PENDING) {
+            return
+        }
+
+        // BankID logic in versions greater than 8.0 of the Curity Identity Server
+        val clientOperation = pollingStep.actions.filterIsInstance<Action.ClientOperation>().firstOrNull()
+        val bankIdActionModel = clientOperation?.model as ClientOperationActionModel.BankId?
+        if (bankIdActionModel != null) {
+            handle(pollingStep, bankIdActionModel.href, bankIdActionModel.continueActions)
+        }
+    }
+
+    private fun endBankIdIfRequired(pollingStep: PollingStep) {
+
+        if (storedPollingStep != null) {
+
+            // On success the continue action runs
+            if (pollingStep.properties.status == PollingStatus.DONE) {
+                storedPollingStep = null
+            }
+
+            // On failure we must present error details
+            if (pollingStep.properties.status == PollingStatus.FAILED) {
+                storedPollingStep = null
+            }
+        }
+    }
+
     /*
      * Logic to launch bankID and handle the continue actions
      */
@@ -393,6 +424,8 @@ class FlowActivity : AppCompatActivity() {
             } else {
                 problemRepresentation.messages.joinToString { it.text.literal }
             }
+
+            storedPollingStep = null
             showAlert(
                 message = message,
                 title = problemRepresentation.title?.literal
