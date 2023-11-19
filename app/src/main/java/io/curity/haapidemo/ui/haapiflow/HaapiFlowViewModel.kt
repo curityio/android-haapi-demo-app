@@ -155,12 +155,7 @@ class HaapiFlowViewModel(private val app: Application, private val configuration
     }
 
     private fun processHaapiResult(haapiResult: HaapiResult) {
-        val currentResponse = liveStep.value?.getOrNull()
         val latestResponse = haapiResult.getOrNull()
-        if (latestResponse is PollingStep && currentResponse is PollingStep && latestResponse.isContentTheSame(currentResponse)) {
-            // We do not post a new value as the pollingStep is the same. Avoiding to have a flickering for the progressBar
-            return
-        }
 
         // Handle automatic fetchAccessToken
         if (latestResponse is OAuthAuthorizationResponseStep &&

@@ -16,9 +16,13 @@
 
 package io.curity.haapidemo.ui.haapiflow
 
+import android.graphics.BitmapFactory
 import android.os.Bundle
+import android.util.Base64
 import android.util.Log
 import android.view.View
+import android.webkit.URLUtil
+import android.widget.LinearLayout
 import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.fragment.app.Fragment
@@ -27,11 +31,14 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import io.curity.haapidemo.Constant
 import io.curity.haapidemo.R
+import io.curity.haapidemo.uicomponents.HeaderView
 import io.curity.haapidemo.uicomponents.ProgressButton
 import io.curity.haapidemo.uicomponents.ViewStopLoadable
 import kotlinx.coroutines.*
+import se.curity.identityserver.haapi.android.sdk.models.Link
 import se.curity.identityserver.haapi.android.sdk.models.PollingStatus
 import se.curity.identityserver.haapi.android.sdk.models.PollingStep
+import java.util.*
 
 class PollingFragment: Fragment(R.layout.fragment_polling) {
 
@@ -39,6 +46,7 @@ class PollingFragment: Fragment(R.layout.fragment_polling) {
     private lateinit var progressBar: ProgressBar
     private lateinit var mainButton: ProgressButton
     private lateinit var cancelButton: ProgressButton
+    private lateinit var linksLayout: LinearLayout
 
     private var selectedButton: ViewStopLoadable? = null
 
@@ -60,6 +68,7 @@ class PollingFragment: Fragment(R.layout.fragment_polling) {
         progressBar = view.findViewById(R.id.progress_bar)
         mainButton = view.findViewById(R.id.main_progress_button)
         cancelButton = view.findViewById(R.id.cancel_progress_button)
+        linksLayout = view.findViewById(R.id.linear_layout_links)
 
         statusTextView.text = pollingViewModel.status
         mainButton.setText(pollingViewModel.mainActionTitle)
@@ -97,6 +106,25 @@ class PollingFragment: Fragment(R.layout.fragment_polling) {
             cancelButton.setLoading(true)
             selectedButton = cancelButton
             pollingViewModel.cancel()
+        }
+
+        val links = pollingViewModel.links
+        linksLayout.removeAllViews()
+        links.forEach { link ->
+            if (link.type == "image/png") {
+                if (URLUtil.isValidUrl(link.href)) {
+                    Log.d(Constant.TAG, "image/png was not handled - you need to load the image")
+                } else {
+                    val pureBase64Encoded = link.href.substring(link.href.indexOf(",") + 1)
+                    val decodedString = Base64.decode(pureBase64Encoded, Base64.DEFAULT)
+                    val bitmap = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.size)
+                    val headerViewLink = HeaderView(requireContext(), null, R.style.HeaderView_Link).apply {
+                        this.setImageBitmap(bitmap)
+                        this.setText(link.title?.literal ?: "")
+                    }
+                    linksLayout.addView(headerViewLink)
+                }
+            }
         }
     }
 
@@ -140,6 +168,11 @@ class PollingFragment: Fragment(R.layout.fragment_polling) {
             get() = pollingStep.cancelAction?.model?.actionTitle?.literal
         val status: String
             get() = pollingStep.properties.status.value
+
+        val links: List<Link>
+            get() {
+                return pollingStep.links
+            }
 
         fun submit() {
             haapiFlowViewModel.submit(pollingStep.mainAction.model, emptyMap())
