@@ -40,6 +40,7 @@ import se.curity.identityserver.haapi.android.sdk.models.*
 import se.curity.identityserver.haapi.android.sdk.models.actions.Action
 import se.curity.identityserver.haapi.android.sdk.models.actions.ActionKind
 import se.curity.identityserver.haapi.android.sdk.models.actions.ClientOperationActionModel
+import se.curity.identityserver.haapi.android.sdk.models.actions.FormActionModel
 import se.curity.identityserver.haapi.android.sdk.models.oauth.ErrorTokenResponse
 import se.curity.identityserver.haapi.android.sdk.models.oauth.SuccessfulTokenResponse
 import java.lang.IllegalArgumentException
@@ -65,8 +66,6 @@ class FlowActivity : AppCompatActivity() {
     // UIs
     private val progressBar: ProgressBar by lazy { findViewById(R.id.loader) }
     private val headerView: HeaderView by lazy { findViewById(R.id.header) }
-
-    private var storedPollingStep: PollingStep? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -233,7 +232,8 @@ class FlowActivity : AppCompatActivity() {
                 )
             }
             is PollingStep -> {
-                if (haapiRepresentation.properties.status == PollingStatus.DONE &&
+
+                if ((haapiRepresentation.properties.status == PollingStatus.DONE || haapiRepresentation.properties.status == PollingStatus.FAILED) &&
                     haapiRepresentation.actions.size == 1 &&
                     haapiFlowViewModel.haapiConfiguration.isAutoRedirect
                 ) {
@@ -243,18 +243,29 @@ class FlowActivity : AppCompatActivity() {
                         fragment = EmptyFragment(),
                         representation = haapiRepresentation
                     )
+
                     progressBar.visibility = VISIBLE
                     haapiFlowViewModel.submit(haapiRepresentation.mainAction.model, emptyMap())
+
                 } else {
                     updateTitle(getString(R.string.polling))
+
                     commitNewFragment(
                         fragment = PollingFragment.newInstance(haapiRepresentation),
                         representation = haapiRepresentation
                     )
-                }
 
-                startBankIdIfRequired(haapiRepresentation)
-                endBankIdIfRequired(haapiRepresentation)
+                    // Logic to start and end interaction with BankID in version 8.0 or later of the Curity Identity Server
+                    val clientOperation = haapiRepresentation.actions.filterIsInstance<Action.ClientOperation>().firstOrNull()
+                    val bankIdActionModel = clientOperation?.model as ClientOperationActionModel.BankId?
+                    if (bankIdActionModel != null) {
+
+                        handle(
+                            haapiRepresentation,
+                            bankIdActionModel.href,
+                            bankIdActionModel.continueActions)
+                    }
+                }
             }
             is OAuthAuthorizationResponseStep -> {
                 if (haapiFlowViewModel.liveOAuthResponse.value?.getOrNull() !is SuccessfulTokenResponse) {
@@ -323,7 +334,10 @@ class FlowActivity : AppCompatActivity() {
             }
             is BankIdClientOperationStep -> {
                 // BankID logic in versions older than 8.0 of the Curity Identity Server
-                handle(operationStep, operationStep.actionModel.href, operationStep.continueActions)
+                handle(
+                    operationStep,
+                    operationStep.actionModel.href,
+                    operationStep.continueActions)
             }
             is EncapClientOperationStep -> {
                 showAlert("Encap client operation step is not implemented")
@@ -331,47 +345,17 @@ class FlowActivity : AppCompatActivity() {
         }
     }
 
-
-
-    // Logic to start interaction with BankID in version 8.0 or later of the Curity Identity Server
-    private fun startBankIdIfRequired(pollingStep: PollingStep) {
-
-        if (storedPollingStep != null || pollingStep.properties.status != PollingStatus.PENDING) {
-            return
-        }
-
-        // BankID logic in versions greater than 8.0 of the Curity Identity Server
-        val clientOperation = pollingStep.actions.filterIsInstance<Action.ClientOperation>().firstOrNull()
-        val bankIdActionModel = clientOperation?.model as ClientOperationActionModel.BankId?
-        if (bankIdActionModel != null) {
-            handle(pollingStep, bankIdActionModel.href, bankIdActionModel.continueActions)
-        }
-    }
-
-    private fun endBankIdIfRequired(pollingStep: PollingStep) {
-
-        if (storedPollingStep != null) {
-
-            // On success the continue action runs
-            if (pollingStep.properties.status == PollingStatus.DONE) {
-                storedPollingStep = null
-            }
-
-            // On failure we must present error details
-            if (pollingStep.properties.status == PollingStatus.FAILED) {
-                storedPollingStep = null
-            }
-        }
-    }
-
     /*
      * Logic to launch bankID and handle the continue actions
      */
-    private fun handle(haapiRepresentation: HaapiRepresentation, uriToLaunch: String, continueActions: List<Action>) {
+    private fun handle(
+        haapiRepresentation: HaapiRepresentation,
+        href: String,
+        continueActions: List<Action>) {
 
         try {
-            Log.d(Constant.TAG_HAAPI_OPERATION, uriToLaunch)
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(uriToLaunch))
+            Log.d(Constant.TAG_HAAPI_OPERATION, href)
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(href))
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
             resultLauncher.launch(intent)
 
@@ -425,7 +409,6 @@ class FlowActivity : AppCompatActivity() {
                 problemRepresentation.messages.joinToString { it.text.literal }
             }
 
-            storedPollingStep = null
             showAlert(
                 message = message,
                 title = problemRepresentation.title?.literal
