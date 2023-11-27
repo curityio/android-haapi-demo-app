@@ -67,8 +67,6 @@ class FlowActivity : AppCompatActivity() {
     private val progressBar: ProgressBar by lazy { findViewById(R.id.loader) }
     private val headerView: HeaderView by lazy { findViewById(R.id.header) }
 
-    private var pendingOperation: Action.ClientOperation? = null
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_flow)
@@ -191,6 +189,7 @@ class FlowActivity : AppCompatActivity() {
     }
 
     private fun handle(haapiRepresentation: HaapiRepresentation) {
+
         when (haapiRepresentation) {
             is RedirectionStep -> {
                 updateTitle(getString(R.string.redirection))
@@ -236,7 +235,7 @@ class FlowActivity : AppCompatActivity() {
             is PollingStep -> {
 
                 if (haapiRepresentation.properties.status == PollingStatus.DONE || haapiRepresentation.properties.status == PollingStatus.FAILED) {
-                    pendingOperation = null
+                    haapiFlowViewModel.isBankIdLaunched = false
                     if (haapiRepresentation.actions.size == 1 && haapiFlowViewModel.haapiConfiguration.isAutoRedirect) {
 
                         // Kill the PollingFragment to avoid polling and send the "redirect"
@@ -251,19 +250,19 @@ class FlowActivity : AppCompatActivity() {
                     }
                 } else {
                     updateTitle(getString(R.string.polling))
-
+                    val pollingFragment = PollingFragment.newInstance(haapiRepresentation)
                     commitNewFragment(
-                        fragment = PollingFragment.newInstance(haapiRepresentation),
+                        fragment = pollingFragment,
                         representation = haapiRepresentation
                     )
 
                     // Logic to start and end interaction with BankID in version 8.0 or later of the Curity Identity Server
-                    if (pendingOperation == null) {
-                        val clientOperation = haapiRepresentation.actions.filterIsInstance<Action.ClientOperation>().firstOrNull()
-                        val bankIdActionModel = clientOperation?.model as ClientOperationActionModel.BankId?
-                        if (bankIdActionModel != null) {
+                    val clientOperation = haapiRepresentation.actions.filterIsInstance<Action.ClientOperation>().firstOrNull()
+                    val bankIdActionModel = clientOperation?.model as ClientOperationActionModel.BankId?
+                    if (bankIdActionModel != null) {
 
-                            pendingOperation = clientOperation
+                        if (!haapiFlowViewModel.isBankIdLaunched) {
+                            haapiFlowViewModel.isBankIdLaunched = true
                             handle(
                                 haapiRepresentation,
                                 bankIdActionModel.href,
@@ -405,7 +404,6 @@ class FlowActivity : AppCompatActivity() {
 
     private fun handle(problemRepresentation: ProblemRepresentation) {
 
-        pendingOperation = null
         val currentFragment = supportFragmentManager.findFragmentByTag(FRAGMENT_TAG) as? ProblemHandable
         if (currentFragment != null) {
             currentFragment.handleProblemRepresentation(problemRepresentation)

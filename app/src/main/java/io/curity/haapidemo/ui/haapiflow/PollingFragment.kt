@@ -183,6 +183,7 @@ class PollingFragment: Fragment(R.layout.fragment_polling) {
             shouldPoll = false
             val cancelActionForm = pollingStep.cancelAction
             if (cancelActionForm != null) {
+                haapiFlowViewModel.isBankIdLaunched = false
                 haapiFlowViewModel.submit(cancelActionForm.model, emptyMap())
             }
         }

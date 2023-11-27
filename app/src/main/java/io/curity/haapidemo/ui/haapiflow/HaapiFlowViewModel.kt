@@ -41,6 +41,7 @@ class HaapiFlowViewModel(private val app: Application, private val configuration
     private val coroutineExceptionHandler = CoroutineExceptionHandler { _, _ -> }
 
     val isAutoPolling = configuration.isAutoPollingEnabled
+    var isBankIdLaunched = false
 
     private var _liveStep = MutableLiveData<HaapiResult?>(null)
     val liveStep: LiveData<HaapiResult?>
@@ -155,7 +156,13 @@ class HaapiFlowViewModel(private val app: Application, private val configuration
     }
 
     private fun processHaapiResult(haapiResult: HaapiResult) {
+
+        val currentResponse = liveStep.value?.getOrNull()
         val latestResponse = haapiResult.getOrNull()
+        if (latestResponse is PollingStep && currentResponse is PollingStep && latestResponse.isContentTheSame(currentResponse)) {
+            // We do not post a new value as the pollingStep is the same. Avoiding to have a flickering for the progressBar
+            return
+        }
 
         // Handle automatic fetchAccessToken
         if (latestResponse is OAuthAuthorizationResponseStep &&
@@ -185,7 +192,17 @@ class HaapiFlowViewModelFactory(val app: Application, val configuration: Configu
 }
 
 private fun PollingStep.isContentTheSame(pollingStep: PollingStep): Boolean {
-    return this.properties.status == pollingStep.properties.status
+
+    val result = this.properties.status == pollingStep.properties.status
             && this.type == pollingStep.type
             && this.mainAction.model.href == pollingStep.mainAction.model.href
+
+    // Handle changes to animated QR codes
+    if (this.links.isNotEmpty() && pollingStep.links.isNotEmpty())        {
+        if (this.links[0].href != pollingStep.links[0].href) {
+            return false
+        }
+    }
+
+    return result
 }
