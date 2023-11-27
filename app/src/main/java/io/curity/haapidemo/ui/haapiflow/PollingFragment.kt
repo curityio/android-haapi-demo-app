@@ -175,7 +175,7 @@ class PollingFragment: Fragment(R.layout.fragment_polling) {
             }
 
         fun submit() {
-            haapiFlowViewModel.submit(pollingStep.mainAction.model, emptyMap())
+            haapiFlowViewModel.submit(pollingStep.mainAction, emptyMap())
         }
 
         fun cancel() {
@@ -183,8 +183,7 @@ class PollingFragment: Fragment(R.layout.fragment_polling) {
             shouldPoll = false
             val cancelActionForm = pollingStep.cancelAction
             if (cancelActionForm != null) {
-                haapiFlowViewModel.isBankIdLaunched = false
-                haapiFlowViewModel.submit(cancelActionForm.model, emptyMap())
+                haapiFlowViewModel.submit(cancelActionForm, emptyMap())
             }
         }
 

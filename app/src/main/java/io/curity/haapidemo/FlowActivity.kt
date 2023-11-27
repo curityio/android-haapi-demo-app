@@ -260,6 +260,9 @@ class FlowActivity : AppCompatActivity() {
                         val clientOperation = haapiRepresentation.actions.filterIsInstance<Action.ClientOperation>().firstOrNull()
                         val bankIdActionModel = clientOperation?.model as ClientOperationActionModel.BankId?
                         if (bankIdActionModel != null) {
+
+                            // Run the BankID launch on the first polling step, then store state to avoid launching BankID again
+                            // This flag is reset on completion, timeout, cancellation or error
                             haapiFlowViewModel.isBankIdLaunched = true
                             handle(
                                 haapiRepresentation,
@@ -401,6 +404,7 @@ class FlowActivity : AppCompatActivity() {
     }
 
     private fun handle(problemRepresentation: ProblemRepresentation) {
+        haapiFlowViewModel.isBankIdLaunched = false
         val currentFragment = supportFragmentManager.findFragmentByTag(FRAGMENT_TAG) as? ProblemHandable
         if (currentFragment != null) {
             currentFragment.handleProblemRepresentation(problemRepresentation)

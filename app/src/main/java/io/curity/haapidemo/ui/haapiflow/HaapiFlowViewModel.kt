@@ -26,6 +26,8 @@ import se.curity.identityserver.haapi.android.sdk.models.HaapiResponse
 import se.curity.identityserver.haapi.android.sdk.models.Link
 import se.curity.identityserver.haapi.android.sdk.models.OAuthAuthorizationResponseStep
 import se.curity.identityserver.haapi.android.sdk.models.PollingStep
+import se.curity.identityserver.haapi.android.sdk.models.actions.Action
+import se.curity.identityserver.haapi.android.sdk.models.actions.ActionKind
 import se.curity.identityserver.haapi.android.sdk.models.actions.FormActionModel
 import se.curity.identityserver.haapi.android.sdk.models.oauth.TokenResponse
 import kotlin.coroutines.CoroutineContext
@@ -102,7 +104,17 @@ class HaapiFlowViewModel(private val app: Application, private val configuration
         }
     }
 
+    fun submit(formAction: Action.Form, parameters: Map<String, String> = emptyMap()) {
+
+        if (isBankIdLaunched && formAction.kind == ActionKind.Cancel) {
+            isBankIdLaunched = false
+        }
+
+        submit(formAction.model, parameters)
+    }
+
     fun submit(form: FormActionModel, parameters: Map<String, String> = emptyMap()) {
+
         executeHaapi {
             val haapiAccessor = accessor ?: throw IllegalStateException("Haapi Accessor is not initialised in submit.")
             haapiAccessor.haapiManager.submitForm(form, parameters, it)
