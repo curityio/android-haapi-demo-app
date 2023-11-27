@@ -116,19 +116,11 @@ data class Configuration(
         Configuration(
             name = name,
             clientId = "haapi-android-client",
-
-            /*baseURLString = "https://10.0.2.2:8443",
+            baseURLString = "https://10.0.2.2:8443",
             tokenEndpointURI = "https://10.0.2.2:8443/oauth/v2/oauth-token",
             authorizationEndpointURI = "https://10.0.2.2:8443/oauth/v2/oauth-authorize",
             userInfoEndpointURI = "https://10.0.2.2:8443/oauth/v2/oauth-userinfo",
-            metaDataBaseURLString = "https://10.0.2.2:8443/oauth/v2/oauth-anonymous",*/
-
-            baseURLString = "https://f09f-2a00-23c7-8ec3-2401-ac85-e22e-cece-10.ngrok-free.app",
-            tokenEndpointURI = "https://f09f-2a00-23c7-8ec3-2401-ac85-e22e-cece-10.ngrok-free.app/oauth/v2/oauth-token",
-            authorizationEndpointURI = "https://f09f-2a00-23c7-8ec3-2401-ac85-e22e-cece-10.ngrok-free.app/oauth/v2/oauth-authorize",
-            userInfoEndpointURI = "https://f09f-2a00-23c7-8ec3-2401-ac85-e22e-cece-10.ngrok-free.app/oauth/v2/oauth-userinfo",
-            metaDataBaseURLString = "https://f09f-2a00-23c7-8ec3-2401-ac85-e22e-cece-10.ngrok-free.app/oauth/v2/oauth-anonymous",
-
+            metaDataBaseURLString = "https://10.0.2.2:8443/oauth/v2/oauth-anonymous",
             redirectURI = "app://haapi",
             followRedirect = true,
             isSSLTrustVerificationEnabled = false,
