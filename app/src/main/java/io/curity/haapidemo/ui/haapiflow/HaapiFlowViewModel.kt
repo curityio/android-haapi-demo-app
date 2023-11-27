@@ -156,7 +156,6 @@ class HaapiFlowViewModel(private val app: Application, private val configuration
     }
 
     private fun processHaapiResult(haapiResult: HaapiResult) {
-
         val currentResponse = liveStep.value?.getOrNull()
         val latestResponse = haapiResult.getOrNull()
         if (latestResponse is PollingStep && currentResponse is PollingStep && latestResponse.isContentTheSame(currentResponse)) {

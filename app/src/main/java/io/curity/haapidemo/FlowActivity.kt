@@ -250,18 +250,16 @@ class FlowActivity : AppCompatActivity() {
                     }
                 } else {
                     updateTitle(getString(R.string.polling))
-                    val pollingFragment = PollingFragment.newInstance(haapiRepresentation)
                     commitNewFragment(
-                        fragment = pollingFragment,
+                        fragment = PollingFragment.newInstance(haapiRepresentation),
                         representation = haapiRepresentation
                     )
 
                     // Logic to start and end interaction with BankID in version 8.0 or later of the Curity Identity Server
-                    val clientOperation = haapiRepresentation.actions.filterIsInstance<Action.ClientOperation>().firstOrNull()
-                    val bankIdActionModel = clientOperation?.model as ClientOperationActionModel.BankId?
-                    if (bankIdActionModel != null) {
-
-                        if (!haapiFlowViewModel.isBankIdLaunched) {
+                    if (!haapiFlowViewModel.isBankIdLaunched) {
+                        val clientOperation = haapiRepresentation.actions.filterIsInstance<Action.ClientOperation>().firstOrNull()
+                        val bankIdActionModel = clientOperation?.model as ClientOperationActionModel.BankId?
+                        if (bankIdActionModel != null) {
                             haapiFlowViewModel.isBankIdLaunched = true
                             handle(
                                 haapiRepresentation,
@@ -403,7 +401,6 @@ class FlowActivity : AppCompatActivity() {
     }
 
     private fun handle(problemRepresentation: ProblemRepresentation) {
-
         val currentFragment = supportFragmentManager.findFragmentByTag(FRAGMENT_TAG) as? ProblemHandable
         if (currentFragment != null) {
             currentFragment.handleProblemRepresentation(problemRepresentation)
@@ -414,7 +411,6 @@ class FlowActivity : AppCompatActivity() {
             } else {
                 problemRepresentation.messages.joinToString { it.text.literal }
             }
-
             showAlert(
                 message = message,
                 title = problemRepresentation.title?.literal
