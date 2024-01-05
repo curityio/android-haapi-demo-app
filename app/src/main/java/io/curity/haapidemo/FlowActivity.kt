@@ -396,10 +396,6 @@ class FlowActivity : AppCompatActivity() {
         } catch (exception: ActivityNotFoundException) {
             Log.d(Constant.TAG_HAAPI_OPERATION, "Could not open bankid activity : $exception")
             expectedCallback = NO_OPERATION_CALLBACK
-            showAlert(
-                message = getString(R.string.bank_id_is_not_installed),
-                title = getString(R.string.no_action)
-            )
         }
     }
 
