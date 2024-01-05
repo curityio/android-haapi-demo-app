@@ -26,6 +26,8 @@ import se.curity.identityserver.haapi.android.sdk.models.HaapiResponse
 import se.curity.identityserver.haapi.android.sdk.models.Link
 import se.curity.identityserver.haapi.android.sdk.models.OAuthAuthorizationResponseStep
 import se.curity.identityserver.haapi.android.sdk.models.PollingStep
+import se.curity.identityserver.haapi.android.sdk.models.actions.Action
+import se.curity.identityserver.haapi.android.sdk.models.actions.ActionKind
 import se.curity.identityserver.haapi.android.sdk.models.actions.FormActionModel
 import se.curity.identityserver.haapi.android.sdk.models.oauth.TokenResponse
 import kotlin.coroutines.CoroutineContext
@@ -41,6 +43,7 @@ class HaapiFlowViewModel(private val app: Application, private val configuration
     private val coroutineExceptionHandler = CoroutineExceptionHandler { _, _ -> }
 
     val isAutoPolling = configuration.isAutoPollingEnabled
+    var isBankIdLaunched = false
 
     private var _liveStep = MutableLiveData<HaapiResult?>(null)
     val liveStep: LiveData<HaapiResult?>
@@ -101,7 +104,17 @@ class HaapiFlowViewModel(private val app: Application, private val configuration
         }
     }
 
+    fun submit(formAction: Action.Form, parameters: Map<String, String> = emptyMap()) {
+
+        if (isBankIdLaunched && formAction.kind == ActionKind.Cancel) {
+            isBankIdLaunched = false
+        }
+
+        submit(formAction.model, parameters)
+    }
+
     fun submit(form: FormActionModel, parameters: Map<String, String> = emptyMap()) {
+
         executeHaapi {
             val haapiAccessor = accessor ?: throw IllegalStateException("Haapi Accessor is not initialised in submit.")
             haapiAccessor.haapiManager.submitForm(form, parameters, it)
@@ -190,7 +203,17 @@ class HaapiFlowViewModelFactory(val app: Application, val configuration: Configu
 }
 
 private fun PollingStep.isContentTheSame(pollingStep: PollingStep): Boolean {
-    return this.properties.status == pollingStep.properties.status
+
+    val result = this.properties.status == pollingStep.properties.status
             && this.type == pollingStep.type
             && this.mainAction.model.href == pollingStep.mainAction.model.href
+
+    // Handle changes to animated QR codes
+    if (this.links.isNotEmpty() && pollingStep.links.isNotEmpty())        {
+        if (this.links[0].href != pollingStep.links[0].href) {
+            return false
+        }
+    }
+
+    return result
 }
