@@ -20,6 +20,7 @@ import android.app.AlertDialog
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.View.*
@@ -38,6 +39,8 @@ import kotlinx.serialization.json.Json
 import se.curity.identityserver.haapi.android.sdk.models.*
 import se.curity.identityserver.haapi.android.sdk.models.actions.Action
 import se.curity.identityserver.haapi.android.sdk.models.actions.ActionKind
+import se.curity.identityserver.haapi.android.sdk.models.actions.ClientOperationActionModel
+import se.curity.identityserver.haapi.android.sdk.models.actions.FormActionModel
 import se.curity.identityserver.haapi.android.sdk.models.oauth.ErrorTokenResponse
 import se.curity.identityserver.haapi.android.sdk.models.oauth.SuccessfulTokenResponse
 import java.lang.IllegalArgumentException
@@ -186,6 +189,7 @@ class FlowActivity : AppCompatActivity() {
     }
 
     private fun handle(haapiRepresentation: HaapiRepresentation) {
+
         when (haapiRepresentation) {
             is RedirectionStep -> {
                 updateTitle(getString(R.string.redirection))
@@ -229,24 +233,44 @@ class FlowActivity : AppCompatActivity() {
                 )
             }
             is PollingStep -> {
-                if (haapiRepresentation.properties.status == PollingStatus.DONE &&
-                    haapiRepresentation.actions.size == 1 &&
-                    haapiFlowViewModel.haapiConfiguration.isAutoRedirect
-                ) {
-                    // Kill the PollingFragment to avoid polling and send the "redirect"
-                    updateTitle("")
-                    commitNewFragment(
-                        fragment = EmptyFragment(),
-                        representation = haapiRepresentation
-                    )
-                    progressBar.visibility = VISIBLE
-                    haapiFlowViewModel.submit(haapiRepresentation.mainAction.model, emptyMap())
+
+                if (haapiRepresentation.properties.status == PollingStatus.DONE || haapiRepresentation.properties.status == PollingStatus.FAILED) {
+                    haapiFlowViewModel.isBankIdLaunched = false
+                    if (haapiRepresentation.actions.size == 1 && haapiFlowViewModel.haapiConfiguration.isAutoRedirect) {
+
+                        // Kill the PollingFragment to avoid polling and send the "redirect"
+                        updateTitle("")
+                        commitNewFragment(
+                            fragment = EmptyFragment(),
+                            representation = haapiRepresentation
+                        )
+
+                        progressBar.visibility = VISIBLE
+                        haapiFlowViewModel.submit(haapiRepresentation.mainAction.model, emptyMap())
+                    }
                 } else {
                     updateTitle(getString(R.string.polling))
                     commitNewFragment(
                         fragment = PollingFragment.newInstance(haapiRepresentation),
                         representation = haapiRepresentation
                     )
+
+                    // Logic to start and end interaction with BankID in version 8.0 or later of the Curity Identity Server
+                    if (!haapiFlowViewModel.isBankIdLaunched) {
+                        val clientOperation = haapiRepresentation.actions.filterIsInstance<Action.ClientOperation>().firstOrNull()
+                        val bankIdActionModel = clientOperation?.model as ClientOperationActionModel.BankId?
+                        if (bankIdActionModel != null) {
+
+                            // Run the BankID launch on the first polling step, then store state to avoid launching BankID again
+                            // This flag is reset on completion, timeout, cancellation or error
+                            haapiFlowViewModel.isBankIdLaunched = true
+                            handle(
+                                haapiRepresentation,
+                                bankIdActionModel.href,
+                                bankIdActionModel.continueActions
+                            )
+                        }
+                    }
                 }
             }
             is OAuthAuthorizationResponseStep -> {
@@ -315,49 +339,11 @@ class FlowActivity : AppCompatActivity() {
                 }
             }
             is BankIdClientOperationStep -> {
-                Log.d(Constant.TAG_HAAPI_OPERATION, operationStep.actionModel.href)
-                try {
-                    expectedCallback = OPERATION_BANKID_CALLBACK
-                    val intent = Intent(Intent.ACTION_VIEW, operationStep.uriToLaunch)
-                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-
-                    resultLauncher.launch(intent)
-                    // If the BankID can be opened then
-                    if (operationStep.continueActions.size == 1 &&
-                        operationStep.continueActions.first().kind == ActionKind.Redirect &&
-                        haapiFlowViewModel.haapiConfiguration.isAutoRedirect
-                    ) {
-                        // There is only one action and it is a redirect -> we just submit according to our app config
-                        val continueAction = operationStep.continueActions.first()
-                        haapiFlowViewModel.submit((continueAction as Action.Form).model, emptyMap())
-                    } else {
-                        // One or many actions - unfortunately if there is one action and it is a redirect, we cannot submit it
-                        val title = if (operationStep.continueActions.size == 1) {
-                            operationStep.continueActions.first().title?.literal ?: "BankID operation"
-                        } else {
-                            "BankID operation"
-                        }
-                        updateTitle(title)
-                        @Suppress("UNCHECKED_CAST")
-                        commitNewFragment(
-                            fragment = InteractiveFormFragment.newInstance(
-                                model = InteractiveFormModel(
-                                    messages = operationStep.messages,
-                                    actions = operationStep.continueActions as List<Action.Form>,
-                                    links = operationStep.links
-                                )
-                            ),
-                            representation = operationStep
-                        )
-                    }
-                } catch (exception: ActivityNotFoundException) {
-                    Log.d(Constant.TAG_HAAPI_OPERATION, "Could not open bankid activity : $exception")
-                    expectedCallback = NO_OPERATION_CALLBACK
-                    showAlert(
-                        message = getString(R.string.bank_id_is_not_installed),
-                        title = getString(R.string.no_action)
-                    )
-                }
+                // BankID logic in versions older than 8.0 of the Curity Identity Server
+                handle(
+                    operationStep,
+                    operationStep.actionModel.href,
+                    operationStep.continueActions)
             }
             is EncapClientOperationStep -> {
                 showAlert("Encap client operation step is not implemented")
@@ -365,7 +351,56 @@ class FlowActivity : AppCompatActivity() {
         }
     }
 
+    /*
+     * Logic to launch bankID and handle the continue actions
+     */
+    private fun handle(
+        haapiRepresentation: HaapiRepresentation,
+        href: String,
+        continueActions: List<Action>) {
+
+        try {
+            Log.d(Constant.TAG_HAAPI_OPERATION, href)
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(href))
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            resultLauncher.launch(intent)
+
+            // If the BankID can be opened then
+            if (continueActions.size == 1 &&
+                continueActions.first().kind == ActionKind.Redirect &&
+                haapiFlowViewModel.haapiConfiguration.isAutoRedirect
+            ) {
+                // There is only one action and it is a redirect -> we just submit according to our app config
+                val continueAction = continueActions.first()
+                haapiFlowViewModel.submit((continueAction as Action.Form).model, emptyMap())
+            } else {
+                // One or many actions - unfortunately if there is one action and it is a redirect, we cannot submit it
+                val title = if (continueActions.size == 1) {
+                    continueActions.first().title?.literal ?: "BankID operation"
+                } else {
+                    "BankID operation"
+                }
+                updateTitle(title)
+                @Suppress("UNCHECKED_CAST")
+                commitNewFragment(
+                    fragment = InteractiveFormFragment.newInstance(
+                        model = InteractiveFormModel(
+                            messages = haapiRepresentation.messages,
+                            actions = continueActions as List<Action.Form>,
+                            links = haapiRepresentation.links
+                        )
+                    ),
+                    representation = haapiRepresentation
+                )
+            }
+        } catch (exception: ActivityNotFoundException) {
+            Log.d(Constant.TAG_HAAPI_OPERATION, "Could not open bankid activity : $exception")
+            expectedCallback = NO_OPERATION_CALLBACK
+        }
+    }
+
     private fun handle(problemRepresentation: ProblemRepresentation) {
+        haapiFlowViewModel.isBankIdLaunched = false
         val currentFragment = supportFragmentManager.findFragmentByTag(FRAGMENT_TAG) as? ProblemHandable
         if (currentFragment != null) {
             currentFragment.handleProblemRepresentation(problemRepresentation)
